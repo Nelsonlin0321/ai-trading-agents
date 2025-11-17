@@ -1,13 +1,9 @@
-from typing import Mapping, Sequence, TypeVar, Generic, cast
+from typing import Sequence, TypeVar, Generic, cast, Any
 import httpx
 import dotenv
 from src.services.utils import async_retry_on_status_code
 from src.utils import get_env
 dotenv.load_dotenv()
-
-# Strict JSON typing without using typing.Any
-JsonPrimitive = str | int | float | bool | None
-JsonValue = JsonPrimitive | list["JsonValue"] | dict[str, "JsonValue"]
 
 
 BASE_URL = "https://data.alpaca.markets"
@@ -16,7 +12,7 @@ ALPACA_API_KEY_ID = get_env("ALPACA_API_KEY")
 ALPACA_API_SECRET_KEY = get_env("ALPACA_API_SECRET")
 
 
-T = TypeVar("T", bound=JsonValue)
+T = TypeVar("T")
 
 
 class AlpacaAPIClient(Generic[T]):  # pylint:disable=too-few-public-methods
@@ -48,8 +44,8 @@ class AlpacaAPIClient(Generic[T]):  # pylint:disable=too-few-public-methods
         *,
         symbols: Sequence[str] | str | None = None,
         endpoint: str | None = None,
-        params: Mapping[str, JsonPrimitive] | None = None,
-        headers: Mapping[str, str] | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> T:
         """Perform a GET request with retries.
 
