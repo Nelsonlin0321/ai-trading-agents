@@ -5,6 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "langchain-openai>=1.0.3",
     "pre-commit>=4.4.0",
     "prisma>=0.15.0",
+    "pytz>=2025.2",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.5",
 ]

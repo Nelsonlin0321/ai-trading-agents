@@ -1,0 +1,17 @@
+{
+    "cSpell.words": [
+        "agentmessage",
+        "ainvoke",
+        "arun",
+        "Axios",
+        "genai",
+        "intraday",
+        "kimi",
+        "pfunc",
+        "Referer"
+    ],
+    "cSpell.ignorePaths": [
+        "**/*.ipynb",
+        "src/utils/constants.py"
+    ]
+}
