@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Dict, Any, Sequence
+from typing import Dict, Any, List, Mapping
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial, wraps
@@ -38,7 +38,7 @@ def get_env(name: str) -> str:
     return value
 
 
-def dicts_to_markdown_table(data: Sequence[Dict[str, Any]]):
+def dicts_to_markdown_table(data: list[dict[str, Any]]):
     """
     Convert a list of dictionaries into a Markdown table string.
 

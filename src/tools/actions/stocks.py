@@ -195,6 +195,9 @@ class StockPriceSnapshotWithHistory(TypedDict):
 
 
 class ETFPriceSnapshotWithHistory(TypedDict):
+    ticker: str
+    name: str
+    description: str
     current_price: str
     current_intraday_percent: str
     one_day: str | None
@@ -204,8 +207,6 @@ class ETFPriceSnapshotWithHistory(TypedDict):
     six_months: str | None
     one_year: str | None
     three_years: str | None
-    name: str
-    description: str
 
 
 class StockFullPriceMetricsAct(Action):
@@ -274,6 +275,9 @@ class ETFFullPriceMetricsAct(Action):
             history: HistoricalPriceChangePeriods = historical[ticker]
             currency: CurrentPriceAndIntradayChange = current[ticker]
             results[ticker] = ETFPriceSnapshotWithHistory(
+                ticker=ticker,
+                name=ticker_info_dict[ticker]["name"],
+                description=ticker_info_dict[ticker]["description"],
                 current_price=currency["current_price"],
                 current_intraday_percent=currency["current_intraday_percent"],
                 one_day=history["one_day"],
@@ -283,8 +287,6 @@ class ETFFullPriceMetricsAct(Action):
                 six_months=history["six_months"],
                 one_year=history["one_year"],
                 three_years=history["three_years"],
-                name=ticker_info_dict[ticker]["name"],
-                description=ticker_info_dict[ticker]["description"],
             )
 
         return results
