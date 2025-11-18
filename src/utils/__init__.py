@@ -104,8 +104,7 @@ def format_date(date_string: str = "2025-11-15T00:59:00.095784453Z") -> str:
 
 
 def format_datetime(datetime_string: str = "2025-11-15T00:59:00.095784453Z") -> str:
-    date: datetime = datetime.fromisoformat(
-        datetime_string.replace("Z", "+00:00"))
+    date: datetime = datetime.fromisoformat(datetime_string.replace("Z", "+00:00"))
     dt_ny = date.astimezone(pytz.timezone("America/New_York"))
     return dt_ny.strftime("%b %d, %Y %H:%M:%S") + " EST"
 

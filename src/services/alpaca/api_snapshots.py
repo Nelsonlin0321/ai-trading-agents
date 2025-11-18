@@ -82,6 +82,7 @@ snapshotsAPI: AlpacaAPIClient[SnapshotsResponse] = AlpacaAPIClient(
 async def get_snapshots(symbols: list[str]) -> SnapshotsResponse:
     return await snapshotsAPI.get(symbols=symbols)
 
+
 __all__ = [
     "get_snapshots",
 ]
@@ -94,8 +95,11 @@ async def _run() -> None:
 
     load_dotenv()
 
-    missing = [name for name in (
-        "ALPACA_API_KEY", "ALPACA_API_SECRET") if not os.environ.get(name)]
+    missing = [
+        name
+        for name in ("ALPACA_API_KEY", "ALPACA_API_SECRET")
+        if not os.environ.get(name)
+    ]
     if missing:
         print(
             f"Missing environment variables: {', '.join(missing)}. "
@@ -119,4 +123,5 @@ async def _run() -> None:
 if __name__ == "__main__":
     # python -m src.services.alpaca.api_snapshots
     import asyncio
+
     asyncio.run(_run())

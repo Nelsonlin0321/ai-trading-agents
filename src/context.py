@@ -9,7 +9,7 @@ class UserContext:
 
 
 @dataclass
-class Context():
+class Context:
     run: Run
     bot: Bot
 
@@ -23,18 +23,21 @@ async def get_context(run_id: str) -> Context:
         if run is None:
             raise ValueError(f"Run with ID {run_id} not found.")
 
-        if run.status != 'RUNNING':
+        if run.status != "RUNNING":
             raise ValueError(f"Run with ID {run_id} is not running.")
 
-        bot = await prisma.bot.find_unique(where={"id": run.botId},
-                                           include={"user": True,
-                                                    "portfolio": {"include": {"positions": True}},
-                                                    "watchlist": True,
-                                                    "trades": True,
-                                                    "DailyPortfolioSnapshot": True,
-                                                    "InitDailyPortfolioSnapshot": True,
-                                                    "QQQBenchmarkPointsCache": True,
-                                                    })
+        bot = await prisma.bot.find_unique(
+            where={"id": run.botId},
+            include={
+                "user": True,
+                "portfolio": {"include": {"positions": True}},
+                "watchlist": True,
+                "trades": True,
+                "DailyPortfolioSnapshot": True,
+                "InitDailyPortfolioSnapshot": True,
+                "QQQBenchmarkPointsCache": True,
+            },
+        )
         if not bot:
             raise ValueError(f"Bot with ID {run.botId} not found.")
 

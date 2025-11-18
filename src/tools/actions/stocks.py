@@ -1,7 +1,11 @@
 import asyncio
 from datetime import time, datetime, timedelta, timezone
 from typing import TypedDict, List
-from src.services.alpaca import get_snapshots, get_historical_price_bars, get_most_active_stocks
+from src.services.alpaca import (
+    get_snapshots,
+    get_historical_price_bars,
+    get_most_active_stocks,
+)
 from src.services.alpaca.typing import PriceBar
 from src.tools.actions.base import Action
 from src import utils
@@ -39,7 +43,9 @@ class StockCurrentPriceAndIntradayChangeAct(Action):
     def name(self):
         return "Stock Current Price and Intraday Change"
 
-    async def arun(self, tickers: list[str]) -> dict[str, CurrentPriceAndIntradayChange]:
+    async def arun(
+        self, tickers: list[str]
+    ) -> dict[str, CurrentPriceAndIntradayChange]:
         """
         Fetch the current price and intraday percent change for a list of tickers.
 
@@ -67,13 +73,14 @@ class StockCurrentPriceAndIntradayChangeAct(Action):
                 previous_close_price = snapshots[ticker]["prevDailyBar"]["c"]
 
             intraday_percent = (
-                snapshots[ticker]["latestQuote"]["bp"] - previous_close_price) / previous_close_price
+                snapshots[ticker]["latestQuote"]["bp"] - previous_close_price
+            ) / previous_close_price
 
             ticker_price_changes[ticker] = CurrentPriceAndIntradayChange(
                 current_price=utils.format_currency(
-                    snapshots[ticker]["latestQuote"]["bp"]),
-                current_intraday_percent=utils.format_percent(
-                    intraday_percent),
+                    snapshots[ticker]["latestQuote"]["bp"]
+                ),
+                current_intraday_percent=utils.format_percent(intraday_percent),
             )
 
         return ticker_price_changes
@@ -93,6 +100,7 @@ class StockHistoricalPriceChangesAct(Action):
     @property
     def name(self):
         return "Stock Historical Price Changes"
+
     # disable: pylint:disable=too-many-locals
 
     async def arun(self, tickers: list[str]) -> dict[str, HistoricalPriceChangePeriods]:
@@ -113,15 +121,24 @@ class StockHistoricalPriceChangesAct(Action):
         """
 
         def _to_iso_z(dt: datetime) -> str:
-            return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+            return (
+                dt.astimezone(timezone.utc)
+                .replace(microsecond=0)
+                .isoformat()
+                .replace("+00:00", "Z")
+            )
 
         def _parse_ts(ts: str) -> datetime:
             try:
                 return datetime.fromisoformat(ts.replace("Z", "+00:00"))
             except ValueError:
-                return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=timezone.utc
+                )
 
-        def _find_close_on_or_before(bars: List[PriceBar], target_dt: datetime) -> float | None:
+        def _find_close_on_or_before(
+            bars: List[PriceBar], target_dt: datetime
+        ) -> float | None:
             for bar_ in bars:
                 bar_dt = _parse_ts(bar_["timestamp"])
                 if bar_dt <= target_dt:
@@ -173,7 +190,8 @@ class StockHistoricalPriceChangesAct(Action):
                 prior_close = _find_close_on_or_before(bars, target_dt)
                 if prior_close is not None and prior_close != 0:
                     period_changes[key] = utils.format_percent_change(
-                        (latest_close - prior_close) / prior_close)
+                        (latest_close - prior_close) / prior_close
+                    )
                 else:
                     period_changes[key] = None
 
@@ -214,7 +232,9 @@ class StockLivePriceChangeAct(Action):
     def name(self):
         return "Get Stock Live Price and Change Summary"
 
-    async def arun(self, tickers: list[str]) -> dict[str, StockPriceSnapshotWithHistory]:
+    async def arun(
+        self, tickers: list[str]
+    ) -> dict[str, StockPriceSnapshotWithHistory]:
         """
         Fetch a complete price snapshot for multiple tickers.
 
@@ -223,9 +243,11 @@ class StockLivePriceChangeAct(Action):
         """
 
         current_task = asyncio.create_task(
-            StockCurrentPriceAndIntradayChangeAct().arun(tickers))
+            StockCurrentPriceAndIntradayChangeAct().arun(tickers)
+        )
         historical_task = asyncio.create_task(
-            StockHistoricalPriceChangesAct().arun(tickers))
+            StockHistoricalPriceChangesAct().arun(tickers)
+        )
 
         current, historical = await asyncio.gather(current_task, historical_task)
 
@@ -260,13 +282,15 @@ class ETFLivePriceChangeAct(Action):
         Returns current price, intraday change, and historical percent changes
         for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
         """
-        tickers = [t['ticker'] for t in ETF_TICKERS]
-        ticker_info_dict = {t['ticker']: t for t in ETF_TICKERS}
+        tickers = [t["ticker"] for t in ETF_TICKERS]
+        ticker_info_dict = {t["ticker"]: t for t in ETF_TICKERS}
 
         current_task = asyncio.create_task(
-            StockCurrentPriceAndIntradayChangeAct().arun(tickers))
+            StockCurrentPriceAndIntradayChangeAct().arun(tickers)
+        )
         historical_task = asyncio.create_task(
-            StockHistoricalPriceChangesAct().arun(tickers))
+            StockHistoricalPriceChangesAct().arun(tickers)
+        )
 
         current, historical = await asyncio.gather(current_task, historical_task)
 
@@ -322,12 +346,12 @@ class MostActiveStockersAct(Action):
         Get the most active stockers.
         """
         data = await get_most_active_stocks()
-        tickers = [item["symbol"] for item in data['most_actives']]
+        tickers = [item["symbol"] for item in data["most_actives"]]
         most_active_stocks: list[ActiveStockFullPriceMetrics] = []
 
         results = await StockLivePriceChangeAct().arun(tickers)
 
-        for item in data['most_actives']:
+        for item in data["most_actives"]:
             symbol = item["symbol"]
             price_metrics = results.get(symbol)
             if price_metrics:
@@ -356,7 +380,6 @@ __all__ = [
 ]
 
 if __name__ == "__main__":
-
     # python -m src.tools.actions.stocks
     async def main():
         changes = await StockLivePriceChangeAct().arun(["AAPL"])

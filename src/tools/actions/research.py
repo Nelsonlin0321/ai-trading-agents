@@ -10,7 +10,6 @@ from src.utils import get_current_date
 
 
 class GoogleMarketResearchAct(Action):
-
     def __init__(self):
         self.client = genai.Client(
             vertexai=True,
@@ -45,7 +44,9 @@ class GoogleMarketResearchAct(Action):
             api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
         )
 
-        with open("./src/tools/actions/google_research.md", mode="r", encoding="utf-8") as f:
+        with open(
+            "./src/tools/actions/google_research.md", mode="r", encoding="utf-8"
+        ) as f:
             prompt_template = f.read()
 
         datetime_str = get_current_date()

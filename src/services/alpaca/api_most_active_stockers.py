@@ -7,8 +7,7 @@ ActiveStock = TypedDict(
 )
 
 MostActiveStocksResponse = TypedDict(
-    "MostActiveStocksResponse", {
-        "last_updated": str, "most_actives": list[ActiveStock]}
+    "MostActiveStocksResponse", {"last_updated": str, "most_actives": list[ActiveStock]}
 )
 
 
@@ -17,7 +16,9 @@ mostActiveStocksAPI: AlpacaAPIClient[MostActiveStocksResponse] = AlpacaAPIClient
 )
 
 
-async def get_most_active_stocks(by: Literal["trades", "volume"] = "trades", top: int = 20):
+async def get_most_active_stocks(
+    by: Literal["trades", "volume"] = "trades", top: int = 20
+):
     most_active_stocks = await mostActiveStocksAPI.get(params={"by": by, "top": top})
     return most_active_stocks
 

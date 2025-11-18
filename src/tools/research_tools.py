@@ -7,7 +7,7 @@ google_market_research_action = GoogleMarketResearchAct()
 @tool(google_market_research_action.name)
 async def google_market_research():
     """
-    Performs market research to synthesize and present the comprehensive current market narrative, 
+    Performs market research to synthesize and present the comprehensive current market narrative,
     key drivers, risks, and opportunities based on real-time data and recent news using Google’s grounded LLM.
     returns up-to-date market insights relevant to that strategy.
     Use this tool when you need to:
@@ -23,6 +23,4 @@ async def google_market_research():
     return market_research
 
 
-__all__ = [
-    "google_market_research"
-]
+__all__ = ["google_market_research"]

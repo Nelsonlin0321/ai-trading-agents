@@ -35,15 +35,16 @@ async def etf_live_historical_price_change():
 **Note:**
 - The percent-change metrics are based on the current trading day and common historical windows such as 1-week, 1-month, and 1-year.
 - The current intraday percent is the percent-change of the ETF's current price relative to the previous close."""
-    markdown_table = utils.dicts_to_markdown_table(
-        etc_info_dict_list)  # type: ignore
+    markdown_table = utils.dicts_to_markdown_table(etc_info_dict_list)  # type: ignore
     return heading + "\n\n" + note + "\n\n" + markdown_table
 
 
 class TickerInput(BaseModel):
-    """Input for querying stock current price and historical price changes  """
+    """Input for querying stock current price and historical price changes"""
+
     tickers: list[str] = Field(
-        description="List of stock tickers, e.g. ['AAPL', 'MSFT', 'GOOGL']")
+        description="List of stock tickers, e.g. ['AAPL', 'MSFT', 'GOOGL']"
+    )
 
 
 @tool(stock_live_price_change_act.name, args_schema=TickerInput)
@@ -126,8 +127,7 @@ async def most_active_stockers():
     results = await most_active_stockers_act.arun()
     last_updated = results["last_updated"]
     most_active_stockers = results["most_actives"]
-    markdown_table = utils.dicts_to_markdown_table(
-        most_active_stockers)  # type: ignore
+    markdown_table = utils.dicts_to_markdown_table(most_active_stockers)  # type: ignore
     heading = "## Most Active Stockers"
     note = f"""
 **Note:**

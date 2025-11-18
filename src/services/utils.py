@@ -6,6 +6,7 @@ import httpx
 from loguru import logger
 from prisma import types
 from src import db
+
 T = TypeVar("T")
 
 
@@ -41,7 +42,9 @@ def _extract_error_message(response: httpx.Response) -> str | None:
     return text if text else None
 
 
-def in_db_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
+def in_db_cache(
+    function_name: str, ttl: int
+) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
     """Async decorator to cache function results in the database.
 
     - Stores results in the `Cache` table with a unique key derived from args/kwargs.
@@ -58,18 +61,19 @@ def in_db_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitab
     def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
         async def wrapper(*args, **kwargs) -> T:
             try:
-
                 pos_args = args[1:] if len(args) > 0 else args
 
                 if "start" in kwargs:
                     start = kwargs["start"]
                     kwargs["start"] = datetime.fromisoformat(
-                        start.replace("Z", "+00:00")).strftime("%Y-%m-%d")
+                        start.replace("Z", "+00:00")
+                    ).strftime("%Y-%m-%d")
 
                 if "end" in kwargs:
                     end = kwargs["end"]
                     kwargs["end"] = datetime.fromisoformat(
-                        end.replace("Z", "+00:00")).strftime("%Y-%m-%d")
+                        end.replace("Z", "+00:00")
+                    ).strftime("%Y-%m-%d")
 
                 if "symbols" in kwargs:
                     symbols = kwargs["symbols"]
@@ -90,8 +94,7 @@ def in_db_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitab
                     }
                 )
                 if existing is not None and isinstance(existing.content, str):
-                    logger.info(
-                        f"Cache hit for {function_name} with key {cache_key}")
+                    logger.info(f"Cache hit for {function_name} with key {cache_key}")
                     return cast(T, json.loads(existing.content))
 
                 # Compute fresh result
@@ -132,7 +135,9 @@ def in_db_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitab
     return decorator
 
 
-def redis_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
+def redis_cache(
+    function_name: str, ttl: int
+) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
     """Async decorator to cache function results in the database.
 
     - Stores results in Redis with a unique key derived from args/kwargs.
@@ -152,26 +157,30 @@ def redis_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitab
             if "start" in kwargs:
                 start = kwargs["start"]
                 kwargs["start"] = datetime.fromisoformat(
-                    start.replace("Z", "+00:00")).strftime("%Y-%m-%d")
+                    start.replace("Z", "+00:00")
+                ).strftime("%Y-%m-%d")
 
             if "end" in kwargs:
                 end = kwargs["end"]
                 kwargs["end"] = datetime.fromisoformat(
-                    end.replace("Z", "+00:00")).strftime("%Y-%m-%d")
+                    end.replace("Z", "+00:00")
+                ).strftime("%Y-%m-%d")
 
             if "symbols" in kwargs:
                 symbols = kwargs["symbols"]
                 kwargs["symbols"] = sorted(symbols)
 
-            key_payload = {"args": pos_args, "kwargs": kwargs,
-                           "function_name": function_name}
+            key_payload = {
+                "args": pos_args,
+                "kwargs": kwargs,
+                "function_name": function_name,
+            }
             cache_key = json.dumps(key_payload, sort_keys=True)
 
             existing = await db.redis.get(cache_key)
 
             if existing:
-                logger.info(
-                    f"Cache Redis hit for {function_name} with key {cache_key}")
+                logger.info(f"Cache Redis hit for {function_name} with key {cache_key}")
                 return cast(T, json.loads(existing))
 
             # Compute fresh result
@@ -197,25 +206,27 @@ def async_retry_on_status_code(
                 try:
                     return await func(*args, **kwargs)
                 except httpx.HTTPStatusError as e:
-                    if (len(status_codes) == 0 or e.response.status_code in status_codes) and retries < max_retries:
+                    if (
+                        len(status_codes) == 0 or e.response.status_code in status_codes
+                    ) and retries < max_retries:
                         retries += 1
-                        delay = min(max_delay_seconds,
-                                    base_delay * (2 ** (retries - 1)))
+                        delay = min(
+                            max_delay_seconds, base_delay * (2 ** (retries - 1))
+                        )
                         logger.info(
-                            f"Retrying in {delay}s due to status code: {e.response.status_code}")
+                            f"Retrying in {delay}s due to status code: {e.response.status_code}"
+                        )
                         await asyncio.sleep(delay)
                     else:
-                        last_error_message = _extract_error_message(
-                            e.response) or str(e)
+                        last_error_message = _extract_error_message(e.response) or str(
+                            e
+                        )
                         logger.error(last_error_message)
                         raise APIError(last_error_message)
+
         return wrapper
+
     return decorator
 
 
-__all__ = [
-    "redis_cache",
-    "async_retry_on_status_code",
-    "APIError",
-    "in_db_cache"
-]
+__all__ = ["redis_cache", "async_retry_on_status_code", "APIError", "in_db_cache"]

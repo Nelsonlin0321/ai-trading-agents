@@ -7,14 +7,16 @@ from src.services.sandx_ai.typing import Position
 
 
 class FormattedPosition(TypedDict):
-    allocation: Annotated[str,
-                          "The percentage allocation of the position in the portfolio"]
-    current_price: Annotated[str,
-                             "The current price of the stock position per share"]
-    ptc_change_in_price: Annotated[str,
-                                   "The percentage change in price relative to the open price"]
-    current_value: Annotated[str,
-                             "The total current value of the position in the portfolio"]
+    allocation: Annotated[
+        str, "The percentage allocation of the position in the portfolio"
+    ]
+    current_price: Annotated[str, "The current price of the stock position per share"]
+    ptc_change_in_price: Annotated[
+        str, "The percentage change in price relative to the open price"
+    ]
+    current_value: Annotated[
+        str, "The total current value of the position in the portfolio"
+    ]
     ticker: Annotated[str, "The stock ticker of the position"]
     volume: Annotated[str, "The total share of the position in the portfolio"]
     cost: Annotated[str, "The average cost of the position in the portfolio"]
@@ -38,19 +40,15 @@ def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
     formatted_positions = []
     for position in positions:
         formatted_position = FormattedPosition(
-            volume=utils.format_float(
-                position["volume"], 2),
-            cost=utils.format_float(
-                position['cost'], 2),
-            current_price=utils.format_float(
-                position["current_price"], 2),
+            volume=utils.format_float(position["volume"], 2),
+            cost=utils.format_float(position["cost"], 2),
+            current_price=utils.format_float(position["current_price"], 2),
             ptc_change_in_price=utils.format_percent_change(
-                position["ptc_change_in_price"]),
-            current_value=utils.format_currency(
-                position["current_value"], 2),
+                position["ptc_change_in_price"]
+            ),
+            current_value=utils.format_currency(position["current_value"], 2),
             ticker=position["ticker"],
-            allocation=utils.format_percent(
-                position["allocation"], 3)
+            allocation=utils.format_percent(position["allocation"], 3),
         )
         formatted_positions.append(formatted_position)
     position_markdown = utils.dicts_to_markdown_table(formatted_positions)
@@ -93,7 +91,7 @@ async def list_positions_tool(runtime: ToolRuntime[Context]):
 
     Notes
     -----
-    - Prices reflect the consolidated feed from the exchange with which the 
+    - Prices reflect the consolidated feed from the exchange with which the
       broker is connected; delays are typically < 500 ms during market hours.
     - Allocation percentages are computed against the sum of currentValue across
       **all** positions plus any cash held in the same account.

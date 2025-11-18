@@ -14,6 +14,7 @@ class MarketNewsAct(Action):
 
 if __name__ == "__main__":
     import asyncio
+
     # python -m src.tools.actions.news
     market_news_action = MarketNewsAct()
     result = asyncio.run(market_news_action.arun())  # type: ignore

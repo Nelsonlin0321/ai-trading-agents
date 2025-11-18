@@ -25,11 +25,7 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     try:
         await db.connect()
         bot_id = runtime.context.bot.id
-        bot = await db.prisma.bot.find_unique(
-            where={
-                "id": bot_id
-            }
-        )
+        bot = await db.prisma.bot.find_unique(where={"id": bot_id})
     except Exception as e:
         raise e
     finally:

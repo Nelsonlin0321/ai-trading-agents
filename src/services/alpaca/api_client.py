@@ -3,6 +3,7 @@ import httpx
 import dotenv
 from src.services.utils import async_retry_on_status_code
 from src.utils import get_env
+
 dotenv.load_dotenv()
 
 

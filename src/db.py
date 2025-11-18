@@ -24,5 +24,6 @@ async def disconnect():
         pass
 
 
-redis = Redis(url=get_env("UPSTASH_REDIS_REST_URL"),
-              token=get_env("UPSTASH_REDIS_REST_TOKEN"))
+redis = Redis(
+    url=get_env("UPSTASH_REDIS_REST_URL"), token=get_env("UPSTASH_REDIS_REST_TOKEN")
+)

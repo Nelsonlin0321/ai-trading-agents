@@ -47,8 +47,7 @@ class TradingEconomicsAPIClient(Generic[T]):  # pylint: disable=too-few-public-m
 
     def _retry_delay(self, attempt: int) -> float:
         # Exponential backoff with jitter, similar to axiosRetry.exponentialDelay
-        delay = min(self.base_delay_seconds *
-                    (2 ** attempt), self.max_delay_seconds)
+        delay = min(self.base_delay_seconds * (2**attempt), self.max_delay_seconds)
         jitter = random.uniform(0.0, self.jitter_seconds)
         return delay + jitter
 

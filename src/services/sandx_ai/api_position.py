@@ -8,39 +8,46 @@ from src.services.utils import APIError, redis_cache
 load_dotenv()
 
 
-PositionItem = TypedDict("PositionItem", {
-    "allocation": float,
-    "currentPrice": float,
-    "ptcChangeInPrice": Annotated[float, "The percentage change in price relative to the open price"],
-    "currentValue": Annotated[float, "The total current value of the position in the portfolio"],
-    "id": str,
-    "ticker": str,
-    "volume": int,
-    "cost": float,
-})
+PositionItem = TypedDict(
+    "PositionItem",
+    {
+        "allocation": float,
+        "currentPrice": float,
+        "ptcChangeInPrice": Annotated[
+            float, "The percentage change in price relative to the open price"
+        ],
+        "currentValue": Annotated[
+            float, "The total current value of the position in the portfolio"
+        ],
+        "id": str,
+        "ticker": str,
+        "volume": int,
+        "cost": float,
+    },
+)
 
 
 class Position(TypedDict):
-    allocation: Annotated[float,
-                          "The percentage allocation of the position in the portfolio"]
-    current_price: Annotated[float,
-                             "The current price of the stock position per share"]
-    ptc_change_in_price: Annotated[float,
-                                   "The percentage change in price relative to the open price"]
-    current_value: Annotated[float,
-                             "The total current value of the position in the portfolio"]
+    allocation: Annotated[
+        float, "The percentage allocation of the position in the portfolio"
+    ]
+    current_price: Annotated[float, "The current price of the stock position per share"]
+    ptc_change_in_price: Annotated[
+        float, "The percentage change in price relative to the open price"
+    ]
+    current_value: Annotated[
+        float, "The total current value of the position in the portfolio"
+    ]
     ticker: Annotated[str, "The stock ticker of the position"]
     volume: Annotated[int, "The total share of the position in the portfolio"]
     cost: Annotated[float, "The average cost of the position in the portfolio"]
 
 
-api_client = SandxAPIClient[list[PositionItem]](
-    "/tools/positions")
+api_client = SandxAPIClient[list[PositionItem]]("/tools/positions")
 
 
 @redis_cache(ttl=10, function_name="list_positions")
 async def list_positions(bot_id: str) -> Sequence[Position]:
-
     positions = await api_client.get(params={"botId": bot_id})
 
     readable_positions: list[Position] = []
@@ -83,8 +90,9 @@ async def _run() -> None:
             "and has access to the Sandx AI API."
         )
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # python -m src.services.sandx_ai.api_position
     import asyncio
+
     asyncio.run(_run())

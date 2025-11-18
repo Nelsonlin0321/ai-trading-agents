@@ -74,55 +74,60 @@ def _format_relative_time(date_str: str, *, now: datetime | None = None) -> str:
     minutes = seconds // 60
     if minutes < 60:
         unit = "minute" if minutes == 1 else "minutes"
-        return (f"{minutes} {unit} ago" if not future else f"in {minutes} {unit}")
+        return f"{minutes} {unit} ago" if not future else f"in {minutes} {unit}"
 
     hours = minutes // 60
     if hours < 24:
         unit = "hour" if hours == 1 else "hours"
-        return (f"{hours} {unit} ago" if not future else f"in {hours} {unit}")
+        return f"{hours} {unit} ago" if not future else f"in {hours} {unit}"
 
     days = hours // 24
     if days < 7:
         unit = "day" if days == 1 else "days"
-        return (f"{days} {unit} ago" if not future else f"in {days} {unit}")
+        return f"{days} {unit} ago" if not future else f"in {days} {unit}"
 
     weeks = days // 7
     if weeks < 5:
         unit = "week" if weeks == 1 else "weeks"
-        return (f"{weeks} {unit} ago" if not future else f"in {weeks} {unit}")
+        return f"{weeks} {unit} ago" if not future else f"in {weeks} {unit}"
 
     months = days // 30
     if months < 12:
         unit = "month" if months == 1 else "months"
-        return (f"{months} {unit} ago" if not future else f"in {months} {unit}")
+        return f"{months} {unit} ago" if not future else f"in {months} {unit}"
 
     years = days // 365
     unit = "year" if years == 1 else "years"
-    return (f"{years} {unit} ago" if not future else f"in {years} {unit}")
+    return f"{years} {unit} ago" if not future else f"in {years} {unit}"
 
 
 async def get_news() -> Sequence[News]:
-    @redis_cache(function_name="tradingeconomics_news", ttl=60*5)
+    @redis_cache(function_name="tradingeconomics_news", ttl=60 * 5)
     async def _get():
         raw_news_list = await api_client.get(
-            params={"c": "united states", "start": 0, "size": 30}, timeout=15.0)
+            params={"c": "united states", "start": 0, "size": 30}, timeout=15.0
+        )
         return raw_news_list
+
     raw_news_list = await _get()
     news_list: Sequence[News] = []
     for new in raw_news_list:
         if new["importance"] > 0:
-            news_list.append(News(
-                ID=new["ID"],
-                title=new["title"],
-                description=new["description"],
-                country=new["country"],
-                category=new["category"],
-                importance=new["importance"],
-                date=new["date"],
-                expiration=new["expiration"],
-                time_ago=_format_relative_time(new["date"]),
-            ))
+            news_list.append(
+                News(
+                    ID=new["ID"],
+                    title=new["title"],
+                    description=new["description"],
+                    country=new["country"],
+                    category=new["category"],
+                    importance=new["importance"],
+                    date=new["date"],
+                    expiration=new["expiration"],
+                    time_ago=_format_relative_time(new["date"]),
+                )
+            )
     return news_list
+
 
 __all__ = [
     "get_news",
@@ -130,7 +135,6 @@ __all__ = [
 
 
 async def _run() -> None:
-
     try:
         data = await get_news()
         print("News response (truncated):")
@@ -142,4 +146,5 @@ async def _run() -> None:
 if __name__ == "__main__":
     # python -m src.services.tradingeconomics.api_market_news
     import asyncio
+
     asyncio.run(_run())
