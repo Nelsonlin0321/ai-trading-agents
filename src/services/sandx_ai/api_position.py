@@ -38,14 +38,11 @@ api_client = SandxAPIClient[list[PositionItem]](
     "/tools/positions")
 
 
+@redis_cache(ttl=10, function_name="list_positions")
 async def list_positions(bot_id: str) -> Sequence[Position]:
 
-    @redis_cache(ttl=10, function_name="list_positions")
-    async def _get(bot_id: str):
-        positions = await api_client.get(params={"botId": bot_id})
-        return positions
+    positions = await api_client.get(params={"botId": bot_id})
 
-    positions = await _get(bot_id)
     readable_positions: list[Position] = []
     for position in positions:
         _dict: Position = {
@@ -59,6 +56,11 @@ async def list_positions(bot_id: str) -> Sequence[Position]:
         }
         readable_positions.append(_dict)
     return readable_positions
+
+
+__all__ = [
+    "list_positions",
+]
 
 
 async def _run() -> None:
@@ -81,13 +83,8 @@ async def _run() -> None:
             "and has access to the Sandx AI API."
         )
 
-
-__all__ = [
-    "list_positions",
-]
-
-
 if __name__ == "__main__":
+
     # python -m src.services.sandx_ai.api_position
     import asyncio
     asyncio.run(_run())
