@@ -3,24 +3,24 @@ from langchain.tools import tool
 from src.tools import actions
 from src import utils
 
-eft_full_price_metrics_act = actions.ETFFullPriceMetricsAct()
+eft_live_price_change_act = actions.ETFLivePriceChangeAct()
 stock_live_price_change_act = actions.StockLivePriceChangeAct()
 
 
-@tool(eft_full_price_metrics_act.name)
-async def etf_percent_change_summary():
+@tool(eft_live_price_change_act.name)
+async def etf_live_historical_price_change():
     """
     Fetch live and historical percent-change metrics for the most-traded U.S. equity ETFs (SPY, QQQ, IWM, etc.) in the different sectors.
 
     The returned string is a markdown snippet that contains:
     - A level-2 heading
-    - A short note explaining the calculation windows (1-day, 1-week, 1-month, 1-year)
+    - A short note explaining the calculation windows (1-day, 1-week, 1-month, 3-month, 1-year, 3-year etc)
     - A table whose columns are derived from the record fields
-      (typically including current intraday % change, 1-day, 1-week, 1-month, 1-year % changes).
+      (typically including current intraday % change, 1-day, 1-week, 1-month, 3-month, 1-year, 3-year % changes).
 
     Use this tool when you need a quick, snapshot of ETF momentum and relative strength
     """
-    results = await eft_full_price_metrics_act.arun()
+    results = await eft_live_price_change_act.arun()
     etc_info_dict_list = list(results.values())
     heading = "## ETF Current and Historical Percent Changes"
     note = """

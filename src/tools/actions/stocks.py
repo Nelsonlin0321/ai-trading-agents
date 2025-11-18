@@ -248,12 +248,12 @@ class StockLivePriceChangeAct(Action):
         return results
 
 
-class ETFFullPriceMetricsAct(Action):
+class ETFLivePriceChangeAct(Action):
     @property
     def name(self):
-        return "Get Major ETF Full Price Metrics"
+        return "Get Major ETF Live Price and Historical Change Summary"
 
-    async def arun(self) -> dict[str, StockPriceSnapshotWithHistory]:
+    async def arun(self) -> dict[str, ETFPriceSnapshotWithHistory]:
         """
         Fetch a complete price snapshot for multiple major ETF tickers.
 
@@ -351,7 +351,7 @@ __all__ = [
     "StockCurrentPriceAndIntradayChangeAct",
     "StockHistoricalPriceChangesAct",
     "StockLivePriceChangeAct",
-    "ETFFullPriceMetricsAct",
+    "ETFLivePriceChangeAct",
     "MostActiveStockersAct",
 ]
 
@@ -362,7 +362,7 @@ if __name__ == "__main__":
         changes = await StockLivePriceChangeAct().arun(["AAPL"])
         print(changes)
 
-        etf_changes = await ETFFullPriceMetricsAct().arun()
+        etf_changes = await ETFLivePriceChangeAct().arun()
         print(etf_changes)
 
         most_active_stocks = await MostActiveStockersAct().arun()
