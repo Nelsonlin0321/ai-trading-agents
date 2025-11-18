@@ -79,29 +79,17 @@ async def list_positions_tool(runtime: ToolRuntime[Context]):
     (largest first) and can be used to monitor P&L, rebalance allocations, or feed
     downstream analytics, etc.
 
-    Returns
-    -------
-    Positions Markdown Table
-        A markdown table with the following columns:
-        allocation : float
-            Fraction of the total portfolio market value represented by this position
-            (e.g., 0.25 means 25 %).
-        currentPrice : float
-            Last traded price per share in the account’s currency.
-        ptcChangeInPrice : str
-            Percentage change from the position’s average open price to the current price,
-            formatted with two decimals and a leading “+” or “-” (e.g., “+3.45%”).
-        currentValue : float
-            Market value of the entire position (currentPrice × volume).
-        ticker : str
-            Upper-case stock symbol (e.g., “AAPL”).
-        volume : int
-            Number of shares held (long is positive, short is negative).
-        cost : float
-            Volume-weighted average cost per share at the time the position was built.
-        datetime : str
-            ISO-8601 timestamp (YYYY-MM-DDTHH:MM:SS-05:00) indicating when the price
-            was last updated in America/New_York time.
+    Possible tool purposes:
+    - Monitor real-time portfolio exposure and sector weightings.
+    - Generate daily P&L snapshots for compliance or client reporting.
+    - Feed position-level data into risk models (VaR, beta, concentration limits).
+    - Detect drift from target allocations and trigger rebalancing alerts.
+    - Provide input for tax-loss harvesting by flagging underwater positions.
+    - Supply holdings to automated strategies that scale in/out based on allocation caps.
+    - Enable chatbot-style queries such as “What are my top 5 holdings?” or “Show me
+      positions down more than 2 % today.”
+    - Serve as a data source for live dashboards or Slack/Teams bots.
+
 
     Notes
     -----

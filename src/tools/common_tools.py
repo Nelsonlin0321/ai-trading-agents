@@ -10,6 +10,13 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
 
     This tool fetches the current investment strategy for the trading portfolio.
 
+    Possible tool purposes:
+    - Allow an AI agent to decide which assets or sectors to trade based on the user’s stated risk tolerance or philosophy.
+    - Enable dynamic re-allocation logic that switches between conservative, balanced, or aggressive portfolios.
+    - Provide context to downstream tools (e.g., stock screeners, rebalancers) so they filter or rank opportunities in line with the user’s mandate.
+    - Surface the strategy to a dashboard or chat interface so the user can confirm or update it before orders are placed.
+    - Act as a guard-rail that prevents trades violating the strategy (e.g., no crypto for a “dividend-income” strategy).
+
     Returns
     -------
     Investment Strategy

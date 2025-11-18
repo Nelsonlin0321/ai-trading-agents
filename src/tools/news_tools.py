@@ -17,7 +17,18 @@ def convert_news_to_markdown_text(news: News):
 
 @tool(market_news_action.name)
 async def get_latest_market_news():
-    """Get the latest United States market news.
+    """
+    Retrieve the most recent market news headlines and summaries for the United States.
+
+    This tool is useful for:
+    - Keeping track of breaking economic events that may move markets
+    - Gathering quick context before making trading or investment decisions
+    - Monitoring scheduled data releases and their market impact
+    - Staying informed on Fed policy hints, inflation updates, employment figures, and other macro drivers
+    - Comparing the relative importance (high/medium/low) of each news item
+    - Filtering news by expiration date to focus only on still-relevant stories
+
+    Returns a markdown-formatted string containing the title, importance level, date, expiration, and description of each news item.
     """
 
     news = await market_news_action.arun()
