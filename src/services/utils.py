@@ -4,8 +4,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Awaitable, Callable, TypeVar, cast
 import httpx
 from loguru import logger
+from prisma import types
 from src import db
-
 T = TypeVar("T")
 
 
@@ -115,12 +115,12 @@ def in_db_cache(function_name: str, ttl: int) -> Callable[[Callable[..., Awaitab
                     )
                 else:
                     await prisma.cache.create(
-                        data={
-                            "function": function_name,
-                            "key": cache_key,
-                            "content": json.dumps(result),
-                            "expiresAt": expires_at,
-                        }
+                        data=types.CacheCreateInput(
+                            function=function_name,
+                            key=cache_key,
+                            content=json.dumps(result),
+                            expiresAt=expires_at,
+                        )
                     )
                 return result
             finally:
