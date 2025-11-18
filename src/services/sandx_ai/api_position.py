@@ -52,16 +52,17 @@ async def list_positions(bot_id: str) -> Sequence[Position]:
     timestamp = get_current_timestamp()
     readable_positions: list[Position] = []
     for position in positions:
-        _dict = {}
-        _dict["allocation"] = position['allocation']
-        _dict["current_price"] = position["currentPrice"]
-        _dict["ptc_change_in_price"] = position["ptcChangeInPrice"]
-        _dict["current_value"] = position["currentValue"]
-        _dict["ticker"] = position["ticker"]
-        _dict["volume"] = position["volume"]
-        _dict["cost"] = position["cost"]
-        _dict["datetime"] = timestamp
-        readable_positions.append(Position(**_dict))
+        _dict: Position = {
+            "allocation": position["allocation"],
+            "current_price": position["currentPrice"],
+            "ptc_change_in_price": position["ptcChangeInPrice"],
+            "current_value": position["currentValue"],
+            "ticker": position["ticker"],
+            "volume": position["volume"],
+            "cost": position["cost"],
+            "datetime": timestamp,
+        }
+        readable_positions.append(_dict)
     return readable_positions
 
 
