@@ -9,7 +9,7 @@ from src.utils import async_wrap
 from src.utils import get_current_date
 
 
-class GoogleMarketResearch(Action):
+class GoogleMarketResearchAct(Action):
 
     def __init__(self):
         self.client = genai.Client(
@@ -71,6 +71,6 @@ class GoogleMarketResearch(Action):
 
 if __name__ == "__main__":
     # python -m src.tools.actions.research
-    google_market_research_action = GoogleMarketResearch()
+    google_market_research_action = GoogleMarketResearchAct()
     result = asyncio.run(google_market_research_action.arun())  # type: ignore
     print(result)

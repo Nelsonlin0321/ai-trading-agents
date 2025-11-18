@@ -1,3 +1,4 @@
+import asyncio
 from datetime import time, datetime, timedelta, timezone
 from typing import TypedDict, List
 from src.services.alpaca import get_snapshots, get_historical_price_bars
@@ -6,35 +7,38 @@ from src.tools.actions.base import Action
 from src import utils
 
 
-class StockSnapshot(Action):
+class StockRawSnapshotAct(Action):
     @property
     def name(self):
-        return "Stock Snapshot"
+        return "Get Stock Snapshot"
 
-    async def arun(self, tickers: list[str]):
+    async def arun(self, tickers: list[str]) -> dict:
         """
-        The snapshot endpoint for multiple tickers provides the latest trade, latest quote, minute bar, daily bar, and previous daily bar data for each given ticker symbol.
+        Fetch raw market snapshots for multiple tickers.
+
+        Returns the latest trade, latest quote, minute bar, daily bar, and previous daily bar data
+        for each ticker symbol.
 
         Args:
             tickers: A list of ticker symbols.
         Returns:
-            A dictionary of snapshot of each ticker.
+            A dictionary mapping each ticker to its complete raw snapshot data.
         """
         data = await get_snapshots(tickers)
         return data
 
 
-class PriceSnapshot(TypedDict):
+class CurrentPriceAndIntradayChange(TypedDict):
     current_price: str
     current_intraday_percent: str
 
 
-class StockPriceSnapshot(Action):
+class StockCurrentPriceAndIntradayChangeAct(Action):
     @property
     def name(self):
-        return "Stock Price Snapshot: Current Price And Intraday Price Change"
+        return "Stock Current Price and Intraday Change"
 
-    async def arun(self, tickers: list[str]) -> dict[str, PriceSnapshot]:
+    async def arun(self, tickers: list[str]) -> dict[str, CurrentPriceAndIntradayChange]:
         """
         Fetch the current price and intraday percent change for a list of tickers.
 
@@ -64,7 +68,7 @@ class StockPriceSnapshot(Action):
             intraday_percent = (
                 snapshots[ticker]["latestQuote"]["bp"] - previous_close_price) / previous_close_price
 
-            ticker_price_changes[ticker] = PriceSnapshot(
+            ticker_price_changes[ticker] = CurrentPriceAndIntradayChange(
                 current_price=utils.format_currency(
                     snapshots[ticker]["latestQuote"]["bp"]),
                 current_intraday_percent=utils.format_percent(
@@ -74,7 +78,7 @@ class StockPriceSnapshot(Action):
         return ticker_price_changes
 
 
-class PriceChange(TypedDict):
+class HistoricalPriceChangePeriods(TypedDict):
     one_day: str | None
     one_week: str | None
     one_month: str | None
@@ -84,13 +88,13 @@ class PriceChange(TypedDict):
     three_years: str | None
 
 
-class StockHistoricalPriceChanges(Action):
+class StockHistoricalPriceChangesAct(Action):
     @property
     def name(self):
         return "Stock Historical Price Changes"
     # disable: pylint:disable=too-many-locals
 
-    async def arun(self, tickers: list[str]):
+    async def arun(self, tickers: list[str]) -> dict[str, HistoricalPriceChangePeriods]:
         """
         Compute percentage changes over standard periods using Alpaca daily bars.
 
@@ -177,12 +181,62 @@ class StockHistoricalPriceChanges(Action):
         return results
 
 
+class StockPriceSnapshotWithHistory(TypedDict):
+    current_price: str
+    current_intraday_percent: str
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class StockFullPriceMetricsAct(Action):
+    @property
+    def name(self):
+        return "Get Stock Full Price Metrics"
+
+    async def arun(self, tickers: list[str]) -> dict[str, StockPriceSnapshotWithHistory]:
+        """
+        Fetch a complete price snapshot for multiple tickers.
+
+        Returns current price, intraday change, and historical percent changes
+        for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
+        """
+
+        current_task = asyncio.create_task(
+            StockCurrentPriceAndIntradayChangeAct().arun(tickers))
+        historical_task = asyncio.create_task(
+            StockHistoricalPriceChangesAct().arun(tickers))
+
+        current, historical = await asyncio.gather(current_task, historical_task)
+
+        results = {}
+        for ticker in tickers:
+            history: HistoricalPriceChangePeriods = historical[ticker]
+            currency: CurrentPriceAndIntradayChange = current[ticker]
+            results[ticker] = StockPriceSnapshotWithHistory(
+                current_price=currency["current_price"],
+                current_intraday_percent=currency["current_intraday_percent"],
+                one_day=history["one_day"],
+                one_week=history["one_week"],
+                one_month=history["one_month"],
+                three_months=history["three_months"],
+                six_months=history["six_months"],
+                one_year=history["one_year"],
+                three_years=history["three_years"],
+            )
+
+        return results
+
+
 if __name__ == "__main__":
-    import asyncio
 
     # python -m src.tools.actions.stocks
     async def main():
-        changes = await StockHistoricalPriceChanges().arun(["AAPL"])
+        changes = await StockFullPriceMetricsAct().arun(["AAPL"])
         print(changes)
 
     asyncio.run(main())
