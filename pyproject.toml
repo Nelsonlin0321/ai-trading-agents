@@ -9,6 +9,7 @@ dependencies = [
     "langchain>=1.0.7",
     "langchain-openai>=1.0.3",
     "loguru>=0.7.3",
+    "numpy>=2.3.5",
     "pre-commit>=4.4.0",
     "prisma>=0.15.0",
     "pytz>=2025.2",
