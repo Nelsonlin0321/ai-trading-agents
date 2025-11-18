@@ -1,79 +1,12 @@
-from typing import Sequence, TypedDict, Annotated
 from langchain.tools import tool, ToolRuntime
-from src import utils
-from src.services.sandx_ai.api_position import list_positions
 from src.context import Context
-from src.services.sandx_ai.typing import Position
+from src.tools.actions.portfolio import ListPositionsAct
+
+list_positions_act = ListPositionsAct()
 
 
-class FormattedPosition(TypedDict):
-    allocation: Annotated[
-        str, "The percentage allocation of the position in the portfolio"
-    ]
-    current_price: Annotated[str, "The current price of the stock position per share"]
-    ptc_change_in_price: Annotated[
-        str, "The percentage change in price relative to the open price"
-    ]
-    current_value: Annotated[
-        str, "The total current value of the position in the portfolio"
-    ]
-    ticker: Annotated[str, "The stock ticker of the position"]
-    volume: Annotated[str, "The total share of the position in the portfolio"]
-    cost: Annotated[str, "The average cost of the position in the portfolio"]
-    pnl: Annotated[str, "Profit and Loss of the position in the portfolio"]
-    pnl_percent: Annotated[
-        str, "Profit and Loss percentage of the position in the portfolio"
-    ]
-
-
-def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
-    """
-    Convert a list of Position objects to a markdown table.
-
-    Parameters
-    ----------
-    positions : list[Position]
-        A list of Position objects to be converted into a markdown table.
-
-    Returns
-    -------
-    str
-        A markdown table string representation of the positions.
-    """
-    positions = sorted(positions, key=lambda x: x["allocation"], reverse=True)
-    formatted_positions = []
-    for position in positions:
-        formatted_position = FormattedPosition(
-            volume=utils.format_float(position["volume"]),
-            cost=utils.format_float(position["cost"]),
-            current_price=utils.format_float(position["current_price"]),
-            ptc_change_in_price=utils.format_percent_change(
-                position["ptc_change_in_price"]
-            ),
-            current_value=utils.format_currency(position["current_value"]),
-            ticker=position["ticker"],
-            allocation=utils.format_percent(position["allocation"]),
-            pnl=utils.format_currency(position["pnl"]),
-            pnl_percent=utils.format_percent(position["pnl_percent"]),
-        )
-        formatted_positions.append(formatted_position)
-    position_markdown = utils.dicts_to_markdown_table(formatted_positions)
-    heading = "## Current Open Positions"
-
-    datetime = utils.get_current_timestamp()
-
-    note = f"""
-    - Datetime New York Time: {datetime}
-    - ptcChangeInPrice is the percentage change from the position’s open price to the current price.
-    - Allocation percentages are computed against the sum of currentValue across
-      **all** positions plus any cash held in the same account.
-    """
-
-    return heading + "\n\n" + note + "\n\n" + position_markdown
-
-
-@tool("Retrieve Current Open Positions")
-async def list_positions_tool(runtime: ToolRuntime[Context]):
+@tool(list_positions_act.name)
+async def list_current_positions(runtime: ToolRuntime[Context]):
     """
     Retrieve the current open positions for the trading portfolio, enriched with live market data.
 
@@ -105,12 +38,15 @@ async def list_positions_tool(runtime: ToolRuntime[Context]):
     -----
     - Prices reflect the consolidated feed from the exchange with which the
       broker is connected; delays are typically < 500 ms during market hours.
+    - CASH is a special position that represents the cash balance in the account.
     - Allocation percentages are computed against the sum of currentValue across
       **all** positions plus any cash held in the same account.
     - Each position now includes `pnl` (dollar profit/loss) and `pnl_percent` (return on cost basis).
     """
 
     bot_id = runtime.context.bot.id
-    positions = await list_positions(bot_id)
-    position_markdown = convert_positions_to_markdown_table(positions)
+    position_markdown = await list_positions_act.arun(bot_id=bot_id)
     return position_markdown
+
+
+__all__ = ["list_current_positions"]
