@@ -4,7 +4,6 @@ from typing import Annotated, Sequence, TypedDict
 from dotenv import load_dotenv
 from src.services.sandx_ai.api_client import SandxAPIClient
 from src.services.utils import APIError, redis_cache
-from src.utils import get_current_timestamp
 
 load_dotenv()
 
@@ -33,8 +32,6 @@ class Position(TypedDict):
     ticker: Annotated[str, "The stock ticker of the position"]
     volume: Annotated[int, "The total share of the position in the portfolio"]
     cost: Annotated[float, "The average cost of the position in the portfolio"]
-    datetime: Annotated[str,
-                        "The datetime of the position updated in New York time"]
 
 
 api_client = SandxAPIClient[list[PositionItem]](
@@ -49,7 +46,6 @@ async def list_positions(bot_id: str) -> Sequence[Position]:
         return positions
 
     positions = await _get(bot_id)
-    timestamp = get_current_timestamp()
     readable_positions: list[Position] = []
     for position in positions:
         _dict: Position = {
@@ -60,7 +56,6 @@ async def list_positions(bot_id: str) -> Sequence[Position]:
             "ticker": position["ticker"],
             "volume": position["volume"],
             "cost": position["cost"],
-            "datetime": timestamp,
         }
         readable_positions.append(_dict)
     return readable_positions
