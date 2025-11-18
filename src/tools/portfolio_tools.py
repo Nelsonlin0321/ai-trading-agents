@@ -20,6 +20,10 @@ class FormattedPosition(TypedDict):
     ticker: Annotated[str, "The stock ticker of the position"]
     volume: Annotated[str, "The total share of the position in the portfolio"]
     cost: Annotated[str, "The average cost of the position in the portfolio"]
+    pnl: Annotated[str, "Profit and Loss of the position in the portfolio"]
+    pnl_percent: Annotated[
+        str, "Profit and Loss percentage of the position in the portfolio"
+    ]
 
 
 def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
@@ -40,15 +44,17 @@ def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
     formatted_positions = []
     for position in positions:
         formatted_position = FormattedPosition(
-            volume=utils.format_float(position["volume"], 2),
-            cost=utils.format_float(position["cost"], 2),
-            current_price=utils.format_float(position["current_price"], 2),
+            volume=utils.format_float(position["volume"]),
+            cost=utils.format_float(position["cost"]),
+            current_price=utils.format_float(position["current_price"]),
             ptc_change_in_price=utils.format_percent_change(
                 position["ptc_change_in_price"]
             ),
-            current_value=utils.format_currency(position["current_value"], 2),
+            current_value=utils.format_currency(position["current_value"]),
             ticker=position["ticker"],
-            allocation=utils.format_percent(position["allocation"], 3),
+            allocation=utils.format_percent(position["allocation"]),
+            pnl=utils.format_currency(position["pnl"]),
+            pnl_percent=utils.format_percent(position["pnl_percent"]),
         )
         formatted_positions.append(formatted_position)
     position_markdown = utils.dicts_to_markdown_table(formatted_positions)
@@ -84,10 +90,16 @@ async def list_positions_tool(runtime: ToolRuntime[Context]):
     - Detect drift from target allocations and trigger rebalancing alerts.
     - Provide input for tax-loss harvesting by flagging underwater positions.
     - Supply holdings to automated strategies that scale in/out based on allocation caps.
-    - Enable chatbot-style queries such as “What are my top 5 holdings?” or “Show me
-      positions down more than 2 % today.”
-    - Serve as a data source for live dashboards or Slack/Teams bots.
-
+    - Quickly identify top gainers/losers by PnL or PnL percent for intraday reviews.
+    - Screen for positions exceeding a PnL percent threshold to automate profit-taking or stop-loss.
+    - Aggregate PnL across positions to compute total portfolio return on capital at risk.
+    - Export position-level PnL data to Excel for deeper attribution analysis (sector, factor, etc.).
+    - Flag large PnL swings outside expected volatility bands for risk-manager alerts.
+    - Feed PnL percent into rebalancing algorithms that trim winners and add to laggards.
+    - Generate client statements showing dollar and percent gain/loss per holding.
+    - Compare realized vs. unrealized PnL to estimate upcoming tax impacts.
+    - Provide chatbot answers like “Which positions are up more than 5 % today?” or
+      “What is my total unrealized PnL?”
 
     Notes
     -----
@@ -95,8 +107,7 @@ async def list_positions_tool(runtime: ToolRuntime[Context]):
       broker is connected; delays are typically < 500 ms during market hours.
     - Allocation percentages are computed against the sum of currentValue across
       **all** positions plus any cash held in the same account.
-    - Short positions are represented with negative volume and may carry a
-      negative allocation if the account is net-short.
+    - Each position now includes `pnl` (dollar profit/loss) and `pnl_percent` (return on cost basis).
     """
 
     bot_id = runtime.context.bot.id

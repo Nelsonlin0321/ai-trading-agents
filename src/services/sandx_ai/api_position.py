@@ -23,6 +23,8 @@ PositionItem = TypedDict(
         "ticker": str,
         "volume": int,
         "cost": float,
+        "pnl": float,
+        "pnlPercent": float,
     },
 )
 
@@ -41,6 +43,10 @@ class Position(TypedDict):
     ticker: Annotated[str, "The stock ticker of the position"]
     volume: Annotated[int, "The total share of the position in the portfolio"]
     cost: Annotated[float, "The average cost of the position in the portfolio"]
+    pnl: Annotated[float, "Profit and Loss of the position in the portfolio"]
+    pnl_percent: Annotated[
+        float, "Profit and Loss percentage of the position in the portfolio"
+    ]
 
 
 api_client = SandxAPIClient[list[PositionItem]]("/tools/positions")
@@ -60,6 +66,8 @@ async def list_positions(bot_id: str) -> Sequence[Position]:
             "ticker": position["ticker"],
             "volume": position["volume"],
             "cost": position["cost"],
+            "pnl": position["pnl"],
+            "pnl_percent": position["pnlPercent"],
         }
         readable_positions.append(_dict)
     return readable_positions
