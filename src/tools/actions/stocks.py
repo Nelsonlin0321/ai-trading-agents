@@ -1,7 +1,7 @@
 import asyncio
 from datetime import time, datetime, timedelta, timezone
 from typing import TypedDict, List
-from src.services.alpaca import get_snapshots, get_historical_price_bars
+from src.services.alpaca import get_snapshots, get_historical_price_bars, get_most_active_stocks
 from src.services.alpaca.typing import PriceBar
 from src.tools.actions.base import Action
 from src import utils
@@ -290,6 +290,59 @@ class ETFFullPriceMetricsAct(Action):
         return results
 
 
+class ActiveStockFullPriceMetrics(TypedDict):
+    symbol: str
+    trade_count: int
+    volume: int
+    current_price: str
+    current_intraday_percent: str
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class MostActiveStockFullPriceMetrics(TypedDict):
+    last_updated: str
+    most_actives: list[ActiveStockFullPriceMetrics]
+
+
+class MostActiveStockersAct(Action):
+    @property
+    def name(self):
+        return "Get Most Active Stockers By Trades With Historical Price Changes"
+
+    async def arun(self):
+        """
+        Get the most active stockers.
+        """
+        data = await get_most_active_stocks()
+        tickers = [item["symbol"] for item in data['most_actives']]
+        most_active_stocks: list[ActiveStockFullPriceMetrics] = []
+
+        results = await StockFullPriceMetricsAct().arun(tickers)
+
+        for item in data['most_actives']:
+            symbol = item["symbol"]
+            price_metrics = results.get(symbol)
+            if price_metrics:
+                full_metrics = ActiveStockFullPriceMetrics(
+                    symbol=symbol,
+                    trade_count=item["trade_count"],
+                    volume=item["volume"],
+                    **price_metrics,
+                )
+                most_active_stocks.append(full_metrics)
+
+        return MostActiveStockFullPriceMetrics(
+            last_updated=data["last_updated"],
+            most_actives=most_active_stocks,
+        )
+
+
 if __name__ == "__main__":
 
     # python -m src.tools.actions.stocks
@@ -299,5 +352,8 @@ if __name__ == "__main__":
 
         etf_changes = await ETFFullPriceMetricsAct().arun()
         print(etf_changes)
+
+        most_active_stocks = await MostActiveStockersAct().arun()
+        print(most_active_stocks)
 
     asyncio.run(main())
