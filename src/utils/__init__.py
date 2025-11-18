@@ -118,3 +118,7 @@ def async_wrap(func):
         return await loop.run_in_executor(executor, pfunc)
 
     return run
+
+
+def get_new_york_datetime() -> datetime:
+    return datetime.now(tz=pytz.timezone("America/New_York"))
