@@ -8,3 +8,13 @@ repos:
       files: \.ipynb$
       types: [file]
       pass_filenames: true
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.14.5
+  hooks:
+    # Run the linter.
+    - id: ruff-check
+      types_or: [ python, pyi ]
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+      types_or: [ python, pyi ]
