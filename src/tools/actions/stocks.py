@@ -5,6 +5,7 @@ from src.services.alpaca import get_snapshots, get_historical_price_bars
 from src.services.alpaca.typing import PriceBar
 from src.tools.actions.base import Action
 from src import utils
+from src.utils.constants import ETF_TICKERS
 
 
 class StockRawSnapshotAct(Action):
@@ -193,6 +194,20 @@ class StockPriceSnapshotWithHistory(TypedDict):
     three_years: str | None
 
 
+class ETFPriceSnapshotWithHistory(TypedDict):
+    current_price: str
+    current_intraday_percent: str
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+    name: str
+    description: str
+
+
 class StockFullPriceMetricsAct(Action):
     @property
     def name(self):
@@ -232,11 +247,57 @@ class StockFullPriceMetricsAct(Action):
         return results
 
 
+class ETFFullPriceMetricsAct(Action):
+    @property
+    def name(self):
+        return "Get Major ETF Full Price Metrics"
+
+    async def arun(self) -> dict[str, StockPriceSnapshotWithHistory]:
+        """
+        Fetch a complete price snapshot for multiple major ETF tickers.
+
+        Returns current price, intraday change, and historical percent changes
+        for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
+        """
+        tickers = [t['ticker'] for t in ETF_TICKERS]
+        ticker_info_dict = {t['ticker']: t for t in ETF_TICKERS}
+
+        current_task = asyncio.create_task(
+            StockCurrentPriceAndIntradayChangeAct().arun(tickers))
+        historical_task = asyncio.create_task(
+            StockHistoricalPriceChangesAct().arun(tickers))
+
+        current, historical = await asyncio.gather(current_task, historical_task)
+
+        results = {}
+        for ticker in tickers:
+            history: HistoricalPriceChangePeriods = historical[ticker]
+            currency: CurrentPriceAndIntradayChange = current[ticker]
+            results[ticker] = ETFPriceSnapshotWithHistory(
+                current_price=currency["current_price"],
+                current_intraday_percent=currency["current_intraday_percent"],
+                one_day=history["one_day"],
+                one_week=history["one_week"],
+                one_month=history["one_month"],
+                three_months=history["three_months"],
+                six_months=history["six_months"],
+                one_year=history["one_year"],
+                three_years=history["three_years"],
+                name=ticker_info_dict[ticker]["name"],
+                description=ticker_info_dict[ticker]["description"],
+            )
+
+        return results
+
+
 if __name__ == "__main__":
 
     # python -m src.tools.actions.stocks
     async def main():
         changes = await StockFullPriceMetricsAct().arun(["AAPL"])
         print(changes)
+
+        etf_changes = await ETFFullPriceMetricsAct().arun()
+        print(etf_changes)
 
     asyncio.run(main())
