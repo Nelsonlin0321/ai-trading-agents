@@ -209,10 +209,10 @@ class ETFPriceSnapshotWithHistory(TypedDict):
     three_years: str | None
 
 
-class StockFullPriceMetricsAct(Action):
+class StockLivePriceChangeAct(Action):
     @property
     def name(self):
-        return "Get Stock Full Price Metrics"
+        return "Get Stock Live Price and Change Summary"
 
     async def arun(self, tickers: list[str]) -> dict[str, StockPriceSnapshotWithHistory]:
         """
@@ -325,7 +325,7 @@ class MostActiveStockersAct(Action):
         tickers = [item["symbol"] for item in data['most_actives']]
         most_active_stocks: list[ActiveStockFullPriceMetrics] = []
 
-        results = await StockFullPriceMetricsAct().arun(tickers)
+        results = await StockLivePriceChangeAct().arun(tickers)
 
         for item in data['most_actives']:
             symbol = item["symbol"]
@@ -345,11 +345,21 @@ class MostActiveStockersAct(Action):
         )
 
 
+# only Act
+__all__ = [
+    "StockRawSnapshotAct",
+    "StockCurrentPriceAndIntradayChangeAct",
+    "StockHistoricalPriceChangesAct",
+    "StockLivePriceChangeAct",
+    "ETFFullPriceMetricsAct",
+    "MostActiveStockersAct",
+]
+
 if __name__ == "__main__":
 
     # python -m src.tools.actions.stocks
     async def main():
-        changes = await StockFullPriceMetricsAct().arun(["AAPL"])
+        changes = await StockLivePriceChangeAct().arun(["AAPL"])
         print(changes)
 
         etf_changes = await ETFFullPriceMetricsAct().arun()
