@@ -1,8 +1,9 @@
-from typing import Dict, TypedDict, List, Union
-from dataclasses import asdict, dataclass, field
 import json
 import os
+from typing import Dict, TypedDict, Union
+
 from dotenv import load_dotenv
+
 from src.services.alpaca.api_client import AlpacaAPIClient
 from src.services.utils import APIError, redis_cache
 
@@ -35,8 +36,7 @@ historicalBarsAPI: AlpacaAPIClient[HistoricalBars] = AlpacaAPIClient(
 )
 
 
-@dataclass
-class PriceBar:
+class PriceBar(TypedDict):
     close_price: Union[int, float]
     high_price: Union[int, float]
     low_price: Union[int, float]
@@ -45,11 +45,6 @@ class PriceBar:
     timestamp: str
     volume: int
     volume_weighted_average_price: Union[int, float]
-
-
-@dataclass
-class PriceHistoricalBars:
-    bars: Dict[str, List[PriceBar]] = field(default_factory=dict)
 
 
 example = {
@@ -102,9 +97,10 @@ def _rename_keys(bars: Dict[str, list[Bar]]) -> Dict[str, list[PriceBar]]:
     return new_bars
 
 
+@redis_cache(function_name="get_historical_price_bars", ttl=3600)
 async def get_historical_price_bars(
     *, symbols: list[str], timeframe: str, start: str, end: str, sort: str = "asc"
-) -> PriceHistoricalBars:
+) -> Dict[str, list[PriceBar]]:
     """Get historical bars for a list of symbols.
 
     Args:
@@ -119,53 +115,40 @@ async def get_historical_price_bars(
         PriceHistoricalBars: A dictionary of historical bars for each symbol.
     """
 
-    @redis_cache(function_name="get_historical_price_bars", ttl=3600)
-    async def _get(
-        *, symbols: list[str], timeframe: str, start: str, end: str, sort: str = "asc"
-    ):
-        api_response = await historicalBarsAPI.get(
+    api_response = await historicalBarsAPI.get(
+        symbols=symbols,
+        params={
+            "timeframe": timeframe,
+            "start": start,
+            "end": end,
+            "sort": sort,
+        },
+    )
+
+    next_page_token = api_response["next_page_token"]
+    bars = api_response["bars"]
+
+    while next_page_token is not None:
+        next_api_response = await historicalBarsAPI.get(
             symbols=symbols,
             params={
                 "timeframe": timeframe,
                 "start": start,
                 "end": end,
+                "page_token": next_page_token,
                 "sort": sort,
             },
         )
 
-        next_page_token = api_response["next_page_token"]
-        bars = api_response["bars"]
+        if next_api_response["bars"]:
+            for key, bar_list in next_api_response["bars"].items():
+                if key not in bars:
+                    bars[key] = []
+                bars[key].extend(bar_list)
+        next_page_token = next_api_response["next_page_token"]
 
-        while next_page_token is not None:
-            next_api_response = await historicalBarsAPI.get(
-                symbols=symbols,
-                params={
-                    "timeframe": timeframe,
-                    "start": start,
-                    "end": end,
-                    "page_token": next_page_token,
-                    "sort": sort,
-                },
-            )
-
-            if next_api_response["bars"]:
-                for key, bar_list in next_api_response["bars"].items():
-                    if key not in bars:
-                        bars[key] = []
-                    bars[key].extend(bar_list)
-            next_page_token = next_api_response["next_page_token"]
-
-        return bars
-
-    bars = await _get(
-        symbols=symbols,
-        timeframe=timeframe,
-        start=start,
-        end=end,
-        sort=sort,
-    )
     bars = _rename_keys(bars)
-    return PriceHistoricalBars(bars=bars)
+    return bars
 
 
 __all__ = ["get_historical_price_bars", "PriceBar"]
@@ -193,7 +176,7 @@ async def _run() -> None:
             sort="desc",
         )
         print("Historical bars response (truncated):")
-        print(json.dumps(asdict(data), indent=2)[:2000])
+        print(json.dumps(data, indent=2)[:2000])
     except APIError as e:
         print(f"Request failed: {e}")
         print(
