@@ -1,7 +1,7 @@
-from datetime import time
-from typing import TypedDict
-
-from src.services.alpaca.api_snapshots import get_snapshots
+from datetime import time, datetime, timedelta, timezone
+from typing import TypedDict, List
+from src.services.alpaca import get_snapshots, get_historical_price_bars
+from src.services.alpaca.typing import PriceBar
 from src.tools.actions.base import Action
 from src import utils
 
@@ -72,3 +72,117 @@ class StockPriceSnapshot(Action):
             )
 
         return ticker_price_changes
+
+
+class PriceChange(TypedDict):
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class StockHistoricalPriceChanges(Action):
+    @property
+    def name(self):
+        return "Stock Historical Price Changes"
+    # disable: pylint:disable=too-many-locals
+
+    async def arun(self, tickers: list[str]):
+        """
+        Compute percentage changes over standard periods using Alpaca daily bars.
+
+        Periods: one_day, one_week, one_month, three_months, six_months, one_year, three_years.
+
+        - Uses UTC timestamps (ISO 8601 with trailing 'Z') as required by Alpaca.
+        - Selects the most recent close as the "current" reference.
+        - For each period, finds the close on or before the target date.
+        - Returns None when not enough history exists for a period.
+
+        Args:
+            tickers: List of ticker symbols.
+        Returns:
+            Mapping of ticker to period percent changes, e.g. {"AAPL": {"1w": 0.02, ...}}.
+        """
+
+        def _to_iso_z(dt: datetime) -> str:
+            return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+        def _parse_ts(ts: str) -> datetime:
+            try:
+                return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+
+        def _find_close_on_or_before(bars: List[PriceBar], target_dt: datetime) -> float | None:
+            for bar_ in bars:
+                bar_dt = _parse_ts(bar_["timestamp"])
+                if bar_dt <= target_dt:
+                    return bar_["close_price"]
+            return None
+
+        period_deltas: dict[str, timedelta] = {
+            "one_day": timedelta(days=1),
+            "one_week": timedelta(days=7),
+            "one_month": timedelta(days=30),
+            "three_months": timedelta(days=90),
+            "six_months": timedelta(days=180),
+            "one_year": timedelta(days=365),
+            "three_years": timedelta(days=365 * 3),
+        }
+
+        end_dt = datetime.now(timezone.utc)
+        # Buffer for weekends and holidays
+        start_dt = end_dt - period_deltas["three_years"] - timedelta(days=14)
+
+        bars_by_symbol = await get_historical_price_bars(
+            symbols=tickers,
+            timeframe="1Day",
+            start=_to_iso_z(start_dt),
+            end=_to_iso_z(end_dt),
+            sort="desc",  # IMPORTANT: sort by descending timestamp
+        )
+
+        results = {}
+        for ticker in tickers:
+            if not bars_by_symbol.get(ticker):
+                continue
+            bars = bars_by_symbol[ticker]
+            latest_close = float(bars[0]["close_price"])
+            latest_dt = _parse_ts(bars[0]["timestamp"])
+
+            period_changes: dict[str, str | None] = {
+                "one_day": None,
+                "one_week": None,
+                "one_month": None,
+                "three_months": None,
+                "six_months": None,
+                "one_year": None,
+                "three_years": None,
+            }
+
+            for key, delta in period_deltas.items():
+                target_dt = latest_dt - delta
+                prior_close = _find_close_on_or_before(bars, target_dt)
+                if prior_close is not None and prior_close != 0:
+                    period_changes[key] = utils.format_percent_change(
+                        (latest_close - prior_close) / prior_close)
+                else:
+                    period_changes[key] = None
+
+            results[ticker] = period_changes
+
+        return results
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    # python -m src.tools.actions.stocks
+    async def main():
+        changes = await StockHistoricalPriceChanges().arun(["AAPL"])
+        print(changes)
+
+    asyncio.run(main())
