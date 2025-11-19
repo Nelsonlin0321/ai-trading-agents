@@ -76,7 +76,7 @@ def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
 class ListPositionsAct(Action):
     @property
     def name(self):
-        return "List Current Open Positions"
+        return "list_current_positions"
 
     async def arun(self, bot_id: str) -> str:
         positions = await list_positions(bot_id)
@@ -87,7 +87,7 @@ class ListPositionsAct(Action):
 class PortfolioPerformanceAnalysisAct(Action):
     @property
     def name(self):
-        return "Get Portfolio Performance Analysis"
+        return "get_portfolio_performance_analysis"
 
     async def arun(self, bot_id: str):
         timeline_values = await get_timeline_values(bot_id)

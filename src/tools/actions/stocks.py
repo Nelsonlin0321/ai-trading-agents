@@ -230,7 +230,7 @@ class ETFPriceSnapshotWithHistory(TypedDict):
 class StockLivePriceChangeAct(Action):
     @property
     def name(self):
-        return "Get Stock Live Price and Change Summary"
+        return "get_stock_live_price_and_change"
 
     async def arun(
         self, tickers: list[str]
@@ -273,7 +273,7 @@ class StockLivePriceChangeAct(Action):
 class ETFLivePriceChangeAct(Action):
     @property
     def name(self):
-        return "Get Major ETF Live Price and Historical Change Summary"
+        return "get_major_etf_live_price_and_historical_change"
 
     async def arun(self) -> dict[str, ETFPriceSnapshotWithHistory]:
         """
@@ -339,7 +339,7 @@ class MostActiveStockFullPriceMetrics(TypedDict):
 class MostActiveStockersAct(Action):
     @property
     def name(self):
-        return "Get Most Active Stockers By Trades With Historical Price Changes"
+        return "get_most_active_stockers_with_historical_price_changes"
 
     async def arun(self):
         """

@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from prisma.enums import Role
+
 from prisma.models import Bot, Run
 from src import db
-from src.tools.actions import ListPositionsAct, PortfolioPerformanceAnalysisAct
-from src.prompt import RolePrompts, SANDX_AI_INTRODUCTION
 
 
 @dataclass
@@ -17,7 +15,7 @@ class Context:
     bot: Bot
 
 
-async def get_context(run_id: str) -> Context:
+async def build_context(run_id: str) -> Context:
     try:
         prisma = await db.connect()
 
@@ -53,35 +51,3 @@ async def get_context(run_id: str) -> Context:
     except Exception as e:
         await db.disconnect()
         raise e
-
-
-async def build_context_narrative(context: Context, role: Role) -> str:
-    user = context.bot.user
-    if not user:
-        raise ValueError("User not found.")
-
-    user_name = "You're serving the user: " + " ".join(
-        [user.firstName or "", user.lastName or ""]
-    )
-
-    watchlist = context.bot.watchlist or []
-
-    watchlist = (
-        "Here's the watchlist of user, you can trade only on these stocks or stock in the current positions:"
-        + ", ".join([w.ticker for w in watchlist])
-    )
-
-    positions_markdown = await ListPositionsAct().arun(bot_id=context.bot.id)
-    performance_narrative = await PortfolioPerformanceAnalysisAct().arun(
-        bot_id=context.bot.id
-    )
-    role_intro = RolePrompts.get(role, "")
-    sections = [
-        SANDX_AI_INTRODUCTION,
-        role_intro,
-        user_name,
-        watchlist,
-        positions_markdown,
-        performance_narrative,
-    ]
-    return "\n\n".join([s for s in sections if s])

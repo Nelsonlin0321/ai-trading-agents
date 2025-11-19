@@ -5,7 +5,7 @@ from typing import Dict, TypedDict, Union
 from dotenv import load_dotenv
 
 from src.services.alpaca.api_client import AlpacaAPIClient
-from src.services.utils import APIError, redis_cache
+from src.services.utils import APIError, in_db_cache
 
 load_dotenv()
 
@@ -97,7 +97,36 @@ def _rename_keys(bars: Dict[str, list[Bar]]) -> Dict[str, list[PriceBar]]:
     return new_bars
 
 
-@redis_cache(function_name="get_historical_price_bars", ttl=3600)
+@in_db_cache(function_name="get_historical_price_bars", ttl=3600)
+async def _get_price_bar(
+    *,
+    symbols: list[str],
+    timeframe: str,
+    start: str,
+    end: str,
+    page_token=None,
+    limit=200,
+    sort: str = "asc",
+):
+    params = {
+        "timeframe": timeframe,
+        "start": start,
+        "end": end,
+        "sort": sort,
+        "limit": limit,
+    }
+    if page_token:
+        params["page_token"] = page_token
+
+    api_response = await historicalBarsAPI.get(
+        symbols=symbols,
+        params=params,
+    )
+    return api_response
+
+
+# @redis_cache(function_name="get_historical_price_bars", ttl=3600)
+# @in_db_cache(function_name="get_historical_price_bars", ttl=3600)
 async def get_historical_price_bars(
     *, symbols: list[str], timeframe: str, start: str, end: str, sort: str = "asc"
 ) -> Dict[str, list[PriceBar]]:
@@ -115,29 +144,25 @@ async def get_historical_price_bars(
         PriceHistoricalBars: A dictionary of historical bars for each symbol.
     """
 
-    api_response = await historicalBarsAPI.get(
+    api_response = await _get_price_bar(
         symbols=symbols,
-        params={
-            "timeframe": timeframe,
-            "start": start,
-            "end": end,
-            "sort": sort,
-        },
+        timeframe=timeframe,
+        start=start,
+        end=end,
+        sort=sort,
     )
 
     next_page_token = api_response["next_page_token"]
     bars = api_response["bars"]
 
     while next_page_token is not None:
-        next_api_response = await historicalBarsAPI.get(
+        next_api_response = await _get_price_bar(
             symbols=symbols,
-            params={
-                "timeframe": timeframe,
-                "start": start,
-                "end": end,
-                "page_token": next_page_token,
-                "sort": sort,
-            },
+            timeframe=timeframe,
+            start=start,
+            end=end,
+            sort=sort,
+            page_token=next_page_token,
         )
 
         if next_api_response["bars"]:

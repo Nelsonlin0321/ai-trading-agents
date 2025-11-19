@@ -31,7 +31,7 @@ class GoogleMarketResearchAct(Action):
 
     @property
     def name(self):
-        return "Google Market Research"
+        return "do_google_market_research"
 
     @redis_cache(function_name="GoogleMarketResearch.arun", ttl=180)
     async def arun(self):  # type: ignore

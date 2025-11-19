@@ -5,7 +5,7 @@ from src.tools.actions.base import Action
 class MarketNewsAct(Action):
     @property
     def name(self):
-        return "Get US Market News"
+        return "get_latest_market_news"
 
     async def arun(self):
         data = await get_news()

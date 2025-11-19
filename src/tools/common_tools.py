@@ -3,7 +3,7 @@ from src.context import Context
 from src import db
 
 
-@tool("Get User Investment Strategy")
+@tool("get_user_investment_strategy")
 async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     """
     Retrieve the current investment strategy for the trading portfolio.

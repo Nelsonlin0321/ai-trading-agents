@@ -4,12 +4,13 @@ from src import tools
 from src import middleware
 from src.models import get_model
 from src.typings import ModelName
-from src.context import get_context, Context, build_context_narrative
+from src.context import build_context, Context
+from src.prompt import build_agent_system_prompt
 
 
-async def get_us_market_analyst_agent(model_name: ModelName, run_id: str):
-    context = await get_context(run_id)
-    system_prompt = await build_context_narrative(context, Role.MARKET_ANALYST)
+async def build_market_analyst_agent(model_name: ModelName, run_id: str):
+    context = await build_context(run_id)
+    system_prompt = await build_agent_system_prompt(context, Role.MARKET_ANALYST)
     langchain_model = get_model(model_name)
     agent = create_agent(
         model=langchain_model,
@@ -18,9 +19,9 @@ async def get_us_market_analyst_agent(model_name: ModelName, run_id: str):
             tools.do_google_market_research,
             tools.get_etf_live_historical_price_change,
             tools.get_stock_live_historical_price_change,
-            # tools.list_current_positions,
+            tools.list_current_positions,
             tools.get_most_active_stockers,
-            # tools.get_portfolio_performance_analysis,
+            tools.get_portfolio_performance_analysis,
             tools.get_user_investment_strategy,
         ],
         middleware=[
