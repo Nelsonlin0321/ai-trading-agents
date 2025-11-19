@@ -87,7 +87,7 @@ class ListPositionsAct(Action):
 class PortfolioPerformanceAnalysisAct(Action):
     @property
     def name(self):
-        return "Portfolio Performance Analysis"
+        return "Get Portfolio Performance Analysis"
 
     async def arun(self, bot_id: str):
         timeline_values = await get_timeline_values(bot_id)

@@ -1,8 +1,12 @@
 from langchain.tools import tool, ToolRuntime
 from src.context import Context
-from src.tools.actions.portfolio import ListPositionsAct
+from src.tools.actions.portfolio import (
+    ListPositionsAct,
+    PortfolioPerformanceAnalysisAct,
+)
 
 list_positions_act = ListPositionsAct()
+portfolio_performance_analysis_act = PortfolioPerformanceAnalysisAct()
 
 
 @tool(list_positions_act.name)
@@ -49,4 +53,31 @@ async def list_current_positions(runtime: ToolRuntime[Context]):
     return position_markdown
 
 
-__all__ = ["list_current_positions"]
+@tool(portfolio_performance_analysis_act.name)
+async def get_portfolio_performance_analysis(runtime: ToolRuntime[Context]):
+    """
+    Analyze the performance of the trading portfolio over different periods.
+
+    This tool calculates the total return, annualized return, maximum drawdown,
+    and Sharpe ratio for the trading portfolio.  It provides a snapshot of the
+    portfolio's risk-adjusted performance over the specified time period.
+
+    Possible tool purposes:
+    - Evaluate the historical performance of the trading strategy.
+    - Compare the performance of different trading strategies or portfolios.
+    - Identify periods of strong and weak performance.
+    - Assess the riskiness of the trading strategy.
+    - Guide decision-making on when to rebalance or exit the portfolio.
+
+    Notes
+    -----
+    - The Sharpe ratio is computed using a risk-free rate of 0% for simplicity.
+    - Maximum drawdown is the largest percentage decline from a peak to a trough.
+    """
+
+    bot_id = runtime.context.bot.id
+    performance_analysis = await portfolio_performance_analysis_act.arun(bot_id=bot_id)
+    return performance_analysis
+
+
+__all__ = ["list_current_positions", "get_portfolio_performance_analysis"]
