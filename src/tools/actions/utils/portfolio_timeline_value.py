@@ -278,7 +278,7 @@ def create_performance_narrative(analysis: AnalysisResult) -> str:
     periods = analysis["period_performance"]
 
     narrative = f"""
-User's PORTFOLIO PERFORMANCE ANALYSIS
+## User's PORTFOLIO PERFORMANCE ANALYSIS
 As of {summary["analysis_date"]}
 
 PERFORMANCE SUMMARY:
@@ -302,7 +302,7 @@ PERFORMANCE SUMMARY:
             period = periods[period_key]
             arrow = "📈" if period["total_return_percent"] >= 0 else "📉"
             narrative += f"\n{period_names[period_key]} Performance {arrow}:"
-            narrative += f"\n  Return: {period['total_return_percent']:+.2f}% (${period['total_return']:+,.2f})"
+            narrative += f"\n  Return: {period['total_return_percent']:+.2f}% ({period['total_return']:+,.2f})"
             narrative += f"\n  Volatility: {period['volatility']:.2f}%"
 
             # Only show best/worst day if we have multiple days

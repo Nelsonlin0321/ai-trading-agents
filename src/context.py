@@ -84,4 +84,4 @@ async def build_context_narrative(context: Context, role: Role) -> str:
         positions_markdown,
         performance_narrative,
     ]
-    return "\n".join([s for s in sections if s])
+    return "\n\n".join([s for s in sections if s])

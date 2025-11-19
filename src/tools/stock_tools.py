@@ -9,7 +9,7 @@ most_active_stockers_act = actions.MostActiveStockersAct()
 
 
 @tool(eft_live_price_change_act.name)
-async def etf_live_historical_price_change():
+async def get_etf_live_historical_price_change():
     """
     Fetch live and historical percent-change metrics for the most-traded U.S. equity ETFs (SPY, QQQ, IWM, etc.) in the different sectors.
 
@@ -48,7 +48,7 @@ class TickerInput(BaseModel):
 
 
 @tool(stock_live_price_change_act.name, args_schema=TickerInput)
-async def stock_live_historical_price_change(tickers: list[str]):
+async def get_stock_live_historical_price_change(tickers: list[str]):
     """
     Fetch comprehensive percent-change metrics for the provided stock tickers.
 
@@ -102,7 +102,7 @@ async def stock_live_historical_price_change(tickers: list[str]):
 
 
 @tool(most_active_stockers_act.name)
-async def most_active_stockers():
+async def get_most_active_stockers():
     """
     Fetch the most active stockers by trading volume in the U.S. stock market.
 
@@ -140,7 +140,7 @@ async def most_active_stockers():
 
 
 __all__ = [
-    "etf_live_historical_price_change",
-    "stock_live_historical_price_change",
-    "most_active_stockers",
+    "get_etf_live_historical_price_change",
+    "get_stock_live_historical_price_change",
+    "get_most_active_stockers",
 ]
