@@ -1,8 +1,13 @@
-from datetime import timedelta, date
-from typing import Any, Dict, List, Optional, TypedDict
-
+from collections import defaultdict
+from datetime import timedelta, date, datetime
+from typing import Dict, List, Optional, TypedDict
 import numpy as np
-from prisma.models import DailyPortfolioSnapshot
+from src.services.sandx_ai.typing import TimelineValue
+
+
+class FormattedTimelineValue(TypedDict):
+    date: date
+    value: float
 
 
 class PeriodMetrics(TypedDict):
@@ -47,9 +52,41 @@ class TimeSeriesData(TypedDict):
 
 class AnalysisResult(TypedDict):
     overall_summary: AnalysisSummary
-    current_position: CurrentDetails
     period_performance: Dict[str, PeriodMetrics]
     time_series_data: TimeSeriesData
+
+
+def deduplicate_timeline_by_date(timeline_values: List[TimelineValue]):
+    """
+    Groups timeline entries by calendar date and keeps only the latest entry per date.
+
+    Args:
+        timeline_values (list): List of dicts with keys 'date' (ISO string) and 'value'.
+
+    Returns:
+        list: Deduplicated list with one entry per calendar date, converted to date objects.
+    """
+    grouped: Dict[str, List[TimelineValue]] = defaultdict(list)
+    for entry in timeline_values:
+        date_key = entry["date"][:10]  # Extract YYYY-MM-DD
+        grouped[date_key].append(entry)
+
+    def convert_to_date(entry: TimelineValue) -> FormattedTimelineValue:
+        return {
+            "date": datetime.fromisoformat(entry["date"].replace("Z", "+00:00")).date(),
+            "value": entry["value"],
+        }
+
+    transformed_timeline_values = [
+        convert_to_date(
+            max(
+                group,
+                key=lambda x: datetime.fromisoformat(x["date"].replace("Z", "+00:00")),
+            )
+        )
+        for group in grouped.values()
+    ]
+    return transformed_timeline_values
 
 
 def compute_daily_returns(values_slice: List[float]) -> np.ndarray:
@@ -77,7 +114,7 @@ def find_period_start_index(
 ) -> Optional[int]:
     target_date = current_date - timedelta(days=days_back)
     for i, snapshot_date in enumerate(dates):
-        if snapshot_date <= target_date:
+        if snapshot_date >= target_date:
             return i
     return None
 
@@ -123,17 +160,6 @@ def period_metrics(  # pylint: disable=too-many-arguments
         worst_day_percent=worst_day,
         max_drawdown_percent=max_drawdown,
     )
-
-
-def build_current_details(current_snapshot: DailyPortfolioSnapshot) -> CurrentDetails:
-    return {
-        "date": current_snapshot.date.strftime("%Y-%m-%d"),
-        "portfolio_value": current_snapshot.portfolioValue,
-        "positions_value": current_snapshot.positionsValue,
-        "cash": current_snapshot.cash,
-        "cash_percentage": (current_snapshot.cash / current_snapshot.portfolioValue)
-        * 100,
-    }
 
 
 def build_periods(
@@ -193,6 +219,9 @@ def build_overall_summary(
 def build_time_series_data(
     dates: List[date], portfolio_values: List[float]
 ) -> TimeSeriesData:
+    dates = dates[-365:]
+    portfolio_values = portfolio_values[-365:]
+
     daily = [0.0] + [
         ((portfolio_values[i] - portfolio_values[i - 1]) / portfolio_values[i - 1])
         * 100
@@ -205,40 +234,41 @@ def build_time_series_data(
     }
 
 
-def analyze_portfolio(
-    snapshots: List[DailyPortfolioSnapshot],
+def analyze_timeline_value(
+    timeline_values: List[TimelineValue],
 ) -> Optional[AnalysisResult]:
-    if len(snapshots) < 2:
+    if len(timeline_values) < 2:
         return None
 
-    sorted_snapshots = sorted(snapshots, key=lambda x: x.date)
-    dates_local = [s.date.date() for s in sorted_snapshots]
-    values_local = [s.portfolioValue for s in sorted_snapshots]
+    snapshots = deduplicate_timeline_by_date(timeline_values)
 
-    current_date_local = sorted_snapshots[-1].date.date()
+    sorted_snapshots = sorted(snapshots, key=lambda x: x["date"])
+    dates_local = [s["date"] for s in sorted_snapshots]
+    values_local = [s["value"] for s in sorted_snapshots]
+
+    current_date_local = sorted_snapshots[-1]["date"]
     current_value_local = values_local[-1]
     last_index_local = len(sorted_snapshots) - 1
 
     periods_local = build_periods(
         dates_local, values_local, current_date_local, last_index_local
     )
-    current_details_local = build_current_details(sorted_snapshots[-1])
     overall_summary_local = build_overall_summary(
         dates_local, current_date_local, current_value_local, periods_local
     )
     time_series_data_local = build_time_series_data(dates_local, values_local)
+
     return {
         "overall_summary": overall_summary_local,
-        "current_position": current_details_local,
         "period_performance": periods_local,
         "time_series_data": time_series_data_local,
     }
 
 
-__all__ = ["analyze_portfolio", "create_performance_narrative"]
+__all__ = ["analyze_timeline_value", "create_performance_narrative"]
 
 
-def create_performance_narrative(analysis: Dict[str, Any]) -> str:
+def create_performance_narrative(analysis: AnalysisResult) -> str:
     """
     Create a natural language narrative from the performance analysis
     Only includes periods that have sufficient data
@@ -248,16 +278,10 @@ def create_performance_narrative(analysis: Dict[str, Any]) -> str:
 
     summary = analysis["overall_summary"]
     periods = analysis["period_performance"]
-    current = analysis["current_position"]
 
     narrative = f"""
 PORTFOLIO PERFORMANCE ANALYSIS
 As of {summary["analysis_date"]}
-
-CURRENT POSITION:
-- Portfolio Value: ${current["portfolio_value"]:,.2f}
-- Investment Value: ${current["positions_value"]:,.2f}
-- Cash: ${current["cash"]:,.2f} ({current["cash_percentage"]:.1f}% of portfolio)
 
 PERFORMANCE SUMMARY:
 """

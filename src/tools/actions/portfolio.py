@@ -1,7 +1,8 @@
 from typing import Sequence, Annotated, TypedDict
 from src.tools.actions import Action
-from src.services.sandx_ai import list_positions
+from src.services.sandx_ai import list_positions, get_timeline_values
 from src.services.sandx_ai.typing import Position
+from src.tools.actions import utils as action_utils
 from src import utils
 
 
@@ -83,4 +84,18 @@ class ListPositionsAct(Action):
         return position_markdown
 
 
-__all__ = ["ListPositionsAct"]
+class PortfolioPerformanceAnalysisAct(Action):
+    @property
+    def name(self):
+        return "Portfolio Performance Analysis"
+
+    async def arun(self, bot_id: str):
+        timeline_values = await get_timeline_values(bot_id)
+        analysis = action_utils.analyze_timeline_value(timeline_values)
+        if analysis:
+            return action_utils.create_performance_narrative(analysis)
+
+        return "Insufficient data for analysis."
+
+
+__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]

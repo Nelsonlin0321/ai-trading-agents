@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Sequence, TypedDict
+from typing import List, TypedDict
 from dotenv import load_dotenv
 from src.services.sandx_ai.api_client import SandxAPIClient
 from src.services.utils import APIError, redis_cache
@@ -22,7 +22,7 @@ api_client = SandxAPIClient[list[TimelineValue]]("/tools/portfolio/timeline-valu
 
 
 @redis_cache(ttl=10, function_name="get_timeline_values")
-async def get_timeline_values(bot_id: str) -> Sequence[TimelineValue]:
+async def get_timeline_values(bot_id: str) -> List[TimelineValue]:
     from_date = datetime.now() - timedelta(days=365) - timedelta(days=7)
     from_date_str = from_date.strftime("%Y-%m-%d %H:%M:%S")
     timeline_values = await api_client.get(

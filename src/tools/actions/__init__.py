@@ -8,7 +8,10 @@ from src.tools.actions.stocks import (
     StockLivePriceChangeAct,
     MostActiveStockersAct,
 )
-from src.tools.actions.portfolio import ListPositionsAct
+from src.tools.actions.portfolio import (
+    ListPositionsAct,
+    PortfolioPerformanceAnalysisAct,
+)
 
 __all__ = [
     "Action",
@@ -20,4 +23,5 @@ __all__ = [
     "StockLivePriceChangeAct",
     "MostActiveStockersAct",
     "ListPositionsAct",
+    "PortfolioPerformanceAnalysisAct",
 ]

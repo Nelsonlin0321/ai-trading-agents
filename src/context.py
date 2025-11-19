@@ -33,9 +33,9 @@ async def get_context(run_id: str) -> Context:
                 "portfolio": {"include": {"positions": True}},
                 "watchlist": True,
                 "trades": True,
-                "DailyPortfolioSnapshot": True,
-                "InitDailyPortfolioSnapshot": True,
-                "QQQBenchmarkPointsCache": True,
+                # "DailyPortfolioSnapshot": True,
+                # "InitDailyPortfolioSnapshot": True,
+                # "QQQBenchmarkPointsCache": True,
             },
         )
         if not bot:
