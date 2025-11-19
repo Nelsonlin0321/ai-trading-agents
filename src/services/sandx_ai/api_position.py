@@ -49,7 +49,7 @@ class Position(TypedDict):
     ]
 
 
-api_client = SandxAPIClient[list[PositionItem]]("/tools/positions")
+api_client = SandxAPIClient[list[PositionItem]]("/tools/portfolio/positions")
 
 
 @redis_cache(ttl=10, function_name="list_positions")

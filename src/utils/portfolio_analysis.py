@@ -71,16 +71,18 @@ def compute_max_drawdown(values_slice: List[float]) -> float:
 
 
 def find_period_start_index(
-    dates: List[date], current_date: date, days_back: int
+    dates: List[date],  # asc ordering
+    current_date: date,
+    days_back: int,
 ) -> Optional[int]:
     target_date = current_date - timedelta(days=days_back)
     for i, snapshot_date in enumerate(dates):
-        if snapshot_date >= target_date:
+        if snapshot_date <= target_date:
             return i
     return None
 
 
-def period_metrics(
+def period_metrics(  # pylint: disable=too-many-arguments
     dates: List[date],
     values: List[float],
     start_index: int,
@@ -135,7 +137,7 @@ def build_current_details(current_snapshot: DailyPortfolioSnapshot) -> CurrentDe
 
 
 def build_periods(
-    dates: List[date],
+    dates: List[date],  # asc ordering
     values: List[float],
     current_date: date,
     last_index: int,
@@ -206,16 +208,17 @@ def build_time_series_data(
 def analyze_portfolio(
     snapshots: List[DailyPortfolioSnapshot],
 ) -> Optional[AnalysisResult]:
-    if not snapshots:
+    if len(snapshots) < 2:
         return None
+
     sorted_snapshots = sorted(snapshots, key=lambda x: x.date)
     dates_local = [s.date.date() for s in sorted_snapshots]
     values_local = [s.portfolioValue for s in sorted_snapshots]
-    if len(sorted_snapshots) < 2:
-        return None
+
     current_date_local = sorted_snapshots[-1].date.date()
     current_value_local = values_local[-1]
     last_index_local = len(sorted_snapshots) - 1
+
     periods_local = build_periods(
         dates_local, values_local, current_date_local, last_index_local
     )
@@ -232,14 +235,7 @@ def analyze_portfolio(
     }
 
 
-def create_multi_period_performance_analysis(
-    snapshots: List[DailyPortfolioSnapshot],
-) -> Dict[str, Any]:
-    """
-    Create comprehensive performance analysis across multiple time periods
-    Skips periods with insufficient data
-    """
-    return analyze_portfolio(snapshots)  # type: ignore[return-value]
+__all__ = ["analyze_portfolio", "create_performance_narrative"]
 
 
 def create_performance_narrative(analysis: Dict[str, Any]) -> str:
