@@ -273,14 +273,12 @@ def create_performance_narrative(analysis: AnalysisResult) -> str:
     Create a natural language narrative from the performance analysis
     Only includes periods that have sufficient data
     """
-    if "error" in analysis:
-        return f"Analysis error: {analysis['error']}"
 
     summary = analysis["overall_summary"]
     periods = analysis["period_performance"]
 
     narrative = f"""
-PORTFOLIO PERFORMANCE ANALYSIS
+User's PORTFOLIO PERFORMANCE ANALYSIS
 As of {summary["analysis_date"]}
 
 PERFORMANCE SUMMARY:

@@ -58,7 +58,7 @@ def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
         )
         formatted_positions.append(formatted_position)
     position_markdown = utils.dicts_to_markdown_table(formatted_positions)
-    heading = "## Current Open Positions"
+    heading = "## User's Current Open Positions"
 
     datetime = utils.get_current_timestamp()
 
