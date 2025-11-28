@@ -297,13 +297,13 @@ FUNDAMENTAL_CATEGORIES = {
     ],
     # Dividend & Shareholder Returns
     "Dividend & Payout": [
-        "dividendRate",
+        # "dividendRate",
         "dividendYield",
         "payoutRatio",
         "lastDividendValue",
-        "lastDividendDate",
-        "dividendDate",
-        "exDividendDate",
+        # "lastDividendDate",
+        # "dividendDate",
+        # "exDividendDate",
         "trailingAnnualDividendRate",
         "trailingAnnualDividendYield",
         "fiveYearAvgDividendYield",
@@ -386,7 +386,7 @@ FUNDAMENTAL_CATEGORIES = {
         "compensationRisk",
         "shareHolderRightsRisk",
         "overallRisk",
-        "maxAge",
+        # "maxAge",
     ],
     # Earnings & Financial Calendar
     # 'Earnings & Calendar': [

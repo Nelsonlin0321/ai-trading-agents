@@ -1,6 +1,16 @@
 from src.utils.constants import FUNDAMENTAL_CATEGORIES
 
 
+def preprocess_info_dict(info_dict):
+    if "dividendYield" in info_dict:
+        info_dict["dividendYield"] = float(info_dict["dividendYield"]) / 100
+    if "fiveYearAvgDividendYield" in info_dict:
+        info_dict["fiveYearAvgDividendYield"] = (
+            float(info_dict["fiveYearAvgDividendYield"]) / 100
+        )
+    return info_dict
+
+
 def categorize_fundamental_data(info_dict):
     """
     Categorize fundamental data from info dictionary into structured categories
@@ -113,4 +123,5 @@ __all__ = [
     "categorize_fundamental_data",
     "get_categorized_metrics",
     "format_fundamentals_markdown",
+    "preprocess_info_dict",
 ]

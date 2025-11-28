@@ -22,6 +22,7 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Refactor in-database cache to be decorator: Done
 - Sync Agent Message to Sandx AI Monitoring Dashboard: Done in PoC
 - Pylint: Done
+- Yahoo Finance Fundamental Data API: Done
 
 ## Market Research Agent:
 ### Tools:
@@ -39,3 +40,7 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 
 ## Deep Agent
 - Learn About Langchain Deep Agent: Done
+
+## Resources:
+- https://github.com/The-Swarm-Corporation/AutoHedge: Less Useful
+- 

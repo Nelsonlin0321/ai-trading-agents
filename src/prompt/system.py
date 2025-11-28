@@ -25,7 +25,7 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
     performance_narrative = await PortfolioPerformanceAnalysisAct().arun(
         bot_id=context.bot.id
     )
-    role_intro = RolePrompts.get(role, "")
+    role_intro = RolePrompts[role]
     sections = [
         SANDX_AI_INTRODUCTION,
         role_intro,

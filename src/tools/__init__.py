@@ -10,6 +10,7 @@ from src.tools.portfolio_tools import (
 )
 from src.tools.research_tools import do_google_market_research
 from src.tools.common_tools import get_user_investment_strategy
+from src.tools.fundamental_data_tools import get_fundamental_data
 
 __all__ = [
     "get_latest_market_news",
@@ -20,4 +21,5 @@ __all__ = [
     "get_portfolio_performance_analysis",
     "do_google_market_research",
     "get_user_investment_strategy",
+    "get_fundamental_data",
 ]

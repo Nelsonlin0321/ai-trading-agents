@@ -13,6 +13,9 @@ from src.tools.actions.portfolio import (
     PortfolioPerformanceAnalysisAct,
 )
 
+from src.tools.actions.fundamental_data import FundamentalDataAct
+
+
 __all__ = [
     "Action",
     "MarketNewsAct",
@@ -24,4 +27,5 @@ __all__ = [
     "MostActiveStockersAct",
     "ListPositionsAct",
     "PortfolioPerformanceAnalysisAct",
+    "FundamentalDataAct",
 ]
