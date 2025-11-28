@@ -153,7 +153,8 @@ def redis_cache(
 
     def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
         async def wrapper(*args, **kwargs) -> T:
-            pos_args = args[1:] if len(args) > 0 else args
+            # print(
+            #     f"function_name:{function_name} args:{args}, kwargs:{kwargs}")
             if "start" in kwargs:
                 start = kwargs["start"]
                 kwargs["start"] = datetime.fromisoformat(
@@ -171,7 +172,7 @@ def redis_cache(
                 kwargs["symbols"] = sorted(symbols)
 
             key_payload = {
-                "args": pos_args,
+                "args": sorted(args),
                 "kwargs": kwargs,
                 "function_name": function_name,
             }

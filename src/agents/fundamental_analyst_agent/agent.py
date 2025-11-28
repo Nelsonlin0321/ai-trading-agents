@@ -14,7 +14,10 @@ async def build_fundamental_analyst_agent(model_name: ModelName, run_id: str):
     langchain_model = get_model(model_name)
     agent = create_agent(
         model=langchain_model,
-        tools=[tools.get_fundamental_data],
+        tools=[
+            tools.get_fundamental_data,
+            tools.get_stock_live_historical_price_change,
+        ],
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
@@ -23,4 +26,4 @@ async def build_fundamental_analyst_agent(model_name: ModelName, run_id: str):
         context_schema=Context,
     )
 
-    return agent
+    return context, agent

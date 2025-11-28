@@ -10,7 +10,7 @@ def get_ticker_info(ticker: str) -> dict:
     return info
 
 
-@redis_cache(function_name="async_get_ticker_info", ttl=60 * 60 * 24)
+@redis_cache(function_name="get_ticker_info", ttl=60 * 60 * 24)
 async def async_get_ticker_info(ticker: str) -> dict:
     info = await get_ticker_info(ticker)  # type: ignore
     return info
