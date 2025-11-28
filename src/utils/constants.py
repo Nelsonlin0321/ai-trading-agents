@@ -234,3 +234,196 @@ ETF_TICKERS: list[ETFTickerInfo] = [
         "description": "Invests in mid-cap U.S. stocks representing the S&P MidCap 400 Index",
     },
 ]
+
+FUNDAMENTAL_CATEGORIES = {
+    # Core Valuation Metrics
+    "Valuation Metrics": [
+        "trailingPE",
+        "forwardPE",
+        "priceToBook",
+        "priceToSalesTrailing12Months",
+        "enterpriseToRevenue",
+        "enterpriseToEbitda",
+        "marketCap",
+        "enterpriseValue",
+        "trailingPegRatio",
+        "priceEpsCurrentYear",
+    ],
+    # Profitability & Earnings
+    "Profitability & Margins": [
+        "profitMargins",
+        "grossMargins",
+        "operatingMargins",
+        "ebitdaMargins",
+        "returnOnEquity",
+        "returnOnAssets",
+        "trailingEps",
+        "forwardEps",
+        "epsTrailingTwelveMonths",
+        "epsForward",
+        "epsCurrentYear",
+        "netIncomeToCommon",
+        "grossProfits",
+        "ebitda",
+        "operatingCashflow",
+        "freeCashflow",
+        "totalRevenue",
+    ],
+    # Financial Health & Balance Sheet
+    "Financial Health & Liquidity": [
+        "currentRatio",
+        "quickRatio",
+        "debtToEquity",
+        "totalDebt",
+        "totalCash",
+        "totalCashPerShare",
+        "bookValue",
+        "floatShares",
+        "sharesOutstanding",
+        "impliedSharesOutstanding",
+    ],
+    # Growth & Performance
+    "Growth Metrics": [
+        "earningsGrowth",
+        "revenueGrowth",
+        "earningsQuarterlyGrowth",
+        "52WeekChange",
+        "fiftyTwoWeekChangePercent",
+        "SandP52WeekChange",
+        "fiftyDayAverageChange",
+        "fiftyDayAverageChangePercent",
+        "twoHundredDayAverageChange",
+        "twoHundredDayAverageChangePercent",
+    ],
+    # Dividend & Shareholder Returns
+    "Dividend & Payout": [
+        "dividendRate",
+        "dividendYield",
+        "payoutRatio",
+        "lastDividendValue",
+        "lastDividendDate",
+        "dividendDate",
+        "exDividendDate",
+        "trailingAnnualDividendRate",
+        "trailingAnnualDividendYield",
+        "fiveYearAvgDividendYield",
+    ],
+    # Market & Trading Data
+    "Market & Trading Data": [
+        "currentPrice",
+        # 'regularMarketPrice',
+        "previousClose",
+        "open",
+        "dayLow",
+        "dayHigh",
+        "regularMarketPreviousClose",
+        "regularMarketOpen",
+        "regularMarketDayLow",
+        "regularMarketDayHigh",
+        "volume",
+        "regularMarketVolume",
+        "averageVolume",
+        "averageVolume10days",
+        "averageDailyVolume10Day",
+        "averageDailyVolume3Month",
+        "bid",
+        "ask",
+        # 'bidSize',
+        # 'askSize',
+        "fiftyTwoWeekLow",
+        "fiftyTwoWeekHigh",
+        "fiftyTwoWeekRange",
+        "fiftyDayAverage",
+        "twoHundredDayAverage",
+        "allTimeHigh",
+        "allTimeLow",
+    ],
+    # Analyst Expectations
+    "Analyst Estimates & Ratings": [
+        "targetHighPrice",
+        "targetLowPrice",
+        "targetMeanPrice",
+        "targetMedianPrice",
+        "recommendationMean",
+        "recommendationKey",
+        "numberOfAnalystOpinions",
+        "averageAnalystRating",
+    ],
+    # Company Profile
+    "Company Information": [
+        "longName",
+        # 'shortName',
+        "symbol",
+        "exchange",
+        "sector",
+        # 'sectorDisp',
+        # 'sectorKey',
+        "industry",
+        # 'industryDisp', 'industryKey',
+        "fullTimeEmployees",
+        "longBusinessSummary",
+        # 'website', 'address1',
+        # 'city', 'state', 'zip', 'country', 'phone',
+        # 'companyOfficers'
+    ],
+    # Ownership & Capital Structure
+    "Ownership & Shares": [
+        "heldPercentInsiders",
+        "heldPercentInstitutions",
+        "sharesShort",
+        "sharesShortPriorMonth",
+        "sharesShortPreviousMonthDate",
+        "dateShortInterest",
+        "sharesPercentSharesOut",
+        "shortRatio",
+        "shortPercentOfFloat",
+    ],
+    # Risk Assessment
+    "Risk & Volatility": [
+        "beta",
+        "auditRisk",
+        "boardRisk",
+        "compensationRisk",
+        "shareHolderRightsRisk",
+        "overallRisk",
+        "maxAge",
+    ],
+    # Earnings & Financial Calendar
+    # 'Earnings & Calendar': [
+    #     'earningsTimestamp', 'earningsTimestampStart', 'earningsTimestampEnd',
+    #     'earningsCallTimestampStart', 'earningsCallTimestampEnd',
+    #     'lastFiscalYearEnd', 'nextFiscalYearEnd', 'mostRecentQuarter',
+    #     'lastSplitDate', 'lastSplitFactor', 'isEarningsDateEstimate'
+    # ],
+    # Technical Indicators
+    "Technical Indicators": [
+        "fiftyTwoWeekLowChange",
+        "fiftyTwoWeekLowChangePercent",
+        "fiftyTwoWeekHighChange",
+        "fiftyTwoWeekHighChangePercent",
+    ],
+    # Additional Financial Metrics
+    "Additional Financial Metrics": [
+        "revenuePerShare",
+        "financialCurrency",
+        "currency",
+        "priceHint",
+        "totalCashPerShare",
+    ],
+    # Market Operations & Metadata
+    # 'Market Operations': [
+    #     'tradeable', 'triggerable', 'cryptoTradeable', 'esgPopulated',
+    #     'quoteType', 'typeDisp', 'quoteSourceName', 'messageBoardId',
+    #     'exchangeTimezoneName', 'exchangeTimezoneShortName',
+    #     'gmtOffSetMilliseconds', 'market', 'exchangeDataDelayedBy',
+    #     'sourceInterval', 'firstTradeDateMilliseconds',
+    #     'hasPrePostMarketData', 'customPriceAlertConfidence'
+    # ],
+    # Post-Market & Extended Hours
+    # 'Post-Market Data': [
+    #     'postMarketChangePercent', 'postMarketPrice', 'postMarketChange',
+    #     'postMarketTime', 'regularMarketTime', 'regularMarketChange',
+    #     'regularMarketChangePercent', 'regularMarketDayRange',
+    #     'fullExchangeName', 'displayName', 'marketState'
+    # ]
+}
