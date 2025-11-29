@@ -16,6 +16,7 @@ async def build_risk_analyst_agent(model_name: ModelName, run_id: str):
         model=langchain_model,
         tools=[
             tools.get_fundamental_risk_data,
+            tools.get_volatility_risk_indicators,
             tools.get_stock_live_historical_price_change,
         ],
         middleware=[

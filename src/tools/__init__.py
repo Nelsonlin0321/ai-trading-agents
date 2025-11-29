@@ -12,7 +12,10 @@ from src.tools.research_tools import do_google_market_research
 from src.tools.common_tools import get_user_investment_strategy
 from src.tools.fundamental_data_tools import (
     get_fundamental_data,
+)
+from src.tools.risk_tools import (
     get_fundamental_risk_data,
+    get_volatility_risk_indicators,
 )
 
 __all__ = [
@@ -26,4 +29,5 @@ __all__ = [
     "get_user_investment_strategy",
     "get_fundamental_data",
     "get_fundamental_risk_data",
+    "get_volatility_risk_indicators",
 ]

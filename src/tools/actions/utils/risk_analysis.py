@@ -133,14 +133,11 @@ def format_volatility_risk_markdown(risk, ticker_symbol):
     """
     md = [f"# {ticker_symbol} Volatility Risk Indicators", ""]
 
-    for category, metrics in risk.items():
-        if metrics:
-            md.append(f"## {category}")
-            md.append("| Metric | Value |")
-            md.append("|--------|-------|")
-            for key, value in metrics.items():
-                md.append(f"| {key} | {value} |")
-            md.append("")
+    md.append("| Metric | Value |")
+    md.append("|--------|-------|")
+    for key, value in risk.items():
+        md.append(f"| {key} | {value} |")
+    md.append("")
 
     return "\n".join(md)
 
