@@ -2,6 +2,7 @@ from typing import List, TypedDict, NotRequired
 
 import numpy as np
 
+from src import utils
 from src.services.alpaca.typing import PriceBar
 
 
@@ -216,10 +217,40 @@ def format_volatility_risk_markdown(risk, ticker_symbol):
     """
     md = [f"# {ticker_symbol} Volatility Risk Indicators", ""]
 
-    md.append("| Metric | Value |")
-    md.append("|--------|-------|")
+    def describe_metric(key: str) -> str:
+        if key.startswith("volatility_") and key.endswith("d"):
+            horizon = key.split("_")[1].removesuffix("d")
+            return f"Historical volatility over {horizon} days (annualized)"
+        if key == "garman_klass_volatility":
+            return "Range-based volatility using open/close and high/low (annualized)"
+        if key == "parkinson_volatility":
+            return "High–low range volatility estimator (annualized)"
+        if key == "realized_volatility":
+            return "RMS of daily returns (annualized)"
+        if key == "volatility_clustering":
+            return "Lag-1 correlation of squared returns (persistence)"
+        if key == "max_drawdown":
+            return "Largest peak-to-trough decline (fraction of peak)"
+        if key == "max_drawdown_duration":
+            return "Longest consecutive days spent in drawdown"
+        if key == "var_95":
+            return "5th percentile daily return (VaR 95%)"
+        if key == "var_99":
+            return "1st percentile daily return (VaR 99%)"
+        if key == "cvar_95":
+            return "Average return in worst 5% tail (CVaR 95%)"
+        if key == "large_jumps_count":
+            return "Days with |return| > 2× std"
+        if key == "jump_intensity":
+            return "Fraction of days with large jumps"
+        return "Indicator"
+
+    md.append("| Metric | Value | Definition |")
+    md.append("|--------|-------|------------|")
     for key, value in risk.items():
-        md.append(f"| {key} | {value} |")
+        md.append(
+            f"| {key} | {utils.format_float(value, 3)} | {describe_metric(key)} |"
+        )
     md.append("")
 
     return "\n".join(md)
@@ -231,10 +262,44 @@ def format_price_risk_markdown(risk, ticker_symbol):
     """
     md = [f"# {ticker_symbol} Price Risk Indicators", ""]
 
-    md.append("| Metric | Value |")
-    md.append("|--------|-------|")
+    def describe_metric(key: str) -> str:
+        if key == "current_price":
+            return "Latest closing price"
+        if key.startswith("momentum_") and key.endswith("d"):
+            horizon = key.split("_")[1].removesuffix("d")
+            return f"Return over {horizon} days relative to prior close"
+        if (
+            key.startswith("average_true_range_")
+            and key.endswith("d")
+            and not key.endswith("d_percent")
+        ):
+            horizon = key.split("_")[3].removesuffix("d")
+            return f"Average True Range over {horizon} days (absolute)"
+        if key.startswith("average_true_range_") and key.endswith("d_percent"):
+            horizon = key.split("_")[3].removesuffix("d")
+            return f"ATR over {horizon} days as a fraction of price"
+        if key.startswith("support_") and key.endswith("d"):
+            horizon = key.split("_")[1].removesuffix("d")
+            return f"Distance to {horizon}d support (lowest low) as fraction of price"
+        if key.startswith("resistance_") and key.endswith("d"):
+            horizon = key.split("_")[1].removesuffix("d")
+            return (
+                f"Distance to {horizon}d resistance (highest high) as fraction of price"
+            )
+        if key.startswith("breakout_") and key.endswith("d"):
+            horizon = key.split("_")[1].removesuffix("d")
+            return f"1 if price above {horizon}d resistance; else 0"
+        if key.startswith("breakdown_") and key.endswith("d"):
+            horizon = key.split("_")[1].removesuffix("d")
+            return f"1 if price below {horizon}d support; else 0"
+        return "Indicator"
+
+    md.append("| Metric | Value | Definition |")
+    md.append("|--------|-------|------------|")
     for key, value in risk.items():
-        md.append(f"| {key} | {value} |")
+        md.append(
+            f"| {key} | {utils.format_float(value, 3)} | {describe_metric(key)} |"
+        )
     md.append("")
 
     return "\n".join(md)
