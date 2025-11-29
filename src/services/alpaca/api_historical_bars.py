@@ -5,7 +5,7 @@ from typing import Dict, TypedDict, Union
 from dotenv import load_dotenv
 
 from src.services.alpaca.api_client import AlpacaAPIClient
-from src.services.utils import APIError, in_db_cache
+from src.services.utils import APIError, redis_cache
 
 load_dotenv()
 
@@ -97,7 +97,7 @@ def _rename_keys(bars: Dict[str, list[Bar]]) -> Dict[str, list[PriceBar]]:
     return new_bars
 
 
-@in_db_cache(function_name="get_historical_price_bars", ttl=3600)
+@redis_cache(function_name="get_historical_price_bars", ttl=3600)
 async def _get_price_bar(
     *,
     symbols: list[str],
