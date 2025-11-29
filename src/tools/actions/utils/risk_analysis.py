@@ -187,7 +187,6 @@ def calculate_price_risk(
             atrs[f"average_true_range_{h}d"] / current_price
         )
 
-    # Breakout/breakdown flags (dynamically for each horizon)
     breakouts = {}
     breakdowns = {}
     for h in horizons:
