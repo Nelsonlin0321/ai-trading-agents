@@ -1,14 +1,32 @@
-from typing import Dict, List
+from typing import List, TypedDict, NotRequired
 
 import numpy as np
 
 from src.services.alpaca.typing import PriceBar
 
 
-def calculate_enhanced_volatility_risk(
+class VolatilityRisk(TypedDict, total=False):
+    error: NotRequired[str]
+    volatility_20d: NotRequired[float]
+    volatility_60d: NotRequired[float]
+    volatility_252d: NotRequired[float]
+    garman_klass_volatility: NotRequired[float]
+    parkinson_volatility: NotRequired[float]
+    realized_volatility: NotRequired[float]
+    volatility_clustering: NotRequired[float]
+    max_drawdown: NotRequired[float]
+    max_drawdown_duration: NotRequired[int]
+    var_95: NotRequired[float]
+    var_99: NotRequired[float]
+    cvar_95: NotRequired[float]
+    large_jumps_count: NotRequired[int]
+    jump_intensity: NotRequired[float]
+
+
+def calculate_volatility_risk(
     price_bars: List[PriceBar], lookback_periods: List[int] = [20, 60, 252]
-) -> Dict:
-    """Enhanced volatility risk calculation with multiple timeframes and metrics"""
+) -> VolatilityRisk:
+    """Volatility risk calculation with multiple timeframes and metrics"""
 
     closes = [bar_["close_price"] for bar_ in price_bars]
     highs = [bar_["high_price"] for bar_ in price_bars]
@@ -22,7 +40,7 @@ def calculate_enhanced_volatility_risk(
         [(closes[i] - closes[i - 1]) / closes[i - 1] for i in range(1, len(closes))]
     )
 
-    results = {}
+    results: VolatilityRisk = {}
 
     # 1. Multi-timeframe Historical Volatility
     for period in lookback_periods:
@@ -87,33 +105,18 @@ def calculate_enhanced_volatility_risk(
     results["max_drawdown_duration"] = max_drawdown_duration
 
     # 7. Value at Risk (VaR) calculations
-    var_95 = np.percentile(returns, 5)  # 5% worst return
-    var_99 = np.percentile(returns, 1)  # 1% worst return
+    var_95 = np.percentile(returns, 5).item()
+    var_99 = np.percentile(returns, 1).item()
     results["var_95"] = var_95
     results["var_99"] = var_99
 
     # 8. Conditional VaR (Expected Shortfall)
     cvar_95 = (
-        np.mean(returns[returns <= var_95])
+        np.mean(returns[returns <= var_95]).item()
         if len(returns[returns <= var_95]) > 0
         else var_95
     )
     results["cvar_95"] = cvar_95
-
-    # 9. Volatility Regime Detection
-    short_term_vol = (
-        np.std(returns[-min(20, len(returns)) :]) * np.sqrt(252)
-        if len(returns) >= 5
-        else 0
-    )
-    long_term_vol = np.std(returns) * np.sqrt(252)
-
-    if short_term_vol > long_term_vol * 1.5:
-        results["volatility_regime"] = "High Volatility"
-    elif short_term_vol < long_term_vol * 0.7:
-        results["volatility_regime"] = "Low Volatility"
-    else:
-        results["volatility_regime"] = "Normal Volatility"
 
     # 10. Jump Detection
     returns_std = np.std(returns)
