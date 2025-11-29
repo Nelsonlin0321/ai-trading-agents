@@ -6,6 +6,7 @@ from datetime import datetime
 from functools import partial, wraps
 import pytz
 from tqdm import tqdm
+from html_to_markdown import convert, ConversionOptions
 
 
 def multi_threading(function, parameters, max_workers=5, desc=""):
@@ -122,3 +123,7 @@ def async_wrap(func):
 
 def get_new_york_datetime() -> datetime:
     return datetime.now(tz=pytz.timezone("America/New_York"))
+
+
+def convert_html_to_markdown(html: str) -> str:
+    return convert(html, options=ConversionOptions(strip_tags={"a"}))

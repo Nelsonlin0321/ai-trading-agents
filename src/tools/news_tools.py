@@ -1,8 +1,9 @@
 from langchain.tools import tool
 from src.services.tradingeconomics.api_market_news import News
-from src.tools.actions.news import MarketNewsAct
+from src.tools.actions import MarketNewsAct, EquityNewsAct
 
 market_news_action = MarketNewsAct()
+equity_news_action = EquityNewsAct()
 
 
 def convert_news_to_markdown_text(news: News):
@@ -42,7 +43,24 @@ async def get_latest_market_news():
     return heading + "\n" + markdown_news
 
 
-__all__ = ["get_latest_market_news"]
+@tool(equity_news_action.name)
+async def get_latest_equity_news(symbol: str):
+    """
+    Retrieve the most recent equity news headlines and summaries for the United States.
+
+    This tool is useful for:
+    - Keeping track of breaking news that may affect specific equities
+    - Gathering quick context before making trading or investment decisions
+    - Monitoring scheduled data releases and their market impact
+    - Staying informed on company-specific events, product launches, or regulatory changes
+
+    Returns a markdown-formatted string containing the title, date, and content of each news item.
+    """
+    equity_news = await equity_news_action.arun(symbol)
+    return equity_news
+
+
+__all__ = ["get_latest_market_news", "get_latest_equity_news"]
 
 if __name__ == "__main__":
     #  python -m src.tools.news_tools

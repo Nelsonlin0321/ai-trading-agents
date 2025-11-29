@@ -33,7 +33,7 @@ class GoogleMarketResearchAct(Action):
     def name(self):
         return "google_finance_market_research"
 
-    @redis_cache(function_name="GoogleMarketResearch.arun", ttl=180)
+    @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
     async def arun(self):  # type: ignore
         return await self.run()  # type: ignore
 
@@ -94,7 +94,7 @@ class GoogleEquityResearchAct(Action):
     def name(self):
         return "google_equity_research"
 
-    @redis_cache(function_name="GoogleEquityResearch.arun", ttl=180)
+    @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 6)
     async def arun(self, ticker: str):  # type: ignore
         return await self.run(ticker)  # type: ignore
 
@@ -111,7 +111,7 @@ class GoogleEquityResearchAct(Action):
             prompt_template = f.read()
 
         datetime_str = get_current_date()
-        prompt = prompt_template.format(ticker=ticker, datetime=datetime_str)
+        prompt = prompt_template.format(TICKER=ticker, datetime=datetime_str)
 
         response = self.client.models.generate_content(
             model="gemini-2.5-flash",

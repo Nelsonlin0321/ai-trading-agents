@@ -1,4 +1,5 @@
-from src.tools.news_tools import get_latest_market_news
+from src.tools.news_tools import get_latest_market_news, get_latest_equity_news
+
 from src.tools.stock_tools import (
     get_etf_live_historical_price_change,
     get_stock_live_historical_price_change,
@@ -24,6 +25,7 @@ from src.tools.risk_tools import (
 
 __all__ = [
     "get_latest_market_news",
+    "get_latest_equity_news",
     "list_current_positions",
     "get_etf_live_historical_price_change",
     "get_stock_live_historical_price_change",

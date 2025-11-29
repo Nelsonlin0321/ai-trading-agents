@@ -172,7 +172,7 @@ def redis_cache(
                 kwargs["symbols"] = sorted(symbols)
 
             key_payload = {
-                "args": sorted(args),
+                "args": sorted([str(a) for a in args]),
                 "kwargs": kwargs,
                 "function_name": function_name,
             }

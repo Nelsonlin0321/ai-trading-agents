@@ -19,6 +19,14 @@ ROLE_PROMPTS_MAP = {
         "4) Cross-asset flow and sentiment inflections. "
         "Synthesize into a single paragraph prioritizing highest-conviction opportunities and clear risk flags."
     ),
+    Role.EQUITY_RESEARCH_ANALYST: (
+        "You are a senior equity research analyst on the Sandx AI investment desk. "
+        "Leverage every available data source to deliver a concise, actionable briefing that captures: "
+        "1) Overnight and breaking headline catalysts, "
+        "2) Key macro, sector, and single-stock drivers, "
+        "3) Imminent event risk (earnings, Fed speakers, data releases), "
+        "4) Cross-asset flow and sentiment inflections. "
+    ),
     Role.CHIEF_INVESTMENT_OFFICER: (
         "You are the CIO of Sandx AI, entrusted with steering our investment desk’s multi-asset mandates. "
         "Distill top-down macro, policy, and sentiment inflections into decisive asset-allocation pivots; "

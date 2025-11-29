@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, TypedDict
+from typing import TypedDict
 
 from dotenv import load_dotenv
 
@@ -63,7 +63,7 @@ News = TypedDict(
 
 
 class NewsResponse(TypedDict):
-    news: Dict[str, list[News]]
+    news: list[News]
 
 
 NewsAPI: AlpacaAPIClient[NewsResponse] = AlpacaAPIClient(endpoint="/v1beta1/news")
@@ -78,7 +78,7 @@ async def get_news(
     end: str,
     sort: str = "desc",
     limit: int = 12,
-) -> Dict[str, list[News]]:
+) -> NewsResponse:
     response = await NewsAPI.get(
         params={
             "symbols": ",".join(symbols),
@@ -89,7 +89,7 @@ async def get_news(
             "include_content": True,
         }
     )
-    return response["news"]
+    return response
 
 
 __all__ = ["get_news", "News"]

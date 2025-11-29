@@ -1,4 +1,4 @@
-from src.tools.actions.news import MarketNewsAct
+from src.tools.actions.news import MarketNewsAct, EquityNewsAct
 from src.tools.actions.research import GoogleMarketResearchAct, GoogleEquityResearchAct
 
 from src.tools.actions.base import Action
@@ -21,6 +21,7 @@ from src.tools.actions.risk import FundamentalRiskDataAct, VolatilityRiskAct
 __all__ = [
     "Action",
     "MarketNewsAct",
+    "EquityNewsAct",
     "GoogleMarketResearchAct",
     "ETFLivePriceChangeAct",
     "StockCurrentPriceAndIntradayChangeAct",
