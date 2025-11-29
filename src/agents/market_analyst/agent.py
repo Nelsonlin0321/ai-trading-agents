@@ -32,4 +32,4 @@ async def build_market_analyst_agent(model_name: ModelName, run_id: str):
         context_schema=Context,
     )
 
-    return agent
+    return context, agent
