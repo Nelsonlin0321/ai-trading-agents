@@ -125,3 +125,24 @@ def calculate_volatility_risk(
     results["jump_intensity"] = large_jumps / len(returns) if len(returns) > 0 else 0
 
     return results
+
+
+def format_volatility_risk_markdown(risk, ticker_symbol):
+    """
+    Simple markdown format with tables for each category
+    """
+    md = [f"# {ticker_symbol} Volatility Risk Indicators", ""]
+
+    for category, metrics in risk.items():
+        if metrics:
+            md.append(f"## {category}")
+            md.append("| Metric | Value |")
+            md.append("|--------|-------|")
+            for key, value in metrics.items():
+                md.append(f"| {key} | {value} |")
+            md.append("")
+
+    return "\n".join(md)
+
+
+__all__ = ["calculate_volatility_risk", "format_volatility_risk_markdown"]

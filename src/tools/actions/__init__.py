@@ -14,6 +14,7 @@ from src.tools.actions.portfolio import (
 )
 
 from src.tools.actions.fundamental_data import FundamentalDataAct
+from src.tools.actions.risk import FundamentalRiskDataAct, VolatilityRiskAct
 
 
 __all__ = [
@@ -28,4 +29,6 @@ __all__ = [
     "ListPositionsAct",
     "PortfolioPerformanceAnalysisAct",
     "FundamentalDataAct",
+    "FundamentalRiskDataAct",
+    "VolatilityRiskAct",
 ]

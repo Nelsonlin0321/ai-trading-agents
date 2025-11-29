@@ -8,6 +8,11 @@ from src.tools.actions.utils.fundamental_data_utils import (
     format_fundamentals_markdown,
     preprocess_info_dict,
 )
+from src.tools.actions.utils.risk_analysis import (
+    calculate_volatility_risk,
+    format_volatility_risk_markdown,
+)
+
 
 __all__ = [
     "analyze_timeline_value",
@@ -16,4 +21,6 @@ __all__ = [
     "get_categorized_metrics",
     "format_fundamentals_markdown",
     "preprocess_info_dict",
+    "calculate_volatility_risk",
+    "format_volatility_risk_markdown",
 ]
