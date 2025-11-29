@@ -1,7 +1,7 @@
 from prisma.enums import Role
 
 from src.context import Context
-from src.prompt import SANDX_AI_INTRODUCTION, RolePrompts
+from src.prompt import SANDX_AI_INTRODUCTION, RECOMMENDATION_PROMPT, ROLE_PROMPTS_MAP
 from src.tools.actions import ListPositionsAct, PortfolioPerformanceAnalysisAct
 
 
@@ -25,10 +25,10 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
     performance_narrative = await PortfolioPerformanceAnalysisAct().arun(
         bot_id=context.bot.id
     )
-    role_intro = RolePrompts[role]
     sections = [
         SANDX_AI_INTRODUCTION,
-        role_intro,
+        ROLE_PROMPTS_MAP[role],
+        RECOMMENDATION_PROMPT,
         user_name,
         watchlist,
         positions_markdown,
