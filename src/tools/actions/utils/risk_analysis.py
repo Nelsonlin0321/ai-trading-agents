@@ -26,7 +26,11 @@ class VolatilityRisk(TypedDict, total=False):
 def calculate_volatility_risk(
     price_bars: List[PriceBar], lookback_periods: List[int] = [20, 60, 252]
 ) -> VolatilityRisk:
-    """Volatility risk calculation with multiple timeframes and metrics"""
+    """Volatility risk calculation with multiple timeframes and metrics
+    price_bars: List of price bars ascending order. the index 0 is the oldest bar,
+    and the index -1 is the latest bar.
+    lookback_periods: List of lookback periods in days. Default is [20, 60, 252].
+    """
 
     closes = [bar_["close_price"] for bar_ in price_bars]
     highs = [bar_["high_price"] for bar_ in price_bars]
@@ -127,6 +131,86 @@ def calculate_volatility_risk(
     return results
 
 
+def calculate_price_risk(
+    price_bars: List[PriceBar], lookback_periods: List[int] = [5, 10, 20, 50]
+) -> dict:
+    """Enhanced price action risk metrics with multiple lookbacks, momentum, and breakout signals
+    price_bars: List of price bars ascending order. the index 0 is the oldest bar,
+    and the index -1 is the latest bar.
+    lookback_periods: List of lookback periods in days. Default is [5, 10, 20, 50].
+    """
+    if not price_bars:
+        return {"error": "No price bars provided"}
+
+    horizons = lookback_periods
+
+    highs = [bar_["high_price"] for bar_ in price_bars]
+    lows = [bar_["low_price"] for bar_ in price_bars]
+    closes = [bar_["close_price"] for bar_ in price_bars]
+    current_price = closes[-1]
+
+    def support_resistance(lookback: int) -> tuple[float, float]:
+        """Local support/resistance over lookback"""
+        if len(highs) < lookback:
+            return min(lows), max(highs)
+        return min(lows[-lookback:]), max(highs[-lookback:])
+
+    # Multi-horizon support/resistance
+    sr_levels = {h: support_resistance(h) for h in horizons}
+
+    # Distances to nearest levels
+    distances = {}
+    for h, (sup, res) in sr_levels.items():
+        distances[f"support_{h}d"] = (current_price - sup) / current_price
+        distances[f"resistance_{h}d"] = (res - current_price) / current_price
+
+    # Momentum and trend strength (dynamically for each horizon)
+    momentums = {}
+    for h in horizons:
+        if len(closes) >= h:
+            momentums[f"momentum_{h}d"] = (current_price - closes[-h]) / closes[-h]
+        else:
+            momentums[f"momentum_{h}d"] = 0
+
+    # Average True Range (proxy for intraday volatility)
+    tr = [
+        max(high, c_prev) - min(low, c_prev)
+        for high, low, c_prev in zip(highs[1:], lows[1:], closes[:-1])
+    ]
+
+    atrs = {}
+    for h in horizons:
+        atrs[f"average_true_range_{h}d"] = (
+            np.mean(tr[-h:]) if len(tr) >= h else np.mean(tr) if tr else 0
+        )
+        atrs[f"average_true_range_{h}d_percent"] = (
+            atrs[f"average_true_range_{h}d"] / current_price
+        )
+
+    # Breakout/breakdown flags (dynamically for each horizon)
+    breakouts = {}
+    breakdowns = {}
+    for h in horizons:
+        if h in sr_levels:
+            breakouts[f"breakout_{h}d"] = 1 if current_price > sr_levels[h][1] else 0
+            breakdowns[f"breakdown_{h}d"] = 1 if current_price < sr_levels[h][0] else 0
+        else:
+            breakouts[f"breakout_{h}d"] = 0
+            breakdowns[f"breakdown_{h}d"] = 0
+
+    # Return enriched dictionary
+    return {
+        "current_price": current_price,
+        **{f"support_{h}d": sr[0] for h, sr in sr_levels.items()},
+        **{f"resistance_{h}d": sr[1] for h, sr in sr_levels.items()},
+        **distances,
+        **momentums,
+        **atrs,
+        **breakouts,
+        **breakdowns,
+    }
+
+
 def format_volatility_risk_markdown(risk, ticker_symbol):
     """
     Simple markdown format with tables for each category
@@ -142,4 +226,24 @@ def format_volatility_risk_markdown(risk, ticker_symbol):
     return "\n".join(md)
 
 
-__all__ = ["calculate_volatility_risk", "format_volatility_risk_markdown"]
+def format_price_risk_markdown(risk, ticker_symbol):
+    """
+    Simple markdown format with tables for each category
+    """
+    md = [f"# {ticker_symbol} Price Risk Indicators", ""]
+
+    md.append("| Metric | Value |")
+    md.append("|--------|-------|")
+    for key, value in risk.items():
+        md.append(f"| {key} | {value} |")
+    md.append("")
+
+    return "\n".join(md)
+
+
+__all__ = [
+    "calculate_volatility_risk",
+    "format_volatility_risk_markdown",
+    "calculate_price_risk",
+    "format_price_risk_markdown",
+]

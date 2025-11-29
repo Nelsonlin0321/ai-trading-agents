@@ -2,11 +2,13 @@ from langchain.tools import tool
 from src.tools.actions.risk import (
     FundamentalRiskDataAct,
     VolatilityRiskAct,
+    PriceRiskAct,
 )
 
 
 fundamental_risk_act = FundamentalRiskDataAct()
 volatility_risk_act = VolatilityRiskAct()
+price_risk_act = PriceRiskAct()
 
 
 @tool(fundamental_risk_act.name)
@@ -52,3 +54,33 @@ async def get_volatility_risk_indicators(ticker: str):
         ticker: Stock symbol, e.g., "AAPL".
     """
     return await volatility_risk_act.arun(ticker)
+
+
+@tool(price_risk_act.name)
+async def get_price_risk_indicators(ticker: str):
+    """Get price action risk indicators for a ticker.
+
+    Computes multi-horizon support/resistance, momentum, ATR, and breakout signals
+    from ~1 year of daily bars.
+
+    Includes:
+    - Support/Resistance over lookbacks (default: 5, 10, 20, 50 days)
+    - Distance to nearest support/resistance normalized by `current_price(T-1)`
+    - Momentum per lookback: `(current_price - close[-h]) / close[-h]`
+    - Average True Range per lookback and percent of price
+    - Breakout/Breakdown flags based on support/resistance breaches
+    - `current_price(T-1)`
+
+    Returns a markdown table summarizing the computed indicators.
+
+    Args:
+        ticker: Stock symbol, e.g., "AAPL".
+    """
+    return await price_risk_act.arun(ticker)
+
+
+__all__ = [
+    "get_fundamental_risk_data",
+    "get_volatility_risk_indicators",
+    "get_price_risk_indicators",
+]

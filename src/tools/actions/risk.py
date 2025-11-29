@@ -32,7 +32,7 @@ class VolatilityRiskAct(Action):
         start = (date.today() - timedelta(days=356 + 7)).isoformat()
         end = date.today().isoformat()
         price_bars = await get_historical_price_bars(
-            symbols=[ticker], timeframe="1Day", start=start, end=end
+            symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
         )
         price_bars = price_bars[ticker]
         risk = utils.calculate_volatility_risk(price_bars)
@@ -40,4 +40,22 @@ class VolatilityRiskAct(Action):
         return md
 
 
-__all__ = ["FundamentalRiskDataAct", "VolatilityRiskAct"]
+class PriceRiskAct(Action):
+    @property
+    def name(self):
+        return "get_price_risk_indicators"
+
+    async def arun(self, ticker: str) -> str:
+        """Get price risk indicators for a ticker"""
+        start = (date.today() - timedelta(days=356 + 7)).isoformat()
+        end = date.today().isoformat()
+        price_bars = await get_historical_price_bars(
+            symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
+        )
+        price_bars = price_bars[ticker]
+        risk = utils.calculate_price_risk(price_bars)
+        md = utils.format_price_risk_markdown(risk, ticker)
+        return md
+
+
+__all__ = ["FundamentalRiskDataAct", "VolatilityRiskAct", "PriceRiskAct"]

@@ -3,6 +3,7 @@
         "agentmessage",
         "ainvoke",
         "arun",
+        "atrs",
         "Axios",
         "drawdowns",
         "garman",
@@ -11,6 +12,7 @@
         "kimi",
         "klass",
         "lookback",
+        "lookbacks",
         "pfunc",
         "Referer"
     ],
