@@ -11,7 +11,7 @@ def preprocess_info_dict(info_dict):
     return info_dict
 
 
-def categorize_fundamental_data(info_dict):
+def categorize_fundamental_data(info_dict, categories_map=FUNDAMENTAL_CATEGORIES):
     """
     Categorize fundamental data from info dictionary into structured categories
 
@@ -23,7 +23,7 @@ def categorize_fundamental_data(info_dict):
     """
     categorized_data = {}
 
-    for category, metric_keys in FUNDAMENTAL_CATEGORIES.items():
+    for category, metric_keys in categories_map.items():
         category_metrics = {}
 
         for key in metric_keys:
@@ -37,7 +37,12 @@ def categorize_fundamental_data(info_dict):
     return categorized_data
 
 
-def get_categorized_metrics(info_dict, format_values=True, include_empty=False):
+def get_categorized_metrics(
+    info_dict,
+    categories_map=FUNDAMENTAL_CATEGORIES,
+    format_values=True,
+    include_empty=False,
+):
     """
     Get categorized metrics with advanced options
 
@@ -83,7 +88,7 @@ def get_categorized_metrics(info_dict, format_values=True, include_empty=False):
 
     categorized_data = {}
 
-    for category, metric_keys in FUNDAMENTAL_CATEGORIES.items():
+    for category, metric_keys in categories_map.items():
         category_metrics = {}
 
         for key in metric_keys:

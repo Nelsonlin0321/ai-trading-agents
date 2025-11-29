@@ -1,6 +1,7 @@
 from src.tools.actions.base import Action
 from src.services.yfinance.api_info import async_get_ticker_info
 from src.tools.actions import utils
+from src.utils import constants
 
 
 class FundamentalDataAct(Action):
@@ -11,9 +12,26 @@ class FundamentalDataAct(Action):
     async def arun(self, ticker: str) -> str:
         info = await async_get_ticker_info(ticker)
         info = utils.preprocess_info_dict(info)
-        categorized_data = utils.get_categorized_metrics(info)
+        categorized_data = utils.get_categorized_metrics(
+            info, categories_map=constants.FUNDAMENTAL_CATEGORIES
+        )
         md = utils.format_fundamentals_markdown(categorized_data, ticker)
         return md
 
 
-__all__ = ["FundamentalDataAct"]
+class FundamentalRiskDataAct(Action):
+    @property
+    def name(self):
+        return "get_comprehensive_fundamental_risk_data"
+
+    async def arun(self, ticker: str) -> str:
+        info = await async_get_ticker_info(ticker)
+        info = utils.preprocess_info_dict(info)
+        categorized_data = utils.get_categorized_metrics(
+            info, categories_map=constants.FUNDAMENTAL_RISK_CATEGORIES
+        )
+        md = utils.format_fundamentals_markdown(categorized_data, ticker)
+        return md
+
+
+__all__ = ["FundamentalDataAct", "FundamentalRiskDataAct"]
