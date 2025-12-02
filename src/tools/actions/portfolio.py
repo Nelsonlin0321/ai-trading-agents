@@ -1,7 +1,8 @@
 from typing import Sequence, Annotated, TypedDict
 import traceback
 from loguru import logger
-from prisma.types import PositionCreateInput, PositionUpdateInput
+from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
+from prisma.enums import TradeType
 from src.tools.actions import Action
 from src.services.sandx_ai import list_positions, get_timeline_values
 from src.services.sandx_ai.typing import Position
@@ -108,7 +109,7 @@ class BuyAct(Action):
     def name(self):
         return "buy_stock"
 
-    async def arun(self, bot_id: str, ticker: str, volume: float):
+    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
         try:
             clock = alpaca_trading_client.get_clock()
             if not clock.is_open:  # type: ignore
@@ -121,6 +122,16 @@ class BuyAct(Action):
             total_cost = price * volume
 
             await db.connect()
+
+            ticker = ticker.upper().strip()
+
+            valid_ticker = await db.prisma.ticker.find_unique(
+                where={"ticker": ticker.replace(".", "-")}
+            )
+
+            if valid_ticker is None:
+                return f"Invalid ticker {ticker}"
+
             async with db.prisma.tx() as transaction:
                 portfolio = await transaction.portfolio.find_unique(
                     where={"botId": bot_id}
@@ -164,6 +175,17 @@ class BuyAct(Action):
                             cost=(existing.cost * existing.volume + price * volume)
                             / (existing.volume + volume),
                         ),
+                    )
+
+                    await transaction.trade.create(
+                        data=TradeCreateInput(
+                            type=TradeType.BUY,
+                            price=price,
+                            ticker=ticker,
+                            amount=volume,
+                            runId=runId,
+                            botId=bot_id,
+                        )
                     )
 
                     return (
