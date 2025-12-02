@@ -1,5 +1,5 @@
 from langchain.tools import tool
-from src.tools.actions.risk import (
+from src.tools_adaptors.risk import (
     FundamentalRiskDataAct,
     VolatilityRiskAct,
     PriceRiskAct,

@@ -1,6 +1,6 @@
 from langchain.tools import tool
 from src.services.tradingeconomics.api_market_news import News
-from src.tools.actions import MarketNewsAct, EquityNewsAct
+from src.tools_adaptors.news import MarketNewsAct, EquityNewsAct
 
 market_news_action = MarketNewsAct()
 equity_news_action = EquityNewsAct()

@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
 from langchain.tools import tool
-from src.tools import actions
+from src import tools_adaptors
 from src import utils
 
-eft_live_price_change_act = actions.ETFLivePriceChangeAct()
-stock_live_price_change_act = actions.StockLivePriceChangeAct()
-most_active_stockers_act = actions.MostActiveStockersAct()
+eft_live_price_change_act = tools_adaptors.ETFLivePriceChangeAct()
+stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
+most_active_stockers_act = tools_adaptors.MostActiveStockersAct()
 
 
 @tool(eft_live_price_change_act.name)

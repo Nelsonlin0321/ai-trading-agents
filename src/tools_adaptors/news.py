@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from src.services.tradingeconomics import get_news
 from src.services.alpaca import get_news as get_alpaca_news
-from src.tools.actions.base import Action
+from src.tools_adaptors.base import Action
 from src.utils import convert_html_to_markdown
 
 

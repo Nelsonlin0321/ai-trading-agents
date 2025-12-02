@@ -3,7 +3,7 @@ import os
 from google import genai
 from google.genai import types
 
-from src.tools.actions.base import Action
+from src.tools_adaptors.base import Action
 from src.services.utils import redis_cache
 from src.utils import async_wrap
 from src.utils import get_current_date
@@ -45,7 +45,7 @@ class GoogleMarketResearchAct(Action):
         )
 
         with open(
-            "./src/tools/actions/google_research.md", mode="r", encoding="utf-8"
+            "./src/tools_adaptors/google_research.md", mode="r", encoding="utf-8"
         ) as f:
             prompt_template = f.read()
 
@@ -106,7 +106,7 @@ class GoogleEquityResearchAct(Action):
         )
 
         with open(
-            "./src/tools/actions/google_equity_research.md", mode="r", encoding="utf-8"
+            "./src/tools_adaptors/google_equity_research.md", mode="r", encoding="utf-8"
         ) as f:
             prompt_template = f.read()
 

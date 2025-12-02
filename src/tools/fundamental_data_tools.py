@@ -1,5 +1,5 @@
 from langchain.tools import tool
-from src.tools.actions.fundamental_data import (
+from src.tools_adaptors.fundamental_data import (
     FundamentalDataAct,
 )
 

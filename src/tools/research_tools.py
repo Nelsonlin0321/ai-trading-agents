@@ -1,5 +1,5 @@
 from langchain.tools import tool
-from src.tools.actions import GoogleMarketResearchAct, GoogleEquityResearchAct
+from src.tools_adaptors.research import GoogleMarketResearchAct, GoogleEquityResearchAct
 
 google_market_research_action = GoogleMarketResearchAct()
 google_equity_research_action = GoogleEquityResearchAct()
