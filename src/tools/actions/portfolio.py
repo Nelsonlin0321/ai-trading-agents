@@ -98,4 +98,13 @@ class PortfolioPerformanceAnalysisAct(Action):
         return "Insufficient data for analysis."
 
 
+class BuyAct(Action):
+    @property
+    def name(self):
+        return "buy_stock"
+
+    async def arun(self, bot_id: str, ticker: str, volume: float):
+        pass
+
+
 __all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
