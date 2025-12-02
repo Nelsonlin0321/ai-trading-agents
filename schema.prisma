@@ -232,16 +232,17 @@ model AgentMessage {
 }
 
 model Trade {
-    id        String    @id @default(uuid())
-    type      TradeType
-    price     Float
-    ticker    String
-    amount    Float
-    run       Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
-    runId     String
-    bot       Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
-    botId     String
-    createdAt DateTime  @default(now())
+    id         String    @id @default(uuid())
+    type       TradeType
+    price      Float
+    ticker     String
+    amount     Float
+    run        Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
+    runId      String
+    bot        Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+    botId      String
+    realizedPL Float? // Only applicable for sell trades
+    createdAt  DateTime  @default(now())
 }
 
 enum TradeType {

@@ -292,6 +292,7 @@ class SellAct(Action):
                         amount=volume,
                         runId=runId,
                         botId=bot_id,
+                        realizedPL=price * volume - existing.cost * volume,
                     )
                 )
 
