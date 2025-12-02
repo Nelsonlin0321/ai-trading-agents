@@ -71,6 +71,8 @@ model Position {
     portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt
+
+    @@unique([portfolioId, ticker])
 }
 
 model InitPortfolio {

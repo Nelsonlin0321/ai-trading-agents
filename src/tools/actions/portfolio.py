@@ -1,9 +1,14 @@
 from typing import Sequence, Annotated, TypedDict
+import traceback
+from loguru import logger
+from prisma.types import PositionCreateInput, PositionUpdateInput
 from src.tools.actions import Action
 from src.services.sandx_ai import list_positions, get_timeline_values
 from src.services.sandx_ai.typing import Position
+from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+from src.services.alpaca import get_latest_quotes
 from src.tools.actions import utils as action_utils
-from src import utils
+from src import utils, db
 
 
 class FormattedPosition(TypedDict):
@@ -104,7 +109,74 @@ class BuyAct(Action):
         return "buy_stock"
 
     async def arun(self, bot_id: str, ticker: str, volume: float):
-        pass
+        try:
+            clock = alpaca_trading_client.get_clock()
+            if not clock.is_open:  # type: ignore
+                return "Market is closed. Cannot buy stock."
+            quotes = await get_latest_quotes([ticker])
+            price = quotes["quotes"].get(ticker, {}).get("ask_price")
+            if not price:
+                return f"Cannot get price for {ticker}"
+            price = float(price)
+            total_cost = price * volume
+
+            await db.connect()
+            async with db.prisma.tx() as transaction:
+                portfolio = await transaction.portfolio.find_unique(
+                    where={"botId": bot_id}
+                )
+                if portfolio is None:
+                    raise ValueError("Portfolio not found")
+                if portfolio.cash < total_cost:
+                    return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
+                portfolio.cash -= total_cost
+                await transaction.portfolio.update(
+                    where={"botId": bot_id}, data={"cash": portfolio.cash}
+                )
+                existing = await transaction.position.find_unique(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    }
+                )
+
+                if existing is None:
+                    await transaction.position.create(
+                        data=PositionCreateInput(
+                            ticker=ticker,
+                            volume=volume,
+                            portfolioId=portfolio.id,
+                            cost=price,
+                        )
+                    )
+                else:
+                    await transaction.position.update(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        },
+                        data=PositionUpdateInput(
+                            volume=existing.volume + volume,
+                            cost=(existing.cost * existing.volume + price * volume)
+                            / (existing.volume + volume),
+                        ),
+                    )
+
+                    return (
+                        f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                        f"Current volume is {existing.volume + volume} "
+                        f"with average cost {utils.format_float(existing.cost)}"
+                    )
+
+        except Exception as e:
+            logger.error(f"Error buying stock: {e} Traceback: {traceback.format_exc()}")
+            return f"Failed to buy {volume} shares of {ticker}"
+        finally:
+            await db.disconnect()
 
 
-__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
+__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct", "BuyAct"]
