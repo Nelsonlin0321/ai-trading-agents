@@ -34,4 +34,5 @@ dev = [
 include = ["src"]
 exclude = [".venv/",
     "**/__pycache__",
+    "uv.lock"
 ]

@@ -1,0 +1,222 @@
+import traceback
+from loguru import logger
+from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
+from src import utils, db
+from src.tools_adaptors.base import Action
+from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+from src.services.alpaca import get_latest_quotes
+from prisma.enums import TradeType
+
+
+class BuyAct(Action):
+    @property
+    def name(self):
+        return "buy_stock"
+
+    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
+        try:
+            clock = alpaca_trading_client.get_clock()
+            if not clock.is_open:  # type: ignore
+                return "Market is closed. Cannot buy stock."
+            quotes = await get_latest_quotes([ticker])
+            price = quotes["quotes"].get(ticker, {}).get("ask_price")
+            if not price:
+                return f"Cannot get price for {ticker}"
+            price = float(price)
+            total_cost = price * volume
+
+            await db.connect()
+
+            ticker = ticker.upper().strip()
+
+            valid_ticker = await db.prisma.ticker.find_unique(
+                where={"ticker": ticker.replace(".", "-")}
+            )
+
+            if valid_ticker is None:
+                return f"Invalid ticker {ticker}"
+
+            async with db.prisma.tx() as transaction:
+                portfolio = await transaction.portfolio.find_unique(
+                    where={"botId": bot_id}
+                )
+                if portfolio is None:
+                    raise ValueError("Portfolio not found")
+                if portfolio.cash < total_cost:
+                    return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
+                portfolio.cash -= total_cost
+                await transaction.portfolio.update(
+                    where={"botId": bot_id}, data={"cash": portfolio.cash}
+                )
+                existing = await transaction.position.find_unique(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    }
+                )
+
+                if existing is None:
+                    await transaction.position.create(
+                        data=PositionCreateInput(
+                            ticker=ticker,
+                            volume=volume,
+                            portfolioId=portfolio.id,
+                            cost=price,
+                        )
+                    )
+                else:
+                    await transaction.position.update(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        },
+                        data=PositionUpdateInput(
+                            volume=existing.volume + volume,
+                            cost=(existing.cost * existing.volume + price * volume)
+                            / (existing.volume + volume),
+                        ),
+                    )
+
+                    await transaction.trade.create(
+                        data=TradeCreateInput(
+                            type=TradeType.BUY,
+                            price=price,
+                            ticker=ticker,
+                            amount=volume,
+                            runId=runId,
+                            botId=bot_id,
+                        )
+                    )
+
+                    return (
+                        f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                        f"Current volume is {existing.volume + volume} "
+                        f"with average cost {utils.format_float(existing.cost)}"
+                    )
+
+        except Exception as e:
+            logger.error(f"Error buying stock: {e} Traceback: {traceback.format_exc()}")
+            return f"Failed to buy {volume} shares of {ticker}"
+        finally:
+            await db.disconnect()
+
+
+class SellAct(Action):
+    @property
+    def name(self):
+        return "sell_stock"
+
+    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
+        try:
+            clock = alpaca_trading_client.get_clock()
+            if not clock.is_open:  # type: ignore
+                return "Market is closed. Cannot sell stock."
+            quotes = await get_latest_quotes([ticker])
+            price = quotes["quotes"].get(ticker, {}).get("bid_price")
+            if not price:
+                return f"Cannot get price for {ticker}"
+            price = float(price)
+            total_proceeds = price * volume
+
+            await db.connect()
+
+            ticker = ticker.upper().strip()
+
+            valid_ticker = await db.prisma.ticker.find_unique(
+                where={"ticker": ticker.replace(".", "-")}
+            )
+
+            if valid_ticker is None:
+                return f"Invalid ticker {ticker}"
+
+            async with db.prisma.tx() as transaction:
+                portfolio = await transaction.portfolio.find_unique(
+                    where={"botId": bot_id}
+                )
+                if portfolio is None:
+                    raise ValueError("Portfolio not found")
+
+                existing = await transaction.position.find_unique(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    }
+                )
+
+                if existing is None:
+                    return f"No position found for {ticker}"
+
+                if existing.volume < volume:
+                    return (
+                        f"Not enough shares to sell {volume} shares of {ticker}. "
+                        f"Current volume is {existing.volume}."
+                    )
+
+                portfolio.cash += total_proceeds
+                await transaction.portfolio.update(
+                    where={"botId": bot_id}, data={"cash": portfolio.cash}
+                )
+
+                new_volume = existing.volume - volume
+
+                if new_volume == 0:
+                    await transaction.position.delete(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        }
+                    )
+                else:
+                    await transaction.position.update(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        },
+                        data=PositionUpdateInput(
+                            volume=new_volume,
+                            cost=existing.cost,
+                        ),
+                    )
+
+                await transaction.trade.create(
+                    data=TradeCreateInput(
+                        type=TradeType.SELL,
+                        price=price,
+                        ticker=ticker,
+                        amount=volume,
+                        runId=runId,
+                        botId=bot_id,
+                        realizedPL=price * volume - existing.cost * volume,
+                        realizedPLPercent=(price - existing.cost) / existing.cost,
+                    )
+                )
+
+                if new_volume == 0:
+                    return (
+                        f"Successfully sold {volume} shares of {ticker} at {price} per share. "
+                        f"Position closed."
+                    )
+
+                return (
+                    f"Successfully sold {volume} shares of {ticker} at {price} per share. "
+                    f"Current volume is {new_volume} "
+                    f"with average cost {utils.format_float(existing.cost)}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Error selling stock: {e} Traceback: {traceback.format_exc()}"
+            )
+            return f"Failed to sell {volume} shares of {ticker}"
+        finally:
+            await db.disconnect()

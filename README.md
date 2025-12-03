@@ -49,3 +49,8 @@ pylint --generate-rcfile > .pylintrc
 
 ## Learning Docs
 - https://docs.langchain.com/oss/python/langchain/overview
+
+
+```shell
+npx codefetch --project-tree 5
+```
