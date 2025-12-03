@@ -8,6 +8,8 @@ from src.tools_adaptors.stocks import (
     StockHistoricalPriceChangesAct,
     StockLivePriceChangeAct,
     MostActiveStockersAct,
+    SingleLatestQuotesAct,
+    MultiLatestQuotesAct,
 )
 from src.tools_adaptors.portfolio import (
     ListPositionsAct,
@@ -20,6 +22,8 @@ from src.tools_adaptors.risk import FundamentalRiskDataAct, VolatilityRiskAct
 
 __all__ = [
     "Action",
+    "SingleLatestQuotesAct",
+    "MultiLatestQuotesAct",
     "MarketNewsAct",
     "EquityNewsAct",
     "GoogleMarketResearchAct",

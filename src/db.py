@@ -27,3 +27,5 @@ async def disconnect():
 redis = Redis(
     url=get_env("UPSTASH_REDIS_REST_URL"), token=get_env("UPSTASH_REDIS_REST_TOKEN")
 )
+
+__all__ = ["prisma", "redis", "connect", "disconnect"]

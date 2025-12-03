@@ -6,6 +6,8 @@ from src import utils
 eft_live_price_change_act = tools_adaptors.ETFLivePriceChangeAct()
 stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
 most_active_stockers_act = tools_adaptors.MostActiveStockersAct()
+single_latest_quotes_act = tools_adaptors.SingleLatestQuotesAct()
+multi_latest_quotes_act = tools_adaptors.MultiLatestQuotesAct()
 
 
 @tool(eft_live_price_change_act.name)
@@ -39,7 +41,7 @@ async def get_etf_live_historical_price_change():
     return heading + "\n\n" + note + "\n\n" + markdown_table
 
 
-class TickerInput(BaseModel):
+class TickersInput(BaseModel):
     """Input for querying stock current price and historical price changes"""
 
     tickers: list[str] = Field(
@@ -47,7 +49,7 @@ class TickerInput(BaseModel):
     )
 
 
-@tool(stock_live_price_change_act.name, args_schema=TickerInput)
+@tool(stock_live_price_change_act.name, args_schema=TickersInput)
 async def get_stock_live_historical_price_change(tickers: list[str]):
     """
     Fetch comprehensive percent-change metrics for the provided stock tickers.
@@ -137,6 +139,62 @@ async def get_most_active_stockers():
 - The current intraday percent is the percent-change of the stock's current price relative to the previous close.
 """
     return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
+@tool(multi_latest_quotes_act.name, args_schema=TickersInput)
+async def get_multi_tickers_latest_quotes(tickers: list[str]):
+    """
+    Fetch the latest bid/ask quotes and market data for multiple stock tickers.
+
+    This tool provides real-time market data including:
+    - Current bid and ask prices with sizes
+    - Quote conditions and timestamp
+    - Latest consolidated quote data
+
+    Use this tool when you need:
+    - Real-time pricing for trading decisions
+    - To monitor bid/ask dynamics before placing orders
+    - To get precise pricing for portfolio valuation
+
+    Args:
+        symbols: List of stock tickers (1-100 symbols recommended)
+
+    Returns:
+        A markdown-formatted table with latest quote data for each symbol.
+    """
+    quotes_data = await multi_latest_quotes_act.arun(tickers)
+    return quotes_data
+
+
+class TickerInput(BaseModel):
+    """Input for querying latest quote for a single symbol"""
+
+    ticker: str = Field(description="Stock ticker, e.g. 'AAPL'")
+
+
+@tool(single_latest_quotes_act.name, args_schema=TickerInput)
+async def get_single_ticker_latest_quotes(ticker: str):
+    """
+    Fetch the latest bid/ask quotes and market data for a single stock ticker.
+
+    This tool provides real-time market data including:
+    - Current bid and ask prices with sizes
+    - Quote conditions and timestamp
+    - Latest consolidated quote data
+
+    Use this tool when you need:
+    - Real-time pricing for trading decisions
+    - To monitor bid/ask dynamics before placing orders
+    - To get precise pricing for portfolio valuation
+
+    Args:
+        tickers: List of stock tickers (1-100 symbols recommended)
+
+    Returns:
+        A markdown-formatted table with latest quote data for each symbol.
+    """
+    quotes_data = await single_latest_quotes_act.arun(ticker)
+    return quotes_data
 
 
 __all__ = [

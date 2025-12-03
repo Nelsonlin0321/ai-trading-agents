@@ -66,6 +66,32 @@ def dicts_to_markdown_table(data: list[dict[str, Any]]):
     return table
 
 
+def dict_to_markdown_table(data: dict[str, Any]):
+    """
+    Convert a dictionary into a Markdown table string.
+
+    Args:
+        data (dict): Dictionary with the same keys.
+
+    Returns:
+        str: Markdown formatted table.
+    """
+    if not data:
+        return ""
+
+    # Extract headers from the first dictionary
+    headers = list(data.keys())
+
+    # Build header row
+    table = "| " + " | ".join(headers) + " |\n"
+    table += "| " + " | ".join(["---"] * len(headers)) + " |\n"
+
+    # Build data rows
+    table += "| " + " | ".join(str(data[h]) for h in headers) + " |\n"
+
+    return table
+
+
 def format_percent_change(p: float, precision: int = 2) -> str:
     p = p * 100
     return f"{p:+.{precision}f}%"

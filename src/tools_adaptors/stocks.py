@@ -5,6 +5,7 @@ from src.services.alpaca import (
     get_snapshots,
     get_historical_price_bars,
     get_most_active_stocks,
+    get_latest_quotes,
 )
 from src.services.alpaca.typing import PriceBar
 from src.tools_adaptors.base import Action
@@ -369,6 +370,115 @@ class MostActiveStockersAct(Action):
         )
 
 
+# src/tools_adaptors/stocks.py - Add this class
+class MultiLatestQuotesAct(Action):
+    @property
+    def name(self):
+        return "get_multi_symbols_latest_quotes"
+
+    async def arun(self, symbols: list[str]) -> str:
+        """
+        Fetch latest quotes for multiple symbols.
+
+        Returns:
+            dict: Mapping of symbol to quote data including:
+                - ask_price: Current ask price
+                - ask_size: Ask size
+                - bid_price: Current bid price
+                - bid_size: Bid size
+                - timestamp: Quote timestamp
+        """
+
+        quotes = await get_latest_quotes(symbols)
+        formatted_quotes = []
+        for symbol in quotes:
+            quote = quotes[symbol]
+            formatted_quote = {
+                "symbol": symbol,
+                "bid_price": utils.format_currency(quote["bid_price"]),
+                "bid_size": utils.human_format(quote["bid_size"]),
+                "ask_price": utils.format_currency(quote["ask_price"]),
+                "ask_size": utils.human_format(quote["ask_size"]),
+                "spread": utils.format_currency(
+                    quote["ask_price"] - quote["bid_price"]
+                ),
+                "spread_percent": utils.format_percent(
+                    (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
+                ),
+                "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
+                "timestamp": utils.format_datetime(quote["timestamp"]),
+                # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
+            }
+            formatted_quotes.append(formatted_quote)
+
+        if not formatted_quotes:
+            return "No quote data available for the requested symbols."
+
+        markdown_table = utils.dicts_to_markdown_table(formatted_quotes)
+        heading = "## Latest Market Quotes"
+        note = f"""
+**Note:**
+- Data fetched at {utils.get_current_timestamp()} New York time
+- Bid/Ask prices are real-time consolidated quotes
+- Spread = Ask Price - Bid Price
+- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
+"""
+
+        return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
+class SingleLatestQuotesAct(Action):
+    @property
+    def name(self):
+        return "get_single_symbol_latest_quotes"
+
+    async def arun(self, symbol: str) -> str:
+        """
+        Fetch latest quotes for a single symbol.
+
+        Returns:
+            dict: Mapping of symbol to quote data including:
+                - ask_price: Current ask price
+                - ask_size: Ask size
+                - bid_price: Current bid price
+                - bid_size: Bid size
+                - timestamp: Quote timestamp
+        """
+
+        quotes = await get_latest_quotes([symbol])
+        quote = quotes.get(symbol)
+
+        if not quote:
+            return "No quote data available for the requested symbol."
+
+        formatted_quote = {
+            "symbol": symbol,
+            "bid_price": utils.format_currency(quote["bid_price"]),
+            "bid_size": utils.human_format(quote["bid_size"]),
+            "ask_price": utils.format_currency(quote["ask_price"]),
+            "ask_size": utils.human_format(quote["ask_size"]),
+            "spread": utils.format_currency(quote["ask_price"] - quote["bid_price"]),
+            "spread_percent": utils.format_percent(
+                (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
+            ),
+            "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
+            "timestamp": utils.format_datetime(quote["timestamp"]),
+            # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
+        }
+
+        markdown_table = utils.dict_to_markdown_table(formatted_quote)
+        heading = f"## Latest {symbol} Market Quotes"
+        note = f"""
+**Note:**
+- Data fetched at {utils.get_current_timestamp()} New York time
+- Bid/Ask prices are real-time consolidated quotes
+- Spread = Ask Price - Bid Price
+- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
+"""
+
+        return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
 # only Act
 __all__ = [
     "StockRawSnapshotAct",
@@ -377,6 +487,8 @@ __all__ = [
     "StockLivePriceChangeAct",
     "ETFLivePriceChangeAct",
     "MostActiveStockersAct",
+    "SingleLatestQuotesAct",
+    "MultiLatestQuotesAct",
 ]
 
 if __name__ == "__main__":

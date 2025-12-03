@@ -22,8 +22,14 @@ from src.tools.risk_tools import (
     get_volatility_risk_indicators,
     get_price_risk_indicators,
 )
+from src.tools.trading_tools import (
+    buy_stock,
+    sell_stock,
+)
 
 __all__ = [
+    "buy_stock",
+    "sell_stock",
     "get_latest_market_news",
     "get_latest_equity_news",
     "list_current_positions",
