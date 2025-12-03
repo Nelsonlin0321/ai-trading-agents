@@ -4,6 +4,8 @@ from src.tools.stock_tools import (
     get_etf_live_historical_price_change,
     get_stock_live_historical_price_change,
     get_most_active_stockers,
+    get_latest_quotes,
+    get_latest_quote,
 )
 from src.tools.portfolio_tools import (
     list_current_positions,
@@ -30,6 +32,8 @@ from src.tools.trading_tools import (
 __all__ = [
     "buy_stock",
     "sell_stock",
+    "get_latest_quotes",
+    "get_latest_quote",
     "get_latest_market_news",
     "get_latest_equity_news",
     "list_current_positions",

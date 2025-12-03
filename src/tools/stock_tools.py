@@ -142,7 +142,7 @@ async def get_most_active_stockers():
 
 
 @tool(multi_latest_quotes_act.name, args_schema=TickersInput)
-async def get_multi_tickers_latest_quotes(tickers: list[str]):
+async def get_latest_quotes(tickers: list[str]):
     """
     Fetch the latest bid/ask quotes and market data for multiple stock tickers.
 
@@ -173,7 +173,7 @@ class TickerInput(BaseModel):
 
 
 @tool(single_latest_quotes_act.name, args_schema=TickerInput)
-async def get_single_ticker_latest_quotes(ticker: str):
+async def get_latest_quote(ticker: str):
     """
     Fetch the latest bid/ask quotes and market data for a single stock ticker.
 
@@ -201,4 +201,6 @@ __all__ = [
     "get_etf_live_historical_price_change",
     "get_stock_live_historical_price_change",
     "get_most_active_stockers",
+    "get_latest_quotes",
+    "get_latest_quote",
 ]

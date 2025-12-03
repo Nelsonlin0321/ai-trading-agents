@@ -19,16 +19,17 @@ async def build_portfolio_manager_agent(model_name: ModelName, run_id: str):
         model=langchain_model,
         tools=[
             # Analysis tools
-            tools.get_fundamental_data,
-            tools.get_latest_market_news,
-            tools.get_stock_live_historical_price_change,
+            # tools.get_fundamental_data,
+            # tools.get_latest_market_news,
+            # tools.get_stock_live_historical_price_change,
             tools.get_portfolio_performance_analysis,
             tools.list_current_positions,
             tools.get_user_investment_strategy,
             # Trading tools (NEW)
             tools.buy_stock,
             tools.sell_stock,
-            # tools.get_latest_quotes,
+            tools.get_latest_quotes,
+            tools.get_latest_quote,
             # tools.get_market_hours,   # Need to add this
         ],
         middleware=[
