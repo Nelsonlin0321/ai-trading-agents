@@ -389,8 +389,9 @@ class MultiLatestQuotesAct(Action):
                 - timestamp: Quote timestamp
         """
 
-        quotes = await get_latest_quotes(symbols)
+        quotesResponse = await get_latest_quotes(symbols)
         formatted_quotes = []
+        quotes = quotesResponse["quotes"]
         for symbol in quotes:
             quote = quotes[symbol]
             formatted_quote = {

@@ -23,13 +23,11 @@ class SellInput(BaseModel):
     volume: float = Field(description="Number of shares to sell")
 
 
-@tool(buy_act.name, args_schema=BuyInput)
+@tool(buy_act.name)
 async def buy_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
     """Execute a buy order for a stock.
 
     Args:
-        runId: The current run ID
-        bot_id: The bot ID
         ticker: Stock symbol to buy
         volume: Number of shares to buy
     """
@@ -38,13 +36,11 @@ async def buy_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
     return await buy_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
 
 
-@tool(sell_act.name, args_schema=SellInput)
+@tool(sell_act.name)
 async def sell_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
     """Execute a sell order for a stock.
 
     Args:
-        runId: The current run ID
-        bot_id: The bot ID
         ticker: Stock symbol to sell
         volume: Number of shares to sell
     """
