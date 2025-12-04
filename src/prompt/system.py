@@ -2,7 +2,7 @@ from prisma.enums import Role
 
 from src.context import Context
 from src.prompt import SANDX_AI_INTRODUCTION, RECOMMENDATION_PROMPT, ROLE_PROMPTS_MAP
-from src.tools.actions import ListPositionsAct, PortfolioPerformanceAnalysisAct
+from src.tools_adaptors import ListPositionsAct, PortfolioPerformanceAnalysisAct
 
 
 async def build_agent_system_prompt(context: Context, role: Role) -> str:
