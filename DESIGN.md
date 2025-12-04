@@ -28,6 +28,7 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 
 ## Market Research Agent: Done
 ## Chief Investment Officer Agent: WIP
+## Trader Agent: WIP
 
 
 ### Tools:
