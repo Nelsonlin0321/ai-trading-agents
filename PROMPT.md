@@ -11,5 +11,5 @@
 
 
 - Agent Design
-I'm building a agentic AI US trading sandbot platform. Now, let discuss how we build this the platform with multi agentic systems.
-Do you think what key agent should have to performance an AI investment team ?
+I'm building an agentic AI US stock trading sandbox platform.  These are my codebases based on the langchain and langgraph framework.
+Now, I want to build a chief investment officer agent for orchestrate all the investment agent team. Based on the current codebase, create a chief investment officer agent.

@@ -10,6 +10,8 @@ Project Structure:
 │   │   │   └── agent.py
 │   │   ├── market_analyst
 │   │   │   └── agent.py
+│   │   ├── portfolio_manager
+│   │   │   └── agent.py
 │   │   ├── risk_analyst
 │   │   │   └── agent.py
 │   │   └── __init__.py
@@ -52,7 +54,8 @@ Project Structure:
 │   │   ├── portfolio_tools.py
 │   │   ├── research_tools.py
 │   │   ├── risk_tools.py
-│   │   └── stock_tools.py
+│   │   ├── stock_tools.py
+│   │   └── trading_tools.py
 │   ├── tools_adaptors
 │   │   ├── utils
 │   │   │   ├── __init__.py
@@ -68,13 +71,15 @@ Project Structure:
 │   │   ├── portfolio.py
 │   │   ├── research.py
 │   │   ├── risk.py
-│   │   └── stocks.py
+│   │   ├── stocks.py
+│   │   └── trading.py
 │   ├── typings
 │   │   └── __init__.py
 │   ├── utils
 │   │   ├── __init__.py
 │   │   ├── config.py
-│   │   └── constants.py
+│   │   ├── constants.py
+│   │   └── ticker.py
 │   ├── context.py
 │   ├── db.py
 │   └── models.py
@@ -398,69 +403,6 @@ model Cache {
 }
 ```
 
-scripts/clear_notebook_outputs.py
-```
-#!/usr/bin/env python3
-"""
-Script to clear outputs from Jupyter notebooks.
-Used by git pre-commit hook to ensure clean notebooks are committed.
-"""
-
-import json
-import sys
-import os
-
-
-def clear_notebook_outputs(notebook_path):
-    """Clear all outputs from a Jupyter notebook."""
-    with open(notebook_path, "r", encoding="utf-8") as f:
-        notebook = json.load(f)
-
-    # Iterate through all cells and clear outputs
-    for cell in notebook.get("cells", []):
-        if cell["cell_type"] == "code":
-            # Clear outputs
-            cell["outputs"] = []
-            # Reset execution count
-            cell["execution_count"] = None
-
-    # Write back to the file
-    with open(notebook_path, "w", encoding="utf-8") as f:
-        json.dump(notebook, f, indent=1)  # Use indent=1 for Jupyter's standard
-        f.write("\n")  # Ensure a final newline
-
-
-def main():
-    if len(sys.argv) < 2:
-        print(
-            "Usage: python clear_notebook_outputs.py <notebook_path> [notebook_path...]",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    notebook_paths = sys.argv[1:]
-
-    for path in notebook_paths:
-        if not os.path.exists(path):
-            print(f"File does not exist: {path}", file=sys.stderr)
-            continue
-
-        if not path.endswith(".ipynb"):
-            print(f"Skipping non-notebook file: {path}", file=sys.stderr)
-            continue
-
-        try:
-            clear_notebook_outputs(path)
-            print(f"Cleared outputs from: {path}")
-        except Exception as e:
-            print(f"Error processing {path}: {e}", file=sys.stderr)
-            sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
-```
-
 src/context.py
 ```
 from dataclasses import dataclass
@@ -549,6 +491,8 @@ async def disconnect():
 redis = Redis(
     url=get_env("UPSTASH_REDIS_REST_URL"), token=get_env("UPSTASH_REDIS_REST_TOKEN")
 )
+
+__all__ = ["prisma", "redis", "connect", "disconnect"]
 ```
 
 src/models.py
@@ -571,6 +515,69 @@ def get_model(model_name: ModelName):
         api_key=OPENAI_API_KEY,
         base_url=OPENAI_API_URL,
     )
+```
+
+scripts/clear_notebook_outputs.py
+```
+#!/usr/bin/env python3
+"""
+Script to clear outputs from Jupyter notebooks.
+Used by git pre-commit hook to ensure clean notebooks are committed.
+"""
+
+import json
+import sys
+import os
+
+
+def clear_notebook_outputs(notebook_path):
+    """Clear all outputs from a Jupyter notebook."""
+    with open(notebook_path, "r", encoding="utf-8") as f:
+        notebook = json.load(f)
+
+    # Iterate through all cells and clear outputs
+    for cell in notebook.get("cells", []):
+        if cell["cell_type"] == "code":
+            # Clear outputs
+            cell["outputs"] = []
+            # Reset execution count
+            cell["execution_count"] = None
+
+    # Write back to the file
+    with open(notebook_path, "w", encoding="utf-8") as f:
+        json.dump(notebook, f, indent=1)  # Use indent=1 for Jupyter's standard
+        f.write("\n")  # Ensure a final newline
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(
+            "Usage: python clear_notebook_outputs.py <notebook_path> [notebook_path...]",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    notebook_paths = sys.argv[1:]
+
+    for path in notebook_paths:
+        if not os.path.exists(path):
+            print(f"File does not exist: {path}", file=sys.stderr)
+            continue
+
+        if not path.endswith(".ipynb"):
+            print(f"Skipping non-notebook file: {path}", file=sys.stderr)
+            continue
+
+        try:
+            clear_notebook_outputs(path)
+            print(f"Cleared outputs from: {path}")
+        except Exception as e:
+            print(f"Error processing {path}: {e}", file=sys.stderr)
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 src/agents/__init__.py
@@ -698,9 +705,31 @@ ROLE_PROMPTS_MAP = {
         "data-driven edges that sharpen alpha generation and minimize slippage."
     ),
     Role.PORTFOLIO_MANAGER: (
-        "You are a pragmatic portfolio manager who balances return targets against risk limits, liquidity needs, and "
-        "client mandates. You translate macro themes and security-level insights into diversified, scalable portfolios "
-        "while dynamically rebalancing to capture evolving market regimes."
+        "You are the Portfolio Manager with FULL trading authority on the Sandx AI investment desk. "
+        "You synthesize inputs from all analysts into actionable portfolio decisions and execute trades directly. "
+        "YOUR RESPONSIBILITIES:"
+        "1. Analyze market conditions, fundamentals, and risk metrics"
+        "2. Make BUY/SELL/HOLD decisions with specific sizing"
+        "3. Execute trades using available tools"
+        "4. Monitor portfolio concentration and risk limits"
+        "5. Rebalance portfolio based on investment strategy"
+        "TRADING FRAMEWORK:"
+        "- Exit: Set profit targets (15-25%) and stop-losses (8%)"
+        "EXECUTION: Use buy_stock() and sell_stock() tools directly. "
+        "Always check current positions and cash before trading."
+        "1. You can execute trades directly (BUY/SELL) using available tools"
+        "2. Trading Rules:"
+        "- Only trade stocks in watchlist or current positions"
+        "- Check market hours before trading (markets closed on weekends/holidays)"
+        "- Ensure sufficient cash before buying"
+        "- Never sell more shares than currently held"
+        "- Respect risk limits (max position size: 10% of portfolio)"
+        "- Consider transaction costs in decisions"
+        "EXECUTION GUIDELINES:"
+        "- Use buy_stock(runId, bot_id, ticker, volume) for purchases"
+        "- Use sell_stock(runId, bot_id, ticker, volume) for sales"
+        "- For partial positions, use fractional volumes"
+        "- Always verify current portfolio positions before trading"
     ),
     Role.USER: (
         "You are an intellectually curious investor eager to understand how markets function, why prices move, and how "
@@ -719,7 +748,7 @@ from prisma.enums import Role
 
 from src.context import Context
 from src.prompt import SANDX_AI_INTRODUCTION, RECOMMENDATION_PROMPT, ROLE_PROMPTS_MAP
-from src.tools.actions import ListPositionsAct, PortfolioPerformanceAnalysisAct
+from src.tools_adaptors import ListPositionsAct, PortfolioPerformanceAnalysisAct
 
 
 async def build_agent_system_prompt(context: Context, role: Role) -> str:
@@ -999,6 +1028,8 @@ from src.tools.stock_tools import (
     get_etf_live_historical_price_change,
     get_stock_live_historical_price_change,
     get_most_active_stockers,
+    get_latest_quotes,
+    get_latest_quote,
 )
 from src.tools.portfolio_tools import (
     list_current_positions,
@@ -1017,8 +1048,16 @@ from src.tools.risk_tools import (
     get_volatility_risk_indicators,
     get_price_risk_indicators,
 )
+from src.tools.trading_tools import (
+    buy_stock,
+    sell_stock,
+)
 
 __all__ = [
+    "buy_stock",
+    "sell_stock",
+    "get_latest_quotes",
+    "get_latest_quote",
     "get_latest_market_news",
     "get_latest_equity_news",
     "list_current_positions",
@@ -1421,6 +1460,8 @@ from src import utils
 eft_live_price_change_act = tools_adaptors.ETFLivePriceChangeAct()
 stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
 most_active_stockers_act = tools_adaptors.MostActiveStockersAct()
+single_latest_quotes_act = tools_adaptors.SingleLatestQuotesAct()
+multi_latest_quotes_act = tools_adaptors.MultiLatestQuotesAct()
 
 
 @tool(eft_live_price_change_act.name)
@@ -1454,7 +1495,7 @@ async def get_etf_live_historical_price_change():
     return heading + "\n\n" + note + "\n\n" + markdown_table
 
 
-class TickerInput(BaseModel):
+class TickersInput(BaseModel):
     """Input for querying stock current price and historical price changes"""
 
     tickers: list[str] = Field(
@@ -1462,7 +1503,7 @@ class TickerInput(BaseModel):
     )
 
 
-@tool(stock_live_price_change_act.name, args_schema=TickerInput)
+@tool(stock_live_price_change_act.name, args_schema=TickersInput)
 async def get_stock_live_historical_price_change(tickers: list[str]):
     """
     Fetch comprehensive percent-change metrics for the provided stock tickers.
@@ -1554,11 +1595,126 @@ async def get_most_active_stockers():
     return heading + "\n\n" + note + "\n\n" + markdown_table
 
 
+@tool(multi_latest_quotes_act.name, args_schema=TickersInput)
+async def get_latest_quotes(tickers: list[str]):
+    """
+    Fetch the latest bid/ask quotes and market data for multiple stock tickers.
+
+    This tool provides real-time market data including:
+    - Current bid and ask prices with sizes
+    - Quote conditions and timestamp
+    - Latest consolidated quote data
+
+    Use this tool when you need:
+    - Real-time pricing for trading decisions
+    - To monitor bid/ask dynamics before placing orders
+    - To get precise pricing for portfolio valuation
+
+    Args:
+        symbols: List of stock tickers (1-100 symbols recommended)
+
+    Returns:
+        A markdown-formatted table with latest quote data for each symbol.
+    """
+    quotes_data = await multi_latest_quotes_act.arun(tickers)
+    return quotes_data
+
+
+class TickerInput(BaseModel):
+    """Input for querying latest quote for a single symbol"""
+
+    ticker: str = Field(description="Stock ticker, e.g. 'AAPL'")
+
+
+@tool(single_latest_quotes_act.name, args_schema=TickerInput)
+async def get_latest_quote(ticker: str):
+    """
+    Fetch the latest bid/ask quotes and market data for a single stock ticker.
+
+    This tool provides real-time market data including:
+    - Current bid and ask prices with sizes
+    - Quote conditions and timestamp
+    - Latest consolidated quote data
+
+    Use this tool when you need:
+    - Real-time pricing for trading decisions
+    - To monitor bid/ask dynamics before placing orders
+    - To get precise pricing for portfolio valuation
+
+    Args:
+        tickers: List of stock tickers (1-100 symbols recommended)
+
+    Returns:
+        A markdown-formatted table with latest quote data for each symbol.
+    """
+    quotes_data = await single_latest_quotes_act.arun(ticker)
+    return quotes_data
+
+
 __all__ = [
     "get_etf_live_historical_price_change",
     "get_stock_live_historical_price_change",
     "get_most_active_stockers",
+    "get_latest_quotes",
+    "get_latest_quote",
 ]
+```
+
+src/tools/trading_tools.py
+```
+# src/tools/trading_tools.py
+from pydantic import BaseModel, Field
+from langchain.tools import tool
+from langchain.tools import ToolRuntime
+from src.context import Context
+from src.tools_adaptors.trading import BuyAct, SellAct
+
+buy_act = BuyAct()
+sell_act = SellAct()
+
+
+class BuyInput(BaseModel):
+    """Input for querying latest quote for a single symbol"""
+
+    ticker: str = Field(description="Stock ticker, e.g. 'AAPL'")
+    volume: float = Field(description="Number of shares to buy")
+
+
+class SellInput(BaseModel):
+    """Input for querying latest quote for a single symbol"""
+
+    ticker: str = Field(description="Stock ticker, e.g. 'AAPL'")
+    volume: float = Field(description="Number of shares to sell")
+
+
+@tool(buy_act.name, args_schema=BuyInput)
+async def buy_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
+    """Execute a buy order for a stock.
+
+    Args:
+        runId: The current run ID
+        bot_id: The bot ID
+        ticker: Stock symbol to buy
+        volume: Number of shares to buy
+    """
+    bot_id = runtime.context.bot.id
+    runId = runtime.context.run.id
+    return await buy_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
+
+
+@tool(sell_act.name, args_schema=SellInput)
+async def sell_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
+    """Execute a sell order for a stock.
+
+    Args:
+        runId: The current run ID
+        bot_id: The bot ID
+        ticker: Stock symbol to sell
+        volume: Number of shares to sell
+    """
+    bot_id = runtime.context.bot.id
+    runId = runtime.context.run.id
+    return await sell_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
 ```
 
 src/tools_adaptors/__init__.py
@@ -1573,6 +1729,8 @@ from src.tools_adaptors.stocks import (
     StockHistoricalPriceChangesAct,
     StockLivePriceChangeAct,
     MostActiveStockersAct,
+    SingleLatestQuotesAct,
+    MultiLatestQuotesAct,
 )
 from src.tools_adaptors.portfolio import (
     ListPositionsAct,
@@ -1585,6 +1743,8 @@ from src.tools_adaptors.risk import FundamentalRiskDataAct, VolatilityRiskAct
 
 __all__ = [
     "Action",
+    "SingleLatestQuotesAct",
+    "MultiLatestQuotesAct",
     "MarketNewsAct",
     "EquityNewsAct",
     "GoogleMarketResearchAct",
@@ -1824,17 +1984,11 @@ if __name__ == "__main__":
 src/tools_adaptors/portfolio.py
 ```
 from typing import Sequence, Annotated, TypedDict
-import traceback
-from loguru import logger
-from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
-from prisma.enums import TradeType
 from src.tools_adaptors.base import Action
 from src.services.sandx_ai import list_positions, get_timeline_values
 from src.services.sandx_ai.typing import Position
-from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
-from src.services.alpaca import get_latest_quotes
 from src.tools_adaptors import utils as action_utils
-from src import utils, db
+from src import utils
 
 
 class FormattedPosition(TypedDict):
@@ -1929,221 +2083,7 @@ class PortfolioPerformanceAnalysisAct(Action):
         return "Insufficient data for analysis."
 
 
-class BuyAct(Action):
-    @property
-    def name(self):
-        return "buy_stock"
-
-    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
-        try:
-            clock = alpaca_trading_client.get_clock()
-            if not clock.is_open:  # type: ignore
-                return "Market is closed. Cannot buy stock."
-            quotes = await get_latest_quotes([ticker])
-            price = quotes["quotes"].get(ticker, {}).get("ask_price")
-            if not price:
-                return f"Cannot get price for {ticker}"
-            price = float(price)
-            total_cost = price * volume
-
-            await db.connect()
-
-            ticker = ticker.upper().strip()
-
-            valid_ticker = await db.prisma.ticker.find_unique(
-                where={"ticker": ticker.replace(".", "-")}
-            )
-
-            if valid_ticker is None:
-                return f"Invalid ticker {ticker}"
-
-            async with db.prisma.tx() as transaction:
-                portfolio = await transaction.portfolio.find_unique(
-                    where={"botId": bot_id}
-                )
-                if portfolio is None:
-                    raise ValueError("Portfolio not found")
-                if portfolio.cash < total_cost:
-                    return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
-                portfolio.cash -= total_cost
-                await transaction.portfolio.update(
-                    where={"botId": bot_id}, data={"cash": portfolio.cash}
-                )
-                existing = await transaction.position.find_unique(
-                    where={
-                        "portfolioId_ticker": {
-                            "portfolioId": portfolio.id,
-                            "ticker": ticker,
-                        }
-                    }
-                )
-
-                if existing is None:
-                    await transaction.position.create(
-                        data=PositionCreateInput(
-                            ticker=ticker,
-                            volume=volume,
-                            portfolioId=portfolio.id,
-                            cost=price,
-                        )
-                    )
-                else:
-                    await transaction.position.update(
-                        where={
-                            "portfolioId_ticker": {
-                                "portfolioId": portfolio.id,
-                                "ticker": ticker,
-                            }
-                        },
-                        data=PositionUpdateInput(
-                            volume=existing.volume + volume,
-                            cost=(existing.cost * existing.volume + price * volume)
-                            / (existing.volume + volume),
-                        ),
-                    )
-
-                    await transaction.trade.create(
-                        data=TradeCreateInput(
-                            type=TradeType.BUY,
-                            price=price,
-                            ticker=ticker,
-                            amount=volume,
-                            runId=runId,
-                            botId=bot_id,
-                        )
-                    )
-
-                    return (
-                        f"Successfully bought {volume} shares of {ticker} at {price} per share. "
-                        f"Current volume is {existing.volume + volume} "
-                        f"with average cost {utils.format_float(existing.cost)}"
-                    )
-
-        except Exception as e:
-            logger.error(f"Error buying stock: {e} Traceback: {traceback.format_exc()}")
-            return f"Failed to buy {volume} shares of {ticker}"
-        finally:
-            await db.disconnect()
-
-
-class SellAct(Action):
-    @property
-    def name(self):
-        return "sell_stock"
-
-    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
-        try:
-            clock = alpaca_trading_client.get_clock()
-            if not clock.is_open:  # type: ignore
-                return "Market is closed. Cannot sell stock."
-            quotes = await get_latest_quotes([ticker])
-            price = quotes["quotes"].get(ticker, {}).get("bid_price")
-            if not price:
-                return f"Cannot get price for {ticker}"
-            price = float(price)
-            total_proceeds = price * volume
-
-            await db.connect()
-
-            ticker = ticker.upper().strip()
-
-            valid_ticker = await db.prisma.ticker.find_unique(
-                where={"ticker": ticker.replace(".", "-")}
-            )
-
-            if valid_ticker is None:
-                return f"Invalid ticker {ticker}"
-
-            async with db.prisma.tx() as transaction:
-                portfolio = await transaction.portfolio.find_unique(
-                    where={"botId": bot_id}
-                )
-                if portfolio is None:
-                    raise ValueError("Portfolio not found")
-
-                existing = await transaction.position.find_unique(
-                    where={
-                        "portfolioId_ticker": {
-                            "portfolioId": portfolio.id,
-                            "ticker": ticker,
-                        }
-                    }
-                )
-
-                if existing is None:
-                    return f"No position found for {ticker}"
-
-                if existing.volume < volume:
-                    return (
-                        f"Not enough shares to sell {volume} shares of {ticker}. "
-                        f"Current volume is {existing.volume}."
-                    )
-
-                portfolio.cash += total_proceeds
-                await transaction.portfolio.update(
-                    where={"botId": bot_id}, data={"cash": portfolio.cash}
-                )
-
-                new_volume = existing.volume - volume
-
-                if new_volume == 0:
-                    await transaction.position.delete(
-                        where={
-                            "portfolioId_ticker": {
-                                "portfolioId": portfolio.id,
-                                "ticker": ticker,
-                            }
-                        }
-                    )
-                else:
-                    await transaction.position.update(
-                        where={
-                            "portfolioId_ticker": {
-                                "portfolioId": portfolio.id,
-                                "ticker": ticker,
-                            }
-                        },
-                        data=PositionUpdateInput(
-                            volume=new_volume,
-                            cost=existing.cost,
-                        ),
-                    )
-
-                await transaction.trade.create(
-                    data=TradeCreateInput(
-                        type=TradeType.SELL,
-                        price=price,
-                        ticker=ticker,
-                        amount=volume,
-                        runId=runId,
-                        botId=bot_id,
-                        realizedPL=price * volume - existing.cost * volume,
-                        realizedPLPercent=(price - existing.cost) / existing.cost,
-                    )
-                )
-
-                if new_volume == 0:
-                    return (
-                        f"Successfully sold {volume} shares of {ticker} at {price} per share. "
-                        f"Position closed."
-                    )
-
-                return (
-                    f"Successfully sold {volume} shares of {ticker} at {price} per share. "
-                    f"Current volume is {new_volume} "
-                    f"with average cost {utils.format_float(existing.cost)}"
-                )
-
-        except Exception as e:
-            logger.error(
-                f"Error selling stock: {e} Traceback: {traceback.format_exc()}"
-            )
-            return f"Failed to sell {volume} shares of {ticker}"
-        finally:
-            await db.disconnect()
-
-
-__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct", "BuyAct", "SellAct"]
+__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
 ```
 
 src/tools_adaptors/research.py
@@ -2362,6 +2302,7 @@ from src.services.alpaca import (
     get_snapshots,
     get_historical_price_bars,
     get_most_active_stocks,
+    get_latest_quotes,
 )
 from src.services.alpaca.typing import PriceBar
 from src.tools_adaptors.base import Action
@@ -2726,6 +2667,115 @@ class MostActiveStockersAct(Action):
         )
 
 
+# src/tools_adaptors/stocks.py - Add this class
+class MultiLatestQuotesAct(Action):
+    @property
+    def name(self):
+        return "get_multi_symbols_latest_quotes"
+
+    async def arun(self, symbols: list[str]) -> str:
+        """
+        Fetch latest quotes for multiple symbols.
+
+        Returns:
+            dict: Mapping of symbol to quote data including:
+                - ask_price: Current ask price
+                - ask_size: Ask size
+                - bid_price: Current bid price
+                - bid_size: Bid size
+                - timestamp: Quote timestamp
+        """
+
+        quotes = await get_latest_quotes(symbols)
+        formatted_quotes = []
+        for symbol in quotes:
+            quote = quotes[symbol]
+            formatted_quote = {
+                "symbol": symbol,
+                "bid_price": utils.format_currency(quote["bid_price"]),
+                "bid_size": utils.human_format(quote["bid_size"]),
+                "ask_price": utils.format_currency(quote["ask_price"]),
+                "ask_size": utils.human_format(quote["ask_size"]),
+                "spread": utils.format_currency(
+                    quote["ask_price"] - quote["bid_price"]
+                ),
+                "spread_percent": utils.format_percent(
+                    (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
+                ),
+                "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
+                "timestamp": utils.format_datetime(quote["timestamp"]),
+                # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
+            }
+            formatted_quotes.append(formatted_quote)
+
+        if not formatted_quotes:
+            return "No quote data available for the requested symbols."
+
+        markdown_table = utils.dicts_to_markdown_table(formatted_quotes)
+        heading = "## Latest Market Quotes"
+        note = f"""
+**Note:**
+- Data fetched at {utils.get_current_timestamp()} New York time
+- Bid/Ask prices are real-time consolidated quotes
+- Spread = Ask Price - Bid Price
+- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
+"""
+
+        return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
+class SingleLatestQuotesAct(Action):
+    @property
+    def name(self):
+        return "get_single_symbol_latest_quotes"
+
+    async def arun(self, symbol: str) -> str:
+        """
+        Fetch latest quotes for a single symbol.
+
+        Returns:
+            dict: Mapping of symbol to quote data including:
+                - ask_price: Current ask price
+                - ask_size: Ask size
+                - bid_price: Current bid price
+                - bid_size: Bid size
+                - timestamp: Quote timestamp
+        """
+
+        quotes = await get_latest_quotes([symbol])
+        quote = quotes.get(symbol)
+
+        if not quote:
+            return "No quote data available for the requested symbol."
+
+        formatted_quote = {
+            "symbol": symbol,
+            "bid_price": utils.format_currency(quote["bid_price"]),
+            "bid_size": utils.human_format(quote["bid_size"]),
+            "ask_price": utils.format_currency(quote["ask_price"]),
+            "ask_size": utils.human_format(quote["ask_size"]),
+            "spread": utils.format_currency(quote["ask_price"] - quote["bid_price"]),
+            "spread_percent": utils.format_percent(
+                (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
+            ),
+            "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
+            "timestamp": utils.format_datetime(quote["timestamp"]),
+            # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
+        }
+
+        markdown_table = utils.dict_to_markdown_table(formatted_quote)
+        heading = f"## Latest {symbol} Market Quotes"
+        note = f"""
+**Note:**
+- Data fetched at {utils.get_current_timestamp()} New York time
+- Bid/Ask prices are real-time consolidated quotes
+- Spread = Ask Price - Bid Price
+- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
+"""
+
+        return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
 # only Act
 __all__ = [
     "StockRawSnapshotAct",
@@ -2734,6 +2784,8 @@ __all__ = [
     "StockLivePriceChangeAct",
     "ETFLivePriceChangeAct",
     "MostActiveStockersAct",
+    "SingleLatestQuotesAct",
+    "MultiLatestQuotesAct",
 ]
 
 if __name__ == "__main__":
@@ -2749,6 +2801,232 @@ if __name__ == "__main__":
         print(most_active_stocks)
 
     asyncio.run(main())
+```
+
+src/tools_adaptors/trading.py
+```
+import traceback
+from loguru import logger
+from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
+from src import utils, db
+from src.tools_adaptors.base import Action
+from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+from src.services.alpaca import get_latest_quotes
+from prisma.enums import TradeType
+
+
+class BuyAct(Action):
+    @property
+    def name(self):
+        return "buy_stock"
+
+    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
+        try:
+            clock = alpaca_trading_client.get_clock()
+            if not clock.is_open:  # type: ignore
+                return "Market is closed. Cannot buy stock."
+            quotes = await get_latest_quotes([ticker])
+            price = quotes["quotes"].get(ticker, {}).get("ask_price")
+            if not price:
+                return f"Cannot get price for {ticker}"
+            price = float(price)
+            total_cost = price * volume
+
+            await db.connect()
+
+            ticker = ticker.upper().strip()
+
+            valid_ticker = await db.prisma.ticker.find_unique(
+                where={"ticker": ticker.replace(".", "-")}
+            )
+
+            if valid_ticker is None:
+                return f"Invalid ticker {ticker}"
+
+            async with db.prisma.tx() as transaction:
+                portfolio = await transaction.portfolio.find_unique(
+                    where={"botId": bot_id}
+                )
+                if portfolio is None:
+                    raise ValueError("Portfolio not found")
+                if portfolio.cash < total_cost:
+                    return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
+                portfolio.cash -= total_cost
+                await transaction.portfolio.update(
+                    where={"botId": bot_id}, data={"cash": portfolio.cash}
+                )
+                existing = await transaction.position.find_unique(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    }
+                )
+
+                if existing is None:
+                    await transaction.position.create(
+                        data=PositionCreateInput(
+                            ticker=ticker,
+                            volume=volume,
+                            portfolioId=portfolio.id,
+                            cost=price,
+                        )
+                    )
+                else:
+                    await transaction.position.update(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        },
+                        data=PositionUpdateInput(
+                            volume=existing.volume + volume,
+                            cost=(existing.cost * existing.volume + price * volume)
+                            / (existing.volume + volume),
+                        ),
+                    )
+
+                    await transaction.trade.create(
+                        data=TradeCreateInput(
+                            type=TradeType.BUY,
+                            price=price,
+                            ticker=ticker,
+                            amount=volume,
+                            runId=runId,
+                            botId=bot_id,
+                        )
+                    )
+
+                    return (
+                        f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                        f"Current volume is {existing.volume + volume} "
+                        f"with average cost {utils.format_float(existing.cost)}"
+                    )
+
+        except Exception as e:
+            logger.error(f"Error buying stock: {e} Traceback: {traceback.format_exc()}")
+            return f"Failed to buy {volume} shares of {ticker}"
+        finally:
+            await db.disconnect()
+
+
+class SellAct(Action):
+    @property
+    def name(self):
+        return "sell_stock"
+
+    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
+        try:
+            clock = alpaca_trading_client.get_clock()
+            if not clock.is_open:  # type: ignore
+                return "Market is closed. Cannot sell stock."
+            quotes = await get_latest_quotes([ticker])
+            price = quotes["quotes"].get(ticker, {}).get("bid_price")
+            if not price:
+                return f"Cannot get price for {ticker}"
+            price = float(price)
+            total_proceeds = price * volume
+
+            await db.connect()
+
+            ticker = ticker.upper().strip()
+
+            valid_ticker = await db.prisma.ticker.find_unique(
+                where={"ticker": ticker.replace(".", "-")}
+            )
+
+            if valid_ticker is None:
+                return f"Invalid ticker {ticker}"
+
+            async with db.prisma.tx() as transaction:
+                portfolio = await transaction.portfolio.find_unique(
+                    where={"botId": bot_id}
+                )
+                if portfolio is None:
+                    raise ValueError("Portfolio not found")
+
+                existing = await transaction.position.find_unique(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    }
+                )
+
+                if existing is None:
+                    return f"No position found for {ticker}"
+
+                if existing.volume < volume:
+                    return (
+                        f"Not enough shares to sell {volume} shares of {ticker}. "
+                        f"Current volume is {existing.volume}."
+                    )
+
+                portfolio.cash += total_proceeds
+                await transaction.portfolio.update(
+                    where={"botId": bot_id}, data={"cash": portfolio.cash}
+                )
+
+                new_volume = existing.volume - volume
+
+                if new_volume == 0:
+                    await transaction.position.delete(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        }
+                    )
+                else:
+                    await transaction.position.update(
+                        where={
+                            "portfolioId_ticker": {
+                                "portfolioId": portfolio.id,
+                                "ticker": ticker,
+                            }
+                        },
+                        data=PositionUpdateInput(
+                            volume=new_volume,
+                            cost=existing.cost,
+                        ),
+                    )
+
+                await transaction.trade.create(
+                    data=TradeCreateInput(
+                        type=TradeType.SELL,
+                        price=price,
+                        ticker=ticker,
+                        amount=volume,
+                        runId=runId,
+                        botId=bot_id,
+                        realizedPL=price * volume - existing.cost * volume,
+                        realizedPLPercent=(price - existing.cost) / existing.cost,
+                    )
+                )
+
+                if new_volume == 0:
+                    return (
+                        f"Successfully sold {volume} shares of {ticker} at {price} per share. "
+                        f"Position closed."
+                    )
+
+                return (
+                    f"Successfully sold {volume} shares of {ticker} at {price} per share. "
+                    f"Current volume is {new_volume} "
+                    f"with average cost {utils.format_float(existing.cost)}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Error selling stock: {e} Traceback: {traceback.format_exc()}"
+            )
+            return f"Failed to sell {volume} shares of {ticker}"
+        finally:
+            await db.disconnect()
 ```
 
 src/typings/__init__.py
@@ -2824,6 +3102,32 @@ def dicts_to_markdown_table(data: list[dict[str, Any]]):
     # Build data rows
     for row in data:
         table += "| " + " | ".join(str(row[h]) for h in headers) + " |\n"
+
+    return table
+
+
+def dict_to_markdown_table(data: dict[str, Any]):
+    """
+    Convert a dictionary into a Markdown table string.
+
+    Args:
+        data (dict): Dictionary with the same keys.
+
+    Returns:
+        str: Markdown formatted table.
+    """
+    if not data:
+        return ""
+
+    # Extract headers from the first dictionary
+    headers = list(data.keys())
+
+    # Build header row
+    table = "| " + " | ".join(headers) + " |\n"
+    table += "| " + " | ".join(["---"] * len(headers)) + " |\n"
+
+    # Build data rows
+    table += "| " + " | ".join(str(data[h]) for h in headers) + " |\n"
 
     return table
 
@@ -3484,6 +3788,22 @@ FUNDAMENTAL_RISK_CATEGORIES = {
 }
 ```
 
+src/utils/ticker.py
+```
+from src import db
+
+
+async def is_valid_ticker(ticker: str):
+    await db.connect()
+    ticker = ticker.replace("-", ".")
+    ticker_record = await db.prisma.ticker.find_unique(where={"ticker": ticker})
+    await db.disconnect()
+    return ticker_record is not None
+
+
+__all__ = ["is_valid_ticker"]
+```
+
 src/agents/equity_research_analyst/agent.py
 ```
 from langchain.agents import create_agent
@@ -3505,6 +3825,39 @@ async def build_equity_research_analyst_agent(model_name: ModelName, run_id: str
     agent = create_agent(
         model=langchain_model,
         tools=[tools.do_google_equity_research, tools.get_latest_equity_news],
+        middleware=[
+            middleware.summarization_middleware,  # type: ignore
+            middleware.todo_list_middleware,
+        ],
+        system_prompt=system_prompt,
+        context_schema=Context,
+    )
+
+    return context, agent
+```
+
+src/agents/fundamental_analyst/agent.py
+```
+from langchain.agents import create_agent
+from prisma.enums import Role
+from src import tools
+from src import middleware
+from src.models import get_model
+from src.typings import ModelName
+from src.context import build_context, Context
+from src.prompt import build_agent_system_prompt
+
+
+async def build_fundamental_analyst_agent(model_name: ModelName, run_id: str):
+    context = await build_context(run_id)
+    system_prompt = await build_agent_system_prompt(context, Role.FUNDAMENTAL_ANALYST)
+    langchain_model = get_model(model_name)
+    agent = create_agent(
+        model=langchain_model,
+        tools=[
+            tools.get_fundamental_data,
+            tools.get_stock_live_historical_price_change,
+        ],
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
@@ -3555,8 +3908,9 @@ async def build_market_analyst_agent(model_name: ModelName, run_id: str):
     return context, agent
 ```
 
-src/agents/fundamental_analyst/agent.py
+src/agents/portfolio_manager/agent.py
 ```
+# src/agents/portfolio_manager/agent.py
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
@@ -3567,15 +3921,28 @@ from src.context import build_context, Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_fundamental_analyst_agent(model_name: ModelName, run_id: str):
+async def build_portfolio_manager_agent(model_name: ModelName, run_id: str):
     context = await build_context(run_id)
-    system_prompt = await build_agent_system_prompt(context, Role.FUNDAMENTAL_ANALYST)
+    system_prompt = await build_agent_system_prompt(context, Role.PORTFOLIO_MANAGER)
     langchain_model = get_model(model_name)
+
+    # Add trading tools
     agent = create_agent(
         model=langchain_model,
         tools=[
-            tools.get_fundamental_data,
-            tools.get_stock_live_historical_price_change,
+            # Analysis tools
+            # tools.get_fundamental_data,
+            # tools.get_latest_market_news,
+            # tools.get_stock_live_historical_price_change,
+            tools.get_portfolio_performance_analysis,
+            tools.list_current_positions,
+            tools.get_user_investment_strategy,
+            # Trading tools (NEW)
+            tools.buy_stock,
+            tools.sell_stock,
+            tools.get_latest_quotes,
+            tools.get_latest_quote,
+            # tools.get_market_hours,   # Need to add this
         ],
         middleware=[
             middleware.summarization_middleware,  # type: ignore
@@ -3584,7 +3951,6 @@ async def build_fundamental_analyst_agent(model_name: ModelName, run_id: str):
         system_prompt=system_prompt,
         context_schema=Context,
     )
-
     return context, agent
 ```
 

@@ -24,8 +24,12 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Sync Agent Message to Sandx AI Monitoring Dashboard: Done in PoC
 - Pylint: Done
 - Yahoo Finance Fundamental Data API: Done
+- Write to DB middleware: TODO
 
-## Market Research Agent:
+## Market Research Agent: Done
+## Chief Investment Officer Agent: WIP
+
+
 ### Tools:
 - Get the latest news from : https://tradingeconomics.com/united-states/news: Done
 - Google Market Research: Done
