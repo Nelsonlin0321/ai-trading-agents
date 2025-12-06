@@ -27,11 +27,13 @@ from src.tools.risk_tools import (
 from src.tools.trading_tools import (
     buy_stock,
     sell_stock,
+    get_market_status,
 )
 
 __all__ = [
     "buy_stock",
     "sell_stock",
+    "get_market_status",
     "get_latest_quotes",
     "get_latest_quote",
     "get_latest_market_news",

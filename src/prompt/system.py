@@ -1,7 +1,7 @@
 from prisma.enums import Role
 
 from src.context import Context
-from src.prompt import SANDX_AI_INTRODUCTION, RECOMMENDATION_PROMPT, ROLE_PROMPTS_MAP
+from src.prompt import RECOMMENDATION_PROMPT, ROLE_PROMPTS_MAP
 from src.tools_adaptors import ListPositionsAct, PortfolioPerformanceAnalysisAct
 
 
@@ -10,9 +10,9 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
     if not user:
         raise ValueError("User not found.")
 
-    user_name = "You're serving the user: " + " ".join(
-        [user.firstName or "", user.lastName or ""]
-    )
+    # user_name = "You're serving the user: " + " ".join(
+    #     [user.firstName or "", user.lastName or ""]
+    # )
 
     watchlist = context.bot.watchlist or []
 
@@ -26,10 +26,10 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
         bot_id=context.bot.id
     )
     sections = [
-        SANDX_AI_INTRODUCTION,
+        # SANDX_AI_INTRODUCTION,
         ROLE_PROMPTS_MAP[role],
         RECOMMENDATION_PROMPT,
-        user_name,
+        # user_name,
         watchlist,
         positions_markdown,
         performance_narrative,

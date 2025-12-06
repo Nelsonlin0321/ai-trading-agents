@@ -21,6 +21,7 @@ async def build_trading_executor_agent(model_name: ModelName, run_id: str):
             tools.sell_stock,
             tools.get_latest_quotes,
             tools.get_latest_quote,
+            tools.get_market_status,
         ],
         # middleware=[
         #     middleware.summarization_middleware,  # type: ignore
