@@ -1,5 +1,5 @@
 from typing import TypedDict, List
-from src.prompt.roles import SubAgentRole, AgentRole
+from src.typings.agent_roles import SubAgentRole, AgentRole
 
 
 class ETFTickerInfo(TypedDict):

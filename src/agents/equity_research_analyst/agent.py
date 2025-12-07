@@ -18,6 +18,7 @@ async def build_equity_research_analyst_agent(context: Context):
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
+            middleware.LoggingMiddleware("EQUITY_RESEARCH_ANALYST"),
         ],
         system_prompt=system_prompt,
         context_schema=Context,

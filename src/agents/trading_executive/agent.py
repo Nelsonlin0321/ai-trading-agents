@@ -1,6 +1,7 @@
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
+from src import middleware
 from src.models import get_model
 from src.context import Context
 from src.prompt import build_agent_system_prompt
@@ -21,10 +22,9 @@ async def build_trading_executor_agent(context: Context):
             tools.get_latest_quote,
             tools.get_market_status,
         ],
-        # middleware=[
-        #     middleware.summarization_middleware,  # type: ignore
-        #     middleware.todo_list_middleware,
-        # ],
+        middleware=[
+            middleware.LoggingMiddleware("TRADING_EXECUTOR"),
+        ],
         system_prompt=system_prompt,
         context_schema=Context,
     )

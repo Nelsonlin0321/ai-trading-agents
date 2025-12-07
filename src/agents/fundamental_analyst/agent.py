@@ -19,6 +19,7 @@ async def build_fundamental_analyst_agent(context: Context):
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
+            middleware.LoggingMiddleware("FUNDAMENTAL_ANALYST"),
         ],
         system_prompt=system_prompt,
         context_schema=Context,

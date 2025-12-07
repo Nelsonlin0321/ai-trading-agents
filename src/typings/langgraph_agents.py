@@ -5,11 +5,11 @@ from langchain.agents.middleware.types import (
 )
 from langgraph.graph.state import CompiledStateGraph
 from typing import TypeVar
-from src.typings.context import Context
+from src.context import Context
 
 Unknown = TypeVar("Unknown")
 
 
-Agent = CompiledStateGraph[
+LangGraphAgent = CompiledStateGraph[
     AgentState[Unknown], Context, _InputAgentState, _OutputAgentState[Unknown]
 ]

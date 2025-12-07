@@ -1,0 +1,18 @@
+from typing import Literal
+
+SubAgentRole = Literal[
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+
+AgentRole = Literal[
+    "CHIEF_INVESTMENT_OFFICER",
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]

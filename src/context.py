@@ -1,5 +1,5 @@
 from src import db
-from src.typings import Context
+from src.typings.context import Context
 
 
 async def build_context(run_id: str):

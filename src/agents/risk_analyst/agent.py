@@ -21,6 +21,7 @@ async def build_risk_analyst_agent(context: Context):
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
+            middleware.LoggingMiddleware("RISK_ANALYST"),
         ],
         system_prompt=system_prompt,
         context_schema=Context,

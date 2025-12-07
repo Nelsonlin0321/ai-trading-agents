@@ -1,8 +1,9 @@
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
+from src.middleware import LoggingMiddleware
 from src.models import get_model
-from src.typings import ModelName
+from src.typings.context import ModelName
 from src.context import build_context, Context
 from src.prompt import build_agent_system_prompt
 
@@ -35,11 +36,11 @@ async def build_chief_investment_officer_agent(model_name: ModelName, run_id: st
             tools.sell_stock,
             tools.get_latest_quotes,
             tools.get_latest_quote,
+            tools.handoff_to_specialist,
         ],
-        # middleware=[
-        #     middleware.summarization_middleware,  # type: ignore
-        #     middleware.todo_list_middleware,
-        # ],
+        middleware=[
+            LoggingMiddleware("CHIEF_INVESTMENT_OFFICER"),
+        ],
         system_prompt=system_prompt,
         context_schema=Context,
     )

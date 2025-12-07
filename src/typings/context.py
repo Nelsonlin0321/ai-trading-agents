@@ -1,6 +1,10 @@
+from typing import Literal
 from dataclasses import dataclass
 from prisma.models import Bot, Run
-from src.typings.models import ModelName
+
+ModelName = Literal[
+    "deepseek", "gpt-5.1-thinking-plus", "deepseek-reasoner", "kimi-k2-thinking"
+]
 
 
 @dataclass

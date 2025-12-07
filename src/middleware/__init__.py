@@ -7,10 +7,10 @@ from prisma.types import (
     AgentMessageUpdateInput,
 )
 from src import db
-from src.typings import Context
+from src.typings.context import Context
 from src.models import get_model
 from src.utils.constants import ALL_ROLES
-from src.typings import AgentRole
+from src.typings.agent_roles import AgentRole
 
 langchain_model = get_model("deepseek")
 

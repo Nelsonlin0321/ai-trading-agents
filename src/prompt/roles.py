@@ -1,5 +1,6 @@
-from typing import Literal, TypedDict
+from typing import TypedDict
 from prisma.enums import Role
+from src.typings.agent_roles import SubAgentRole
 
 
 class AgentDescription(TypedDict):
@@ -7,24 +8,6 @@ class AgentDescription(TypedDict):
     description: str
     key_capabilities: list[str]
     strength_weight: float
-
-
-SubAgentRole = Literal[
-    "MARKET_ANALYST",
-    "RISK_ANALYST",
-    "EQUITY_RESEARCH_ANALYST",
-    "FUNDAMENTAL_ANALYST",
-    "TRADING_EXECUTOR",
-]
-
-AgentRole = Literal[
-    "CHIEF_INVESTMENT_OFFICER",
-    "MARKET_ANALYST",
-    "RISK_ANALYST",
-    "EQUITY_RESEARCH_ANALYST",
-    "FUNDAMENTAL_ANALYST",
-    "TRADING_EXECUTOR",
-]
 
 
 # Agent descriptions for reference in the CIO prompt
@@ -174,4 +157,4 @@ ROLE_PROMPTS_MAP = {
 }
 
 
-__all__ = ["AgentRole", "SubAgentRole", "RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
+__all__ = ["RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP", "AGENT_TEAM_DESCRIPTION"]

@@ -1,6 +1,6 @@
 from pydantic import SecretStr
 from langchain_openai import ChatOpenAI
-from src.typings import ModelName
+from src.typings.context import ModelName
 from src.utils.config import model_mapping
 from src.utils import get_env
 

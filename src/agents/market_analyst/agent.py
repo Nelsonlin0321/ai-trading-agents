@@ -25,6 +25,7 @@ async def build_market_analyst_agent(context: Context):
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
+            middleware.LoggingMiddleware("MARKET_ANALYST"),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
