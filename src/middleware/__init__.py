@@ -1,10 +1,9 @@
-import json
+import asyncio
+from langchain_core.messages import AnyMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
 from prisma.types import (
-    AgentMessageUpsertInput,
     AgentMessageCreateInput,
-    AgentMessageUpdateInput,
 )
 from src import db
 from src.typings.context import Context
@@ -27,37 +26,62 @@ todo_list_middleware = middleware.TodoListMiddleware()
 class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Context]):
     def __init__(self, role: AgentRole):
         assert role in ALL_ROLES
-        self.role = role
+        self.role: AgentRole = role
 
     async def aafter_model(
         self, state: middleware.AgentState, runtime: Runtime[Context]
     ) -> None:
         context = runtime.context
         messages = state["messages"]
-        agent_message_id = messages[0].id
-        message_raw_list = [msg.model_dump_json() for msg in messages]
-        messages_json = json.dumps(message_raw_list)
-
         await db.connect()
-
-        await db.prisma.agentmessage.upsert(
-            where={"id": agent_message_id},
-            data=AgentMessageUpsertInput(
-                create=AgentMessageCreateInput(
+        await asyncio.gather(
+            *[
+                create_agent_message_if_not_exists(
                     role=self.role,
-                    botId=context.bot.id,
-                    messages=messages_json,
-                    runId=context.run.id,
-                ),
-                update=AgentMessageUpdateInput(messages=messages_json),
-            ),
+                    bot_id=context.bot.id,
+                    run_id=context.run.id,
+                    message=msg,
+                )
+                for msg in messages
+            ]
         )
-
         await db.disconnect()
 
 
-__all__ = [
-    "summarization_middleware",
-    "todo_list_middleware",
-    "LoggingMiddleware",
-]
+async def create_agent_message_if_not_exists(
+    role: AgentRole,
+    bot_id: str,
+    run_id: str,
+    message: AnyMessage,
+):
+    existed_message = await db.prisma.agentmessage.find_unique(
+        where={"id": message.id},
+    )
+
+    if not existed_message:
+        await db.prisma.agentmessage.create(
+            data=AgentMessageCreateInput(
+                id=message.id,
+                role=role,
+                botId=bot_id,
+                messages=message.model_dump_json(),
+                runId=run_id,
+            )
+        )
+
+
+# class ExampleLoggingMiddleware(middleware.AgentMiddleware):
+
+#     async def aafter_model(
+#         self, state: middleware.AgentState, runtime: Runtime
+#     ) -> None:
+#         messages = state["messages"]
+#         agent_message_id = messages[0].id
+#         print(f"agent_message_id: {agent_message_id}")
+
+#         __all__ = [
+#             "summarization_middleware",
+#             "todo_list_middleware",
+#             "LoggingMiddleware",
+#             "ExampleLoggingMiddleware"
+#         ]

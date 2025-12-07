@@ -1,5 +1,4 @@
-from typing import List
-from pydantic import BaseModel, Field
+from typing import List, Annotated
 from langchain.tools import tool, ToolRuntime
 from langchain_core.messages import BaseMessage
 from src.context import Context
@@ -19,24 +18,17 @@ agent_building_map = {
 }
 
 
-class HandoffToSpecialistInput(BaseModel):
-    """Input for handoff to a specialist agent"""
-
-    role: SubAgentRole = Field(
-        description=f"Role of the specialist agent to handoff to. Must be one of: {' | '.join(SPECIALIST_ROLES)}"
-    )
-    task: str = Field(
-        description=(
-            "A clear, detailed description of task that the specialist agent should perform. "
-            "Include relevant context, constraints, and expected deliverables to ensure the specialist can act effectively."
-        )
-    )
-    runtime: ToolRuntime[Context]
-
-
-@tool("handoff_to_specialist", args_schema=HandoffToSpecialistInput)
+@tool("handoff_to_specialist")
 async def handoff_to_specialist(
-    role: SubAgentRole, task: str, runtime: ToolRuntime[Context]
+    role: Annotated[
+        SubAgentRole,
+        f"Role of the specialist agent to handoff to. Must be one of: {' | '.join(SPECIALIST_ROLES)}",
+    ],
+    task: Annotated[
+        str,
+        "A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
+    ],
+    runtime: ToolRuntime[Context],
 ) -> str:
     """
     Delegate a specific investment-related task to a specialist agent and return the agent's response.
@@ -49,8 +41,8 @@ async def handoff_to_specialist(
     a concise summary or detailed output depending on the task performed.
 
     Args:
-        role: The role of the specialist agent to handoff to.
-        task: A clear, detailed description of the task the specialist should perform.
+        role: Role of the specialist agent to handoff to.
+        task: A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.
 
     Returns:
         A single string containing the combined AI messages from the specialist agent's response.

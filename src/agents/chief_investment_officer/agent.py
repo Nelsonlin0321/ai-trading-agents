@@ -1,29 +1,18 @@
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
+from src.tools.handoff_tools import handoff_to_specialist
 from src.middleware import LoggingMiddleware
 from src.models import get_model
-from src.typings.context import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_chief_investment_officer_agent(model_name: ModelName, run_id: str):
-    """
-    Build the Chief Investment Officer agent with comprehensive orchestration capabilities.
-
-    The CIO agent can:
-    1. Access all analytical tools across different domains
-    2. Coordinate between different specialist agents
-    3. Make final investment decisions
-    4. Monitor overall portfolio risk and performance
-    5. Provide strategic direction
-    """
-    context = await build_context(run_id)
+async def build_chief_investment_officer_agent(context: Context):
     system_prompt = await build_agent_system_prompt(
         context, Role.CHIEF_INVESTMENT_OFFICER
     )
-    langchain_model = get_model(model_name)
+    langchain_model = get_model(context.model_name)
 
     agent = create_agent(
         model=langchain_model,
@@ -36,7 +25,7 @@ async def build_chief_investment_officer_agent(model_name: ModelName, run_id: st
             tools.sell_stock,
             tools.get_latest_quotes,
             tools.get_latest_quote,
-            tools.handoff_to_specialist,
+            handoff_to_specialist,
         ],
         middleware=[
             LoggingMiddleware("CHIEF_INVESTMENT_OFFICER"),
@@ -45,4 +34,4 @@ async def build_chief_investment_officer_agent(model_name: ModelName, run_id: st
         context_schema=Context,
     )
 
-    return context, agent
+    return agent

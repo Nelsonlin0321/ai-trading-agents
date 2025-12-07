@@ -30,7 +30,8 @@ from src.tools.trading_tools import (
     get_market_status,
 )
 
-from src.tools.handoff_tools import handoff_to_specialist
+# avoid circular import
+# from src.tools.handoff_tools import handoff_to_specialist
 
 __all__ = [
     "buy_stock",
@@ -52,5 +53,5 @@ __all__ = [
     "get_fundamental_risk_data",
     "get_volatility_risk_indicators",
     "get_price_risk_indicators",
-    "handoff_to_specialist",
+    # "handoff_to_specialist",
 ]
