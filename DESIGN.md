@@ -55,4 +55,10 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - https://docs.langchain.com/oss/python/langchain/supervisor
 
 ## Orchestration Design:
-- Handoff Tool
+- Handoff Tool: Done
+
+## Other
+- Only Open Hour Can Run: WIP
+- Too time consuming: WIP
+- Shorter Running Interval: WIP
+- Monitor the cost of google equity research: WIP
