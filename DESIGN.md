@@ -64,3 +64,5 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Monitor the cost of google equity research: WIP
 - Add To Do Middleware To CIO: WIP
 - Reduce Tool Call Frequency: WIP
+- Ignore handoff to specific result: TODO
+- Display tool args: WIP
