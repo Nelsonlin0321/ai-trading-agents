@@ -1,4 +1,5 @@
-from typing import TypedDict
+from typing import TypedDict, List
+from src.prompt.roles import SubAgentRole, AgentRole
 
 
 class ETFTickerInfo(TypedDict):
@@ -577,3 +578,20 @@ FUNDAMENTAL_RISK_CATEGORIES = {
         "priceHint",
     ],
 }
+
+SPECIALIST_ROLES: List[SubAgentRole] = [
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+
+ALL_ROLES: List[AgentRole] = [
+    "CHIEF_INVESTMENT_OFFICER",
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]

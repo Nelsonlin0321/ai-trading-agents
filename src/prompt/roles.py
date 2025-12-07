@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict, List
+from typing import Literal, TypedDict
 from prisma.enums import Role
 
 
@@ -9,7 +9,7 @@ class AgentDescription(TypedDict):
     strength_weight: float
 
 
-RegisteredRole = Literal[
+SubAgentRole = Literal[
     "MARKET_ANALYST",
     "RISK_ANALYST",
     "EQUITY_RESEARCH_ANALYST",
@@ -17,7 +17,8 @@ RegisteredRole = Literal[
     "TRADING_EXECUTOR",
 ]
 
-SPECIALIST_ROLES: List[RegisteredRole] = [
+AgentRole = Literal[
+    "CHIEF_INVESTMENT_OFFICER",
     "MARKET_ANALYST",
     "RISK_ANALYST",
     "EQUITY_RESEARCH_ANALYST",
@@ -27,7 +28,7 @@ SPECIALIST_ROLES: List[RegisteredRole] = [
 
 
 # Agent descriptions for reference in the CIO prompt
-AGENT_DESCRIPTIONS: dict[RegisteredRole, AgentDescription] = {
+AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
     "MARKET_ANALYST": {
         "title": "Market Analyst",
         "description": "Senior US-market analyst who delivers concise, actionable briefings on market catalysts, drivers, and sentiment inflections.",
@@ -173,4 +174,4 @@ ROLE_PROMPTS_MAP = {
 }
 
 
-__all__ = ["RegisteredRole", "RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
+__all__ = ["AgentRole", "SubAgentRole", "RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
