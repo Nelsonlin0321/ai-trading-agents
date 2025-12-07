@@ -3,17 +3,15 @@ from prisma.enums import Role
 from src import tools
 from src import middleware
 from src.models import get_model
-from src.typings import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_equity_research_analyst_agent(model_name: ModelName, run_id: str):
-    context = await build_context(run_id)
+async def build_equity_research_analyst_agent(context: Context):
     system_prompt = await build_agent_system_prompt(
         context, Role.EQUITY_RESEARCH_ANALYST
     )
-    langchain_model = get_model(model_name)
+    langchain_model = get_model(context.model_name)
     agent = create_agent(
         model=langchain_model,
         tools=[tools.do_google_equity_research, tools.get_latest_equity_news],
@@ -25,4 +23,4 @@ async def build_equity_research_analyst_agent(model_name: ModelName, run_id: str
         context_schema=Context,
     )
 
-    return context, agent
+    return agent

@@ -39,8 +39,9 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Get the latest stock price statistics: Done
 - Get the most active stocks: Done
 - Get Jina DeepSearch Tool: Not Impressive and Slow - Avoid using it
-- BUY
-- SELL
+- BUY: Done
+- SELL: Done
+- Handoff Tool: WIP
 
 
 ## Common Tools:
@@ -51,3 +52,7 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 
 ## Resources:
 - https://github.com/The-Swarm-Corporation/AutoHedge: Less Useful
+- https://docs.langchain.com/oss/python/langchain/supervisor
+
+## Orchestration Design:
+- Handoff Tool

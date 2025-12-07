@@ -1,4 +1,6 @@
-model_mapping = {
+from src.typings import ModelName
+
+model_mapping: dict[ModelName, str] = {
     "deepseek": "deepseek-chat",
     "gpt-5.1-thinking-plus": "gpt-5.1-thinking-plus",
     "deepseek-reasoner": "deepseek-reasoner",

@@ -1,21 +1,8 @@
-from dataclasses import dataclass
-
-from prisma.models import Bot, Run
 from src import db
+from src.typings import Context
 
 
-@dataclass
-class UserContext:
-    user_id: str
-
-
-@dataclass
-class Context:
-    run: Run
-    bot: Bot
-
-
-async def build_context(run_id: str) -> Context:
+async def build_context(run_id: str):
     try:
         prisma = await db.connect()
 
@@ -45,7 +32,7 @@ async def build_context(run_id: str) -> Context:
         if not bot.active:
             raise ValueError(f"Bot with ID {bot.id} is not active.")
 
-        context = Context(run=run, bot=bot)
+        context = Context(run=run, bot=bot, model_name="deepseek")
         await db.disconnect()
         return context
     except Exception as e:

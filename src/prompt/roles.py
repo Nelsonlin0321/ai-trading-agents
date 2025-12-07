@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Literal, TypedDict, List
 from prisma.enums import Role
 
 
@@ -9,9 +9,26 @@ class AgentDescription(TypedDict):
     strength_weight: float
 
 
+RegisteredRole = Literal[
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+
+SPECIALIST_ROLES: List[RegisteredRole] = [
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+
+
 # Agent descriptions for reference in the CIO prompt
-AGENT_DESCRIPTIONS: dict[Role, AgentDescription] = {
-    Role.MARKET_ANALYST: {
+AGENT_DESCRIPTIONS: dict[RegisteredRole, AgentDescription] = {
+    "MARKET_ANALYST": {
         "title": "Market Analyst",
         "description": "Senior US-market analyst who delivers concise, actionable briefings on market catalysts, drivers, and sentiment inflections.",
         "key_capabilities": [
@@ -22,7 +39,7 @@ AGENT_DESCRIPTIONS: dict[Role, AgentDescription] = {
         ],
         "strength_weight": 0.25,  # Market context is crucial
     },
-    Role.RISK_ANALYST: {
+    "RISK_ANALYST": {
         "title": "Risk Analyst",
         "description": "Meticulous risk analyst who quantifies downside scenarios, stress-tests portfolios, and designs hedging frameworks.",
         "key_capabilities": [
@@ -33,7 +50,7 @@ AGENT_DESCRIPTIONS: dict[Role, AgentDescription] = {
         ],
         "strength_weight": 0.25,  # Risk management is equally important
     },
-    Role.EQUITY_RESEARCH_ANALYST: {
+    "EQUITY_RESEARCH_ANALYST": {
         "title": "Equity Research Analyst",
         "description": "Senior equity research analyst focused on catalysts, drivers, and market inflections for specific securities.",
         "key_capabilities": [
@@ -44,7 +61,7 @@ AGENT_DESCRIPTIONS: dict[Role, AgentDescription] = {
         ],
         "strength_weight": 0.20,  # Catalysts and timing are important
     },
-    Role.FUNDAMENTAL_ANALYST: {
+    "FUNDAMENTAL_ANALYST": {
         "title": "Fundamental Analyst",
         "description": "Fundamental equity analyst who builds conviction from first principles using comprehensive financial metrics.",
         "key_capabilities": [
@@ -57,7 +74,7 @@ AGENT_DESCRIPTIONS: dict[Role, AgentDescription] = {
         ],
         "strength_weight": 0.30,  # Fundamentals provide the valuation anchor
     },
-    Role.TRADING_EXECUTOR: {
+    "TRADING_EXECUTOR": {
         "title": "Trading Executor",
         "description": "Trading executor who executes trades based on instructions from the Chief Investment Officer.",
         "key_capabilities": [
@@ -155,4 +172,5 @@ ROLE_PROMPTS_MAP = {
     ),
 }
 
-__all__ = ["RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
+
+__all__ = ["RegisteredRole", "RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
