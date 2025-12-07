@@ -38,9 +38,13 @@ class EquityNewsAct(Action):
             headline = new["headline"]
             summary = new["summary"]
             published_at = new["created_at"]
-            image_url = min(
-                new["images"], key=lambda x: image_size_map.get(x["size"], 1)
-            )["url"]
+            image_url = (
+                min(new["images"], key=lambda x: image_size_map.get(x["size"], 1))[
+                    "url"
+                ]
+                if new.get("images")
+                else ""
+            )
             if i <= top_content:
                 content = convert_html_to_markdown(new["content"])
             else:

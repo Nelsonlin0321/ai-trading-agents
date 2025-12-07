@@ -10,6 +10,7 @@ from src.typings.context import Context
 from src.models import get_model
 from src.utils.constants import ALL_ROLES
 from src.typings.agent_roles import AgentRole
+from src.utils import async_retry
 
 langchain_model = get_model("deepseek")
 
@@ -50,6 +51,7 @@ class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Contex
         await db.disconnect()
 
 
+@async_retry()
 async def create_agent_message_if_not_exists(
     role: AgentRole,
     bot_id: str,
@@ -73,8 +75,8 @@ async def create_agent_message_if_not_exists(
                 runId=run_id,
             )
         )
-    else:
-        EPHEMERAL_CACHE[message.id] = True
+
+    EPHEMERAL_CACHE[message.id] = True
 
 
 # class ExampleLoggingMiddleware(middleware.AgentMiddleware):

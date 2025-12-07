@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Any
+from typing import Awaitable, Callable, Any
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial, wraps
@@ -153,3 +153,32 @@ def get_new_york_datetime() -> datetime:
 
 def convert_html_to_markdown(html: str) -> str:
     return convert(html, options=ConversionOptions(strip_tags={"a"}))
+
+
+def async_retry(
+    base_delay: float = 0.5,
+    max_retries: int = 5,
+    exceptions: tuple[type[BaseException], ...] = (Exception,),
+    max_delay_seconds: float = 5.0,
+) -> Callable[[Callable[..., Awaitable[object]]], Callable[..., Awaitable[object]]]:
+    def decorator(
+        func: Callable[..., Awaitable[object]],
+    ) -> Callable[..., Awaitable[object]]:
+        async def wrapper(*args, **kwargs) -> object:
+            retries = 0
+            while True:
+                try:
+                    return await func(*args, **kwargs)
+                except exceptions:
+                    if retries < max_retries:
+                        retries += 1
+                        delay = min(
+                            max_delay_seconds, base_delay * (2 ** (retries - 1))
+                        )
+                        await asyncio.sleep(delay)
+                    else:
+                        raise
+
+        return wrapper
+
+    return decorator
