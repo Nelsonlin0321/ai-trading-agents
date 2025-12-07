@@ -1,5 +1,5 @@
 import asyncio
-from datetime import time, datetime, timedelta, timezone
+from datetime import time, datetime, timedelta, timezone, date
 from typing import TypedDict, List
 from src.services.alpaca import (
     get_snapshots,
@@ -152,19 +152,18 @@ class StockHistoricalPriceChangesAct(Action):
             "one_month": timedelta(days=30),
             "three_months": timedelta(days=90),
             "six_months": timedelta(days=180),
-            "one_year": timedelta(days=365),
-            "three_years": timedelta(days=365 * 3),
+            # "one_year": timedelta(days=365),
+            # "three_years": timedelta(days=365 * 3),
         }
 
-        end_dt = datetime.now(timezone.utc)
-        # Buffer for weekends and holidays
-        start_dt = end_dt - period_deltas["three_years"] - timedelta(days=14)
+        start = (date.today() - timedelta(days=180 + 7)).isoformat()
+        end = date.today().isoformat()
 
         bars_by_symbol = await get_historical_price_bars(
             symbols=tickers,
             timeframe="1Day",
-            start=_to_iso_z(start_dt),
-            end=_to_iso_z(end_dt),
+            start=start,
+            end=end,
             sort="desc",  # IMPORTANT: sort by descending timestamp
         )
 

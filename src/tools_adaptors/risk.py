@@ -29,7 +29,7 @@ class VolatilityRiskAct(Action):
 
     async def arun(self, ticker: str) -> str:
         """Get volatility risk indicators for a ticker"""
-        start = (date.today() - timedelta(days=356 + 7)).isoformat()
+        start = (date.today() - timedelta(days=180 + 7)).isoformat()
         end = date.today().isoformat()
         price_bars = await get_historical_price_bars(
             symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
@@ -47,7 +47,7 @@ class PriceRiskAct(Action):
 
     async def arun(self, ticker: str) -> str:
         """Get price risk indicators for a ticker"""
-        start = (date.today() - timedelta(days=356 + 7)).isoformat()
+        start = (date.today() - timedelta(days=180 + 7)).isoformat()
         end = date.today().isoformat()
         price_bars = await get_historical_price_bars(
             symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
