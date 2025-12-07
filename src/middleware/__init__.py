@@ -13,6 +13,8 @@ from src.typings.agent_roles import AgentRole
 
 langchain_model = get_model("deepseek")
 
+EPHEMERAL_CACHE = {}
+
 summarization_middleware = middleware.SummarizationMiddleware(
     model=langchain_model,
     max_tokens_before_summary=128_000,
@@ -54,6 +56,9 @@ async def create_agent_message_if_not_exists(
     run_id: str,
     message: AnyMessage,
 ):
+    if message.id in EPHEMERAL_CACHE:
+        return
+
     existed_message = await db.prisma.agentmessage.find_unique(
         where={"id": message.id},
     )
@@ -68,6 +73,8 @@ async def create_agent_message_if_not_exists(
                 runId=run_id,
             )
         )
+    else:
+        EPHEMERAL_CACHE[message.id] = True
 
 
 # class ExampleLoggingMiddleware(middleware.AgentMiddleware):
