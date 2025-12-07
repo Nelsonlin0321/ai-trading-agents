@@ -66,3 +66,4 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Reduce Tool Call Frequency: WIP
 - Ignore handoff to specific result: TODO
 - Display tool args: WIP
+- Try Different Strategy: WIP
