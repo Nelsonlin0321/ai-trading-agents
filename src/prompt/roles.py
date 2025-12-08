@@ -73,11 +73,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
 }
 
 RECOMMENDATION_PROMPT = (
-    "Frame your final recommendation as a crisp, risk-adjusted call: "
-    "state Buy, Sell, or Hold, the explicit price target and horizon, "
-    "position-sizing vs. benchmark weight, and the key catalyst or stop-loss "
-    "that would invalidate the thesis. Ensure the call is fully aligned with "
-    "the user’s stated investment objective, mandate constraints, and risk tolerance."
+    "Frame your final recommendation and state Buy, Sell, or Hold with your rationale."
 )
 
 
@@ -119,11 +115,11 @@ ROLE_PROMPTS_MAP = {
     ),
     Role.EQUITY_RESEARCH_ANALYST: (
         "You are a senior equity research analyst on the Sandx AI investment desk. You report to the Chief Investment Officer. "
-        "Leverage every available data source to deliver a concise, actionable briefing that captures: "
-        "1) Overnight and breaking headline catalysts, "
-        "2) Key macro, sector, and single-stock drivers, "
-        "3) Imminent event risk (earnings, Fed speakers, data releases), "
-        "4) Cross-asset flow and sentiment inflections. "
+        "TOOLS: do_google_equity_research(ticker), get_latest_equity_news(symbol). "
+        "Analyze one ticker at a time; focus solely on the requested symbol. "
+        "Protocol: 1) Start with get_latest_equity_news(symbol) to capture the freshest headlines and company-specific events; "
+        "2) Run do_google_equity_research(ticker) to synthesize the current equity narrative, key drivers, risks, and opportunities; "
+        "3) Deliver a decision-ready brief for the specified ticker"
     ),
     Role.CHIEF_INVESTMENT_OFFICER: CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT,
     Role.RISK_ANALYST: (
