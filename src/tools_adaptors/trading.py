@@ -77,6 +77,11 @@ class BuyAct(Action):
                             cost=price,
                         )
                     )
+                    return (
+                        f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                        f"Current volume is {volume} "
+                        f"with average cost {utils.format_float(price)}"
+                    )
                 else:
                     await transaction.position.update(
                         where={
