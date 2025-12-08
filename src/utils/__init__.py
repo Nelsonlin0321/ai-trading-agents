@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Awaitable, Callable, Any
+from typing import Awaitable, Callable, Any, TypeVar, Coroutine
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial, wraps
@@ -178,6 +178,24 @@ def async_retry(
                         await asyncio.sleep(delay)
                     else:
                         raise
+
+        return wrapper
+
+    return decorator
+
+
+T = TypeVar("T")
+
+
+def async_timeout(
+    seconds: float,
+) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Coroutine[Any, Any, T]]]:
+    def decorator(
+        func: Callable[..., Awaitable[T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> T:
+            return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
 
         return wrapper
 

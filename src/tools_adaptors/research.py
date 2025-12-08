@@ -7,6 +7,7 @@ from src.tools_adaptors.base import Action
 from src.services.utils import redis_cache
 from src.utils import async_wrap
 from src.utils import get_current_date
+from src.utils import async_timeout
 
 
 class GoogleMarketResearchAct(Action):
@@ -33,6 +34,7 @@ class GoogleMarketResearchAct(Action):
     def name(self):
         return "google_finance_market_research"
 
+    @async_timeout(30)
     @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
     async def arun(self):  # type: ignore
         return await self.run()  # type: ignore
@@ -94,6 +96,7 @@ class GoogleEquityResearchAct(Action):
     def name(self):
         return "google_equity_research"
 
+    @async_timeout(30)
     @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 6)
     async def arun(self, ticker: str):  # type: ignore
         return await self.run(ticker)  # type: ignore

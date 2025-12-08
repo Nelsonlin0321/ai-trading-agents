@@ -4,6 +4,7 @@ from src.services.sandx_ai import list_positions, get_timeline_values
 from src.services.sandx_ai.typing import Position
 from src.tools_adaptors import utils as action_utils
 from src import utils
+from src.utils import async_timeout
 
 
 class FormattedPosition(TypedDict):
@@ -78,6 +79,7 @@ class ListPositionsAct(Action):
     def name(self):
         return "list_current_positions"
 
+    @async_timeout(30)
     async def arun(self, bot_id: str) -> str:
         positions = await list_positions(bot_id)
         position_markdown = convert_positions_to_markdown_table(positions)
@@ -89,6 +91,7 @@ class PortfolioPerformanceAnalysisAct(Action):
     def name(self):
         return "get_portfolio_performance_analysis"
 
+    @async_timeout(30)
     async def arun(self, bot_id: str):
         timeline_values = await get_timeline_values(bot_id)
         analysis = action_utils.analyze_timeline_value(timeline_values)

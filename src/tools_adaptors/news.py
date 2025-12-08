@@ -3,6 +3,7 @@ from src.services.tradingeconomics import get_news
 from src.services.alpaca import get_news as get_alpaca_news
 from src.tools_adaptors.base import Action
 from src.utils import convert_html_to_markdown
+from src.utils import async_timeout
 
 
 class MarketNewsAct(Action):
@@ -10,6 +11,7 @@ class MarketNewsAct(Action):
     def name(self):
         return "get_latest_market_news"
 
+    @async_timeout(30)
     async def arun(self):
         data = await get_news()
         return data
@@ -20,6 +22,7 @@ class EquityNewsAct(Action):
     def name(self):
         return "get_latest_equity_news"
 
+    @async_timeout(30)
     async def arun(self, symbol: str):
         data = await get_alpaca_news(
             symbols=[symbol],
