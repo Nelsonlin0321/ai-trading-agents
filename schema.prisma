@@ -41,6 +41,7 @@ model Bot {
     QQQInitShareCache          QQQInitShareCache?
     runs                       Run[]
     agentMessages              AgentMessage[]
+    recommends                 Recommend[]
 
     @@index([userId])
     @@index([active])
@@ -79,7 +80,7 @@ model InitPortfolio {
     id            String         @id @default(uuid())
     cash          Float          @default(0)
     botId         String         @unique
-    bot           Bot            @relation(fields: [botId], references: [id])
+    bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
     initPositions InitPosition[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
@@ -204,6 +205,7 @@ model Run {
     agentMessages AgentMessage[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
+    recommends    Recommend[]
 
     @@index([botId, status])
 }
@@ -225,7 +227,7 @@ model AgentMessage {
     role      Role
     botId     String
     bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
-    messages  String // json: [{"role": "assistant","parts": [{"text": "", "type": "text"}]}]
+    messages  String //json: list[AIMessage|HumanMessage|ToolMessage]: Change to json of AIMessage|HumanMessage|ToolMessage
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
@@ -233,16 +235,36 @@ model AgentMessage {
 }
 
 model Trade {
+    id                  String    @id @default(uuid())
+    type                TradeType
+    price               Float
+    ticker              String
+    amount              Float
+    run                 Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
+    runId               String
+    bot                 Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+    botId               String
+    rationale           String
+    confidence          Float
+    realizedPL          Float? // Only applicable for sell trades
+    realizedPLPercent   Float? // Only applicable for sell trades
+    unrealizedPL        Float? // Only applicable for buy trades
+    unrealizedPLPercent Float? // Only applicable for buy trades
+    createdAt           DateTime  @default(now())
+}
+
+model Recommend {
     id         String    @id @default(uuid())
     type       TradeType
-    price      Float
     ticker     String
     amount     Float
+    rationale  String
+    confidence Float
+    role       Role
     run        Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
     runId      String
     bot        Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
     botId      String
-    realizedPL Float? // Only applicable for sell trades
     createdAt  DateTime  @default(now())
 }
 
@@ -259,5 +281,5 @@ model Cache {
     createdAt DateTime @default(now())
     expiresAt DateTime
 
-    @@unique([function, key, expiresAt])
+    @@index([function, key, expiresAt])
 }
