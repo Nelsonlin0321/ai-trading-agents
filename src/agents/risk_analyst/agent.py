@@ -20,8 +20,8 @@ async def build_risk_analyst_agent(context: Context):
             tools.get_recommend_stock_tool(Role.RISK_ANALYST),
         ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            # middleware.summarization_middleware,  # type: ignore
+            # middleware.todo_list_middleware,
             middleware.LoggingMiddleware(Role.RISK_ANALYST.value),
         ],
         system_prompt=system_prompt,

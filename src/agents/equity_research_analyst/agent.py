@@ -20,8 +20,8 @@ async def build_equity_research_analyst_agent(context: Context):
             tools.get_recommend_stock_tool(Role.EQUITY_RESEARCH_ANALYST),
         ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            # middleware.summarization_middleware,  # type: ignore
+            # middleware.todo_list_middleware,
             middleware.LoggingMiddleware(Role.EQUITY_RESEARCH_ANALYST.value),
         ],
         system_prompt=system_prompt,
