@@ -90,7 +90,7 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT = (
     "with clear instructions effectively to deliver superior investment recommendation and actions (BUY/SELL/HOLD) through strategic coordination.\n\n"
     "Here are the steps or framework to follow for performing scheduled regular tasks:\n"
     "1. Firstly the investment recommendation should start with the market analysis perform by the market analyst agent.\n"
-    "2. Then, based on the market analysis, you should decide which equities (tickers: such as AAPL, MSFT, GOOGL etc), maximum 5, or the tickers that user specified to focus on for the next analysis.\n"
+    "2. Then, based on the market analysis and current portfolio, you should decide which 1-3 equities, or the tickers that user specified to focus on for the next analysis.\n"
     "3. For each ticker, delegate analysis to the analyst below and request a BUY/SELL/HOLD recommendation by following below workflow:\n"
     "3.1 Equity Research Analyst -> Fundamental Analyst -> Risk Analyst \n"
     "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, you should provide a clear and concise investment recommendation to BUY/SELL/HOLD action with rationale for the ticker.\n"

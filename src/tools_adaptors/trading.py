@@ -9,7 +9,6 @@ from src import utils, db
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
-from src.utils import async_timeout
 
 
 class BuyAct(Action):
@@ -17,7 +16,6 @@ class BuyAct(Action):
     def name(self):
         return "buy_stock"
 
-    @async_timeout(30)
     async def arun(
         self,
         runId,
@@ -25,7 +23,7 @@ class BuyAct(Action):
         ticker: str,
         volume: float,
         rationale: str,
-        confidence: str,
+        confidence: float,
     ):
         try:
             clock = alpaca_trading_client.get_clock()
@@ -125,7 +123,6 @@ class SellAct(Action):
     def name(self):
         return "sell_stock"
 
-    @async_timeout(30)
     async def arun(
         self,
         runId,
@@ -133,7 +130,7 @@ class SellAct(Action):
         ticker: str,
         volume: float,
         rationale: str,
-        confidence: str,
+        confidence: float,
     ):
         try:
             clock = alpaca_trading_client.get_clock()

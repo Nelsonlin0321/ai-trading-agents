@@ -37,7 +37,7 @@ async def buy_stock(
     ticker: str,
     volume: float,
     rationale: str,
-    confidence: str,
+    confidence: float,
     runtime: ToolRuntime[Context],
 ):
     """Execute a buy order for a stock.
@@ -65,7 +65,7 @@ async def sell_stock(
     ticker: str,
     volume: float,
     rationale: str,
-    confidence: str,
+    confidence: float,
     runtime: ToolRuntime[Context],
 ):
     """Execute a sell order for a stock.

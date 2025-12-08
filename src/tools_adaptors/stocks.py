@@ -11,7 +11,6 @@ from src.services.alpaca.typing import PriceBar
 from src.tools_adaptors.base import Action
 from src import utils
 from src.utils.constants import ETF_TICKERS
-from src.utils import async_timeout
 
 
 class StockRawSnapshotAct(Action):
@@ -19,7 +18,6 @@ class StockRawSnapshotAct(Action):
     def name(self):
         return "Get Stock Snapshot"
 
-    @async_timeout(30)
     async def arun(self, tickers: list[str]) -> dict:
         """
         Fetch raw market snapshots for multiple tickers.
@@ -46,7 +44,6 @@ class StockCurrentPriceAndIntradayChangeAct(Action):
     def name(self):
         return "Stock Current Price and Intraday Change"
 
-    @async_timeout(30)
     async def arun(
         self, tickers: list[str]
     ) -> dict[str, CurrentPriceAndIntradayChange]:
@@ -107,7 +104,6 @@ class StockHistoricalPriceChangesAct(Action):
 
     # disable: pylint:disable=too-many-locals
 
-    @async_timeout(30)
     async def arun(self, tickers: list[str]) -> dict[str, HistoricalPriceChangePeriods]:
         """
         Compute percentage changes over standard periods using Alpaca daily bars.
