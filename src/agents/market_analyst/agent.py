@@ -21,11 +21,12 @@ async def build_market_analyst_agent(context: Context):
             tools.get_most_active_stockers,
             tools.get_portfolio_performance_analysis,
             tools.get_user_investment_strategy,
+            tools.get_recommend_stock_tool(Role.MARKET_ANALYST),
         ],
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
-            middleware.LoggingMiddleware("MARKET_ANALYST"),
+            middleware.LoggingMiddleware(Role.MARKET_ANALYST.value),
         ],
         system_prompt=system_prompt,
         context_schema=Context,

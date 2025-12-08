@@ -1,11 +1,13 @@
 import traceback
 from loguru import logger
 from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
+from src.services.alpaca import get_latest_quotes
+from prisma.enums import TradeType
+from prisma.enums import Role
+from prisma.types import RecommendCreateInput
 from src import utils, db
 from src.tools_adaptors.base import Action
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
-from src.services.alpaca import get_latest_quotes
-from prisma.enums import TradeType
 
 
 class BuyAct(Action):
@@ -13,7 +15,15 @@ class BuyAct(Action):
     def name(self):
         return "buy_stock"
 
-    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
+    async def arun(
+        self,
+        runId,
+        bot_id: str,
+        ticker: str,
+        volume: float,
+        rationale: str,
+        confidence: str,
+    ):
         try:
             clock = alpaca_trading_client.get_clock()
             if not clock.is_open:  # type: ignore
@@ -83,6 +93,8 @@ class BuyAct(Action):
 
                     await transaction.trade.create(
                         data=TradeCreateInput(
+                            rationale=rationale,
+                            confidence=confidence,
                             type=TradeType.BUY,
                             price=price,
                             ticker=ticker,
@@ -110,7 +122,15 @@ class SellAct(Action):
     def name(self):
         return "sell_stock"
 
-    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
+    async def arun(
+        self,
+        runId,
+        bot_id: str,
+        ticker: str,
+        volume: float,
+        rationale: str,
+        confidence: str,
+    ):
         try:
             clock = alpaca_trading_client.get_clock()
             if not clock.is_open:  # type: ignore
@@ -190,6 +210,8 @@ class SellAct(Action):
 
                 await transaction.trade.create(
                     data=TradeCreateInput(
+                        rationale=rationale,
+                        confidence=confidence,
                         type=TradeType.SELL,
                         price=price,
                         ticker=ticker,
@@ -220,3 +242,57 @@ class SellAct(Action):
             return f"Failed to sell {volume} shares of {ticker}"
         finally:
             await db.disconnect()
+
+
+class RecommendStockAct(Action):
+    @property
+    def name(self):
+        return "recommend_stock"
+
+    async def arun(
+        self,
+        ticker: str,
+        amount: float,
+        rationale: str,
+        confidence: float,
+        trade_type: TradeType,
+        role: Role,
+        runId: str,
+        bot_id: str,
+    ) -> str:
+        """
+        Recommend a stock to buy or sell.
+
+        Args:
+            ticker: Stock ticker, e.g. 'AAPL'
+            amount: Amount of stock to buy or sell
+            rationale: Rationale for the recommendation
+            confidence: Confidence in the recommendation (0.0-1.0)
+
+        Returns:
+            A markdown-formatted table with the recommendation.
+        """
+
+        if not (0.0 <= confidence <= 1.0):
+            return "Confidence must be between 0.0 and 1.0"
+
+        await db.connect()
+        await db.prisma.recommend.create(
+            data=RecommendCreateInput(
+                ticker=ticker,
+                type=trade_type,
+                amount=amount,
+                rationale=rationale,
+                confidence=confidence,
+                role=role,
+                runId=runId,
+                botId=bot_id,
+            )
+        )
+        await db.disconnect()
+
+        return (
+            f"{role.value} recommended {trade_type.value} {amount} shares of {ticker}\n"
+            f"Confidence: {confidence:.1%}\n"
+            f"Rationale: {rationale}"
+        )

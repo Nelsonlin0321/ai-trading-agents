@@ -15,11 +15,12 @@ async def build_fundamental_analyst_agent(context: Context):
         tools=[
             tools.get_fundamental_data,
             tools.get_stock_live_historical_price_change,
+            tools.get_recommend_stock_tool(Role.FUNDAMENTAL_ANALYST),
         ],
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
-            middleware.LoggingMiddleware("FUNDAMENTAL_ANALYST"),
+            middleware.LoggingMiddleware(Role.FUNDAMENTAL_ANALYST.value),
         ],
         system_prompt=system_prompt,
         context_schema=Context,

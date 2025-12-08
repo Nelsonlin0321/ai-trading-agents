@@ -14,11 +14,15 @@ async def build_equity_research_analyst_agent(context: Context):
     langchain_model = get_model(context.model_name)
     agent = create_agent(
         model=langchain_model,
-        tools=[tools.do_google_equity_research, tools.get_latest_equity_news],
+        tools=[
+            tools.do_google_equity_research,
+            tools.get_latest_equity_news,
+            tools.get_recommend_stock_tool(Role.EQUITY_RESEARCH_ANALYST),
+        ],
         middleware=[
             middleware.summarization_middleware,  # type: ignore
             middleware.todo_list_middleware,
-            middleware.LoggingMiddleware("EQUITY_RESEARCH_ANALYST"),
+            middleware.LoggingMiddleware(Role.EQUITY_RESEARCH_ANALYST.value),
         ],
         system_prompt=system_prompt,
         context_schema=Context,

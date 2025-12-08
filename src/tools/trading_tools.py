@@ -1,13 +1,15 @@
 # src/tools/trading_tools.py
+from typing import Literal
+from prisma.enums import Role, TradeType
 from pydantic import BaseModel, Field
-from langchain.tools import tool
-from langchain.tools import ToolRuntime
+from langchain.tools import tool, ToolRuntime
 from src.context import Context
-from src.tools_adaptors.trading import BuyAct, SellAct
+from src.tools_adaptors.trading import BuyAct, SellAct, RecommendStockAct
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
 
 buy_act = BuyAct()
 sell_act = SellAct()
+recommend_stock_act = RecommendStockAct()
 
 
 class BuyInput(BaseModel):
@@ -25,29 +27,59 @@ class SellInput(BaseModel):
 
 
 @tool(buy_act.name)
-async def buy_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
+async def buy_stock(
+    ticker: str,
+    volume: float,
+    rationale: str,
+    confidence: str,
+    runtime: ToolRuntime[Context],
+):
     """Execute a buy order for a stock.
 
     Args:
         ticker: Stock symbol to buy
         volume: Number of shares to buy
+        rationale: Rationale for the buy order
+        confidence: Confidence in the buy order (0.0-1.0)
     """
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await buy_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
+    return await buy_act.arun(
+        runId=runId,
+        bot_id=bot_id,
+        ticker=ticker,
+        volume=volume,
+        rationale=rationale,
+        confidence=confidence,
+    )
 
 
 @tool(sell_act.name)
-async def sell_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
+async def sell_stock(
+    ticker: str,
+    volume: float,
+    rationale: str,
+    confidence: str,
+    runtime: ToolRuntime[Context],
+):
     """Execute a sell order for a stock.
 
     Args:
         ticker: Stock symbol to sell
         volume: Number of shares to sell
+        rationale: Rationale for the sell order
+        confidence: Confidence in the sell order (0.0-1.0)
     """
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await sell_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
+    return await sell_act.arun(
+        runId=runId,
+        bot_id=bot_id,
+        ticker=ticker,
+        volume=volume,
+        rationale=rationale,
+        confidence=confidence,
+    )
 
 
 @tool("get_market_status")
@@ -58,3 +90,38 @@ async def get_market_status():
         return "Market is closed. Cannot buy stock."
 
     return "Market is open. You can buy or sell stock."
+
+
+def get_recommend_stock_tool(role: Role):
+    @tool("recommend_stock")
+    async def recommend_stock(
+        ticker: str,
+        amount: float,
+        rationale: str,
+        confidence: float,
+        trade_type: Literal["BUY", "SELL"],
+        runtime: ToolRuntime[Context],
+    ):
+        """Recommend a stock to buy or sell.
+
+        Args:
+            ticker: Stock symbol to recommend to BUY or SELL
+            amount: Number of shares to recommend to BUY or SELL
+            rationale: Rationale for the recommendation
+            confidence: Confidence in the recommendation (0.0-1.0)
+            trade_type: Whether to buy or sell the stock: `BUY` or `SELL`
+        """
+        bot_id = runtime.context.bot.id
+        runId = runtime.context.run.id
+        return await recommend_stock_act.arun(
+            runId=runId,
+            bot_id=bot_id,
+            ticker=ticker,
+            amount=amount,
+            rationale=rationale,
+            confidence=confidence,
+            trade_type=TradeType(trade_type),
+            role=role,
+        )
+
+    return recommend_stock
