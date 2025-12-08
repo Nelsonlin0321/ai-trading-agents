@@ -72,9 +72,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
     },
 }
 
-RECOMMENDATION_PROMPT = (
-    "Frame your final recommendation and state Buy, Sell, or Hold with your rationale."
-)
+RECOMMENDATION_PROMPT = "For each analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, and confidence level (0.0-1.0)"
 
 
 AGENT_TEAM_DESCRIPTION = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
@@ -93,13 +91,10 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT = (
     "Here are the steps or framework to follow for performing scheduled regular tasks:\n"
     "1. Firstly the investment recommendation should start with the market analysis perform by the market analyst agent.\n"
     "2. Then, based on the market analysis, you should decide which equities (tickers: such as AAPL, MSFT, GOOGL etc), maximum 5, or the tickers that user specified to focus on for the next analysis.\n"
-    "3. Next, for each ticker, you should perform the following analysis, typically, we should follow below workflow:\n"
-    "3.1 The equity research analysis should be performed by the Equity Research Analyst agent.\n"
-    "3.2 The fundamental analysis should be performed by the Fundamental Analyst agent.\n"
-    "3.3 The Risk Analyst should evaluate the potential data-drive risks for the ticker.\n"
-    "3.4 Based on the equity research analysis, fundamental analysis, and risk analysis, you should provide a clear and concise investment recommendation with BUY/SELL/HOLD action for the ticker.\n"
-    "3.5 Finally, you should ask trading executor to execute the recommended action (BUY/SELL/HOLD) for the ticker.\n"
-    "4. Repeat the above steps for each ticker or each tickers specified by the user.\n"
+    "3. For each ticker, delegate analysis to the analyst below and request a BUY/SELL/HOLD recommendation by following below workflow:\n"
+    "3.1 Equity Research Analyst -> Fundamental Analyst -> Risk Analyst \n"
+    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, you should provide a clear and concise investment recommendation to BUY/SELL/HOLD action with rationale for the ticker.\n"
+    "3.3 Finally, you should handoff the recommended action (BUY/SELL/HOLD) with rationale for all tickers to the trading executor to execute.\n"
     f"{AGENT_TEAM_DESCRIPTION}"
 )
 

@@ -15,11 +15,11 @@ async def build_trading_executor_agent(context: Context):
         model=langchain_model,
         tools=[
             tools.list_current_positions,
-            tools.get_user_investment_strategy,
+            # tools.get_user_investment_strategy,
             tools.buy_stock,
             tools.sell_stock,
-            tools.get_latest_quotes,
-            tools.get_latest_quote,
+            # tools.get_latest_quotes,
+            # tools.get_latest_quote,
             tools.get_market_status,
         ],
         middleware=[

@@ -14,6 +14,7 @@ from src.tools_adaptors.utils.risk_analysis import (
     calculate_price_risk,
     format_price_risk_markdown,
 )
+from src.tools_adaptors.utils.recommendations import format_recommendations_markdown
 
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     "format_volatility_risk_markdown",
     "calculate_price_risk",
     "format_price_risk_markdown",
+    "format_recommendations_markdown",
 ]

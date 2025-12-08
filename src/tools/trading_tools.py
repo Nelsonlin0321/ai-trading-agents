@@ -4,12 +4,18 @@ from prisma.enums import Role, TradeType
 from pydantic import BaseModel, Field
 from langchain.tools import tool, ToolRuntime
 from src.context import Context
-from src.tools_adaptors.trading import BuyAct, SellAct, RecommendStockAct
+from src.tools_adaptors.trading import (
+    BuyAct,
+    SellAct,
+    RecommendStockAct,
+    GetAnalystsRecommendationsAct,
+)
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
 
 buy_act = BuyAct()
 sell_act = SellAct()
 recommend_stock_act = RecommendStockAct()
+get_analysts_recommendations_act = GetAnalystsRecommendationsAct()
 
 
 class BuyInput(BaseModel):
@@ -99,22 +105,24 @@ def get_recommend_stock_tool(role: Role):
         amount: float,
         rationale: str,
         confidence: float,
-        trade_type: Literal["BUY", "SELL"],
+        trade_type: Literal["BUY", "SELL", "HOLD"],
         runtime: ToolRuntime[Context],
     ):
-        """Recommend a stock to buy or sell.
+        """Recommend a stock to buy, sell, or hold.
 
         Args:
-            ticker: Stock symbol to recommend to BUY or SELL
-            amount: Number of shares to recommend to BUY or SELL
+            ticker: Stock symbol to recommend to BUY, SELL, or HOLD
+            amount: Number of shares to recommend to BUY, SELL, or HOLD
             rationale: Rationale for the recommendation
             confidence: Confidence in the recommendation (0.0-1.0)
-            trade_type: Whether to buy or sell the stock: `BUY` or `SELL`
+            trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
         """
+
         bot_id = runtime.context.bot.id
-        runId = runtime.context.run.id
+        run_id = runtime.context.run.id
+
         return await recommend_stock_act.arun(
-            runId=runId,
+            run_id=run_id,
             bot_id=bot_id,
             ticker=ticker,
             amount=amount,
@@ -125,3 +133,19 @@ def get_recommend_stock_tool(role: Role):
         )
 
     return recommend_stock
+
+
+@tool("get_analysts_recommendations")
+async def get_analysts_recommendations(
+    runtime: ToolRuntime[Context],
+) -> str:
+    """Retrieve consolidated analyst recommendations for final investment decisions.
+
+    Returns:
+        List of recent recommendations with keys: ticker, action (BUY/SELL/HOLD),
+        price_target, rationale.
+    """
+    run_id = runtime.context.run.id
+    return await get_analysts_recommendations_act.arun(
+        run_id=run_id,
+    )

@@ -271,6 +271,7 @@ model Recommend {
 enum TradeType {
     SELL
     BUY
+    HOLD
 }
 
 model Cache {

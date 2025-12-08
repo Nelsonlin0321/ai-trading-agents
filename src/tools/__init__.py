@@ -29,6 +29,7 @@ from src.tools.trading_tools import (
     sell_stock,
     get_market_status,
     get_recommend_stock_tool,
+    get_analysts_recommendations,
 )
 
 # avoid circular import
@@ -38,6 +39,7 @@ __all__ = [
     "buy_stock",
     "sell_stock",
     "get_recommend_stock_tool",
+    "get_analysts_recommendations",
     "get_market_status",
     "get_latest_quotes",
     "get_latest_quote",

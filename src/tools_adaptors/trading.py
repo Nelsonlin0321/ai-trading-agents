@@ -7,6 +7,7 @@ from prisma.enums import Role
 from prisma.types import RecommendCreateInput
 from src import utils, db
 from src.tools_adaptors.base import Action
+from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
 
 
@@ -257,7 +258,7 @@ class RecommendStockAct(Action):
         confidence: float,
         trade_type: TradeType,
         role: Role,
-        runId: str,
+        run_id: str,
         bot_id: str,
     ) -> str:
         """
@@ -285,7 +286,7 @@ class RecommendStockAct(Action):
                 rationale=rationale,
                 confidence=confidence,
                 role=role,
-                runId=runId,
+                runId=run_id,
                 botId=bot_id,
             )
         )
@@ -296,3 +297,39 @@ class RecommendStockAct(Action):
             f"Confidence: {confidence:.1%}\n"
             f"Rationale: {rationale}"
         )
+
+
+class GetAnalystsRecommendationsAct(Action):
+    @property
+    def name(self):
+        return "get_analysts_recommendations"
+
+    async def arun(
+        self,
+        run_id: str,
+    ) -> str:
+        """
+        Get analysts recommendations.
+
+        Args:
+            run_id: Run ID
+            bot_id: Bot ID
+
+        Returns:
+            A markdown-formatted table with the recommendations.
+        """
+
+        await db.connect()
+
+        recommendations = await db.prisma.recommend.find_many(
+            where={
+                "runId": run_id,
+            },
+            order={
+                "role": "asc",
+            },
+        )
+
+        await db.disconnect()
+
+        return format_recommendations_markdown(recommendations)
