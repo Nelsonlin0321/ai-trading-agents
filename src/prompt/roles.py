@@ -32,7 +32,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Designs hedging frameworks for risk mitigation",
             "Assesses tail events and regulatory constraints",
         ],
-        "strength_weight": 0.25,  # Risk management is equally important
+        "strength_weight": 0.2,  # Risk management is equally important
     },
     "EQUITY_RESEARCH_ANALYST": {
         "title": "Equity Research Analyst",
@@ -43,7 +43,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Event risk assessment for individual stocks",
             "Market sentiment and flow analysis for securities",
         ],
-        "strength_weight": 0.20,  # Catalysts and timing are important
+        "strength_weight": 0.5,  # Catalysts and timing are important
     },
     "FUNDAMENTAL_ANALYST": {
         "title": "Fundamental Analyst",
@@ -68,7 +68,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Ensure cash sufficiency for buys",
             "Never short-sell (≤ current holdings)",
         ],
-        "strength_weight": 0.10,  # Execution role, lower weight in decision synthesis
+        "strength_weight": 0,  # Execution role, lower weight in decision synthesis
     },
 }
 
@@ -79,7 +79,7 @@ AGENT_TEAM_DESCRIPTION = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
     f"### {idx}. {AGENT_DESCRIPTIONS[role]['title']}\n"
     f"**Description:** {AGENT_DESCRIPTIONS[role]['description']}\n"
     f"**Capabilities:** {AGENT_DESCRIPTIONS[role]['key_capabilities']}\n"
-    f"**Strength weight in decisions:** {int(AGENT_DESCRIPTIONS[role]['strength_weight'] * 100)}%\n"
+    f"**Default Strength weight in decisions:** {int(AGENT_DESCRIPTIONS[role]['strength_weight'] * 100)}%\n"
     for idx, role in enumerate(AGENT_DESCRIPTIONS.keys(), start=1)
 )
 
@@ -93,9 +93,10 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT = (
     "2. Then, based on the market analysis and current portfolio, you should decide which 1-3 equities, or the tickers that user specified to focus on for the next analysis.\n"
     "3. For each ticker, delegate analysis to the analyst below and request a BUY/SELL/HOLD recommendation by following below workflow:\n"
     "3.1 Equity Research Analyst -> Fundamental Analyst -> Risk Analyst \n"
-    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, you should provide a clear and concise investment recommendation to BUY/SELL/HOLD action with rationale for the ticker.\n"
+    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation,",
+    " you should provide a clear and concise investment recommendation to BUY/SELL/HOLD action with rationale for the ticker.\n"
     "3.3 Finally, you should handoff the recommended action (BUY/SELL/HOLD) with rationale for all tickers to the trading executor to execute.\n"
-    f"{AGENT_TEAM_DESCRIPTION}"
+    f"{AGENT_TEAM_DESCRIPTION}",
 )
 
 ROLE_PROMPTS_MAP = {
@@ -126,14 +127,6 @@ ROLE_PROMPTS_MAP = {
         "Use the provided markdown tables of fundamentals (Valuation, Profitability & Margins, Financial Health & Liquidity, "
         "Growth, Dividend & Payout, Market & Trading Data, Analyst Estimates, Company Info, Ownership & Shares, Risk & Volatility, "
         "Technical Indicators, Additional Financial Metrics) to produce a decision-ready thesis. "
-        "Do the following: 1) Run a quick data sanity check and flag anomalies or unit mistakes; 2) Extract 5–7 high-signal insights with "
-        "metric labels and values (e.g., trailingPE=37.2, ROE=171%, FCF=78.9B, currentRatio=0.89, debtToEquity=152); 3) Assess quality and "
-        "durability (margins, returns, cash conversion, balance-sheet leverage, liquidity); 4) Evaluate valuation vs growth and peers using DCF/comps "
-        "and state implied upside/downside vs currentPrice and targetMeanPrice; 5) Summarize growth trajectory and drivers; 6) Analyze capital returns and "
-        "payout sustainability; 7) Note ownership/short-interest and sentiment context; 8) Outline key catalysts and risks with monitoring indicators. "
-        "Conclude with a concise recommendation including entry/exit triggers, position size within risk limits, and risk-management tactics. "
-        "Present output as a tight thesis paragraph followed by a short bullet list (Valuation, Quality, Growth, Capital Returns, Ownership/Sentiment, Risk/Catalysts, Trade Plan), "
-        "citing metrics inline as metric=value."
     ),
     Role.TRADING_EXECUTOR: (
         "You are the Sandx AI Trading Executor. You report to the CIO and execute only on their explicit instructions.\n"

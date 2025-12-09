@@ -65,7 +65,7 @@ __all__ = ["MarketNewsAct", "EquityNewsAct"]
 if __name__ == "__main__":
     import asyncio
 
-    # python -m src.tools.actions.news
-    market_news_action = MarketNewsAct()
-    result = asyncio.run(market_news_action.arun())  # type: ignore
+    # python -m src.tools_adaptors.news
+    equity_news_action = EquityNewsAct()
+    result = asyncio.run(equity_news_action.arun("AAPL"))  # type: ignore
     print(result)

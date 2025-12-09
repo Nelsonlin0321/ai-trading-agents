@@ -63,9 +63,8 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Shorter Running Interval: WIP
 - Monitor the cost of google equity research: WIP
 - Add To Do Middleware To CIO: Done
-- Reduce Tool Call Frequency: WIP
 - Ignore handoff to specific result: Ignore
 - Display tool args: Done
-- Try Different Strategy: WIP
+- Try Different Strategy: Done
 - Rationale when BUY/SELL: Done
 - Add the records of the ticker of reviewed: WIP
