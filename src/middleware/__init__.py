@@ -1,4 +1,7 @@
 import asyncio
+import json
+from datetime import datetime, timezone, timedelta
+from typing import TypedDict
 from langchain_core.messages import AnyMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
@@ -36,28 +39,27 @@ class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Contex
     ) -> None:
         context = runtime.context
         messages = state["messages"]
-        await db.connect()
-        await asyncio.gather(
-            *[
-                create_agent_message_if_not_exists(
-                    role=self.role,
-                    bot_id=context.bot.id,
-                    run_id=context.run.id,
-                    message=msg,
-                )
-                for msg in messages
-            ]
+        await persist_agent_messages(
+            role=self.role,
+            bot_id=context.bot.id,
+            run_id=context.run.id,
+            messages=messages,
         )
-        await db.disconnect()
+        await cache_agent_messages(
+            role=self.role,
+            bot_id=context.bot.id,
+            run_id=context.run.id,
+            messages=messages,
+        )
 
 
 @async_retry()
-async def create_agent_message_if_not_exists(
-    role: AgentRole,
-    bot_id: str,
-    run_id: str,
-    message: AnyMessage,
+async def persist_agent_message(
+    role: AgentRole, bot_id: str, run_id: str, message: AnyMessage
 ):
+    if not message.id:
+        return
+
     if message.id in EPHEMERAL_CACHE:
         return
 
@@ -76,7 +78,70 @@ async def create_agent_message_if_not_exists(
             )
         )
 
-    EPHEMERAL_CACHE[message.id] = True
+
+@async_retry()
+async def persist_agent_messages(
+    role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
+):
+    await db.connect()
+    await asyncio.gather(
+        *[
+            persist_agent_message(
+                role=role,
+                bot_id=bot_id,
+                run_id=run_id,
+                message=msg,
+            )
+            for msg in messages
+        ]
+    )
+    await db.disconnect()
+
+
+CachedAgentMessage = TypedDict(
+    "CachedAgentMessage",
+    {
+        "id": str,
+        "role": AgentRole,
+        "botId": str,
+        "runId": str,
+        "createdAt": str,
+        "updatedAt": str,
+        "messages": str,
+    },
+)
+
+
+@async_retry()
+async def cache_agent_messages(
+    role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
+):
+    delta_seconds = 10
+    now = datetime.now(timezone.utc) - timedelta(seconds=delta_seconds * len(messages))
+
+    agent_messages = [
+        CachedAgentMessage(
+            id=msg.id,
+            role=role,
+            botId=bot_id,
+            runId=run_id,
+            createdAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
+            updatedAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
+            messages=msg.model_dump_json(),
+        )
+        for (idx, msg) in enumerate(messages)
+        if msg.id
+    ]
+
+    content = json.dumps(agent_messages)
+
+    is_success = await db.redis.set(
+        key=f"agent_messages:{run_id}", value=content, ex=60 * 60 * 24
+    )
+    assert is_success
+
+
+# await db.redis()
 
 
 # class ExampleLoggingMiddleware(middleware.AgentMiddleware):
