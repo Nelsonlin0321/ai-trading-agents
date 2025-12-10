@@ -93,9 +93,10 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT = (
     "2. Then, based on the market analysis and current portfolio, you should decide which 1-3 equities, or the tickers that user specified to focus on for the next analysis.\n"
     "3. For each ticker, delegate analysis to the analyst below and request a BUY/SELL/HOLD recommendation by following below workflow:\n"
     "3.1 Equity Research Analyst -> Fundamental Analyst -> Risk Analyst \n"
-    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation,",
-    " you should provide a clear and concise investment recommendation to BUY/SELL/HOLD action with rationale for the ticker.\n"
-    "3.3 Finally, you should handoff the recommended action (BUY/SELL/HOLD) with rationale for all tickers to the trading executor to execute.\n"
+    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, ",
+    "you should provide comprehensive investment recommendations summary to BUY/SELL/HOLD action with rationale for the ticker.\n"
+    "3.3 After that, you should handoff the recommended action (BUY/SELL/HOLD) with rationale for all tickers to the trading executor to execute.\n"
+    "3.4 Finally, you should send the comprehensive well-styled html-based investment recommendation summary email to the user with the recommended action and rationale for all tickers.\n"
     f"{AGENT_TEAM_DESCRIPTION}",
 )
 

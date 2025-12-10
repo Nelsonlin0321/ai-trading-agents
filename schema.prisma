@@ -25,12 +25,18 @@ model Bot {
     strategy                   String // prompt
     status                     BotStatus
     intervalInSecond           Int
+    startHour                  Int?
+    startMinute                Int?
+    startTimeZone              String?
     active                     Boolean                      @default(false)
     lastRunAt                  DateTime?
     nextRunAt                  DateTime?
     userId                     String
     user                       User                         @relation(fields: [userId], references: [clerkId], onDelete: Cascade)
+    public                     Boolean?                     @default(false)
     portfolio                  Portfolio?
+    accumulatedPL              Float?
+    accumulatedPLPercent       Float?
     watchlist                  WatchlistItem[]
     depositWithdrawCash        DepositWithdrawCash[]
     trades                     Trade[]
@@ -42,9 +48,12 @@ model Bot {
     runs                       Run[]
     agentMessages              AgentMessage[]
     recommends                 Recommend[]
+    createdAt                  DateTime                     @default(now())
+    updatedAt                  DateTime                     @updatedAt
 
     @@index([userId])
     @@index([active])
+    @@index([public])
 }
 
 enum BotStatus {
@@ -105,18 +114,12 @@ model WatchlistItem {
     bot    Bot    @relation(fields: [botId], references: [id], onDelete: Cascade)
 }
 
-enum DepositWithdrawCashType {
-    DEPOSIT
-    WITHDRAW
-}
-
 model DepositWithdrawCash {
-    id            String                  @id @default(uuid())
-    botId         String
-    bot           Bot                     @relation(fields: [botId], references: [id], onDelete: Cascade)
-    addCashAmount Float
-    type          DepositWithdrawCashType
-    createdAt     DateTime                @default(now())
+    id        String   @id @default(uuid())
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    amount    Float
+    createdAt DateTime @default(now())
 }
 
 model WaitList {
@@ -201,6 +204,8 @@ model Run {
     botId         String
     bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
     status        RunStatus
+    summary       String?
+    tickers       String?
     trades        Trade[]
     agentMessages AgentMessage[]
     createdAt     DateTime       @default(now())

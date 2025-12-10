@@ -15,7 +15,7 @@ from src.tools.research_tools import (
     do_google_market_research,
     do_google_equity_research,
 )
-from src.tools.common_tools import get_user_investment_strategy
+from src.tools.common_tools import get_user_investment_strategy, send_summary_email_tool
 from src.tools.fundamental_data_tools import (
     get_fundamental_data,
 )
@@ -40,6 +40,7 @@ __all__ = [
     "sell_stock",
     "get_recommend_stock_tool",
     "get_analysts_recommendations",
+    "send_summary_email_tool",
     "get_market_status",
     "get_latest_quotes",
     "get_latest_quote",
