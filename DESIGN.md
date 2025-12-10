@@ -59,12 +59,12 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 
 ## Other
 - Only Open Hour Can Run: WIP
-- Too time consuming: WIP
-- Shorter Running Interval: WIP
-- Monitor the cost of google equity research: WIP
+- Try google gemini flash lite: WIP
 - Add To Do Middleware To CIO: Done
-- Ignore handoff to specific result: Ignore
 - Display tool args: Done
 - Try Different Strategy: Done
 - Rationale when BUY/SELL: Done
-- Add the records of the ticker of reviewed: WIP
+- Add the records of the ticker of reviewed: TODO
+- Add the CIO summarization: TODO
+- Compile to be graph: TODO
+- Checkpoint of graph: TODO

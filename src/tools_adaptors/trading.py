@@ -210,7 +210,6 @@ class SellAct(Action):
                         },
                         data=PositionUpdateInput(
                             volume=new_volume,
-                            cost=existing.cost,
                         ),
                     )
 
