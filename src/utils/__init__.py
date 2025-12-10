@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Awaitable, Callable, Any, TypeVar, Coroutine
+from typing import Callable, Any, TypeVar, Coroutine
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import partial, wraps
@@ -160,11 +160,11 @@ def async_retry(
     max_retries: int = 5,
     exceptions: tuple[type[BaseException], ...] = (Exception,),
     max_delay_seconds: float = 5.0,
-) -> Callable[[Callable[..., Awaitable[object]]], Callable[..., Awaitable[object]]]:
+):
     def decorator(
-        func: Callable[..., Awaitable[object]],
-    ) -> Callable[..., Awaitable[object]]:
-        async def wrapper(*args, **kwargs) -> object:
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
+        async def wrapper(*args, **kwargs) -> T:
             retries = 0
             while True:
                 try:
@@ -189,9 +189,9 @@ T = TypeVar("T")
 
 def async_timeout(
     seconds: float,
-) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Coroutine[Any, Any, T]]]:
+):
     def decorator(
-        func: Callable[..., Awaitable[T]],
+        func: Callable[..., Coroutine[Any, Any, T]],
     ) -> Callable[..., Coroutine[Any, Any, T]]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> T:
