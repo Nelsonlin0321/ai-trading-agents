@@ -68,3 +68,4 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Add the CIO summarization: Done
 - Compile to be graph: TODO
 - Restore Checkpoint of graph: TODO
+- And Based on the prediction of price increase or decrease, decide whether to buy or sell the stock: TODO

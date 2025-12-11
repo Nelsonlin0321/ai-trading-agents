@@ -2,7 +2,7 @@ import asyncio
 import json
 from loguru import logger
 from datetime import datetime, timezone, timedelta
-from typing import TypedDict, Any, List
+from typing import TypedDict, Any
 from langchain_core.messages import AnyMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
@@ -31,9 +31,6 @@ CachedAgentMessage = TypedDict(
         "messages": dict[str, Any],
     },
 )
-
-PERSISTENT_DB_CACHE_KEY: set[str] = set()
-AGENT_CACHED_MESSAGES: List[AnyMessage] = []
 
 
 summarization_middleware = middleware.SummarizationMiddleware(
@@ -67,12 +64,12 @@ class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Contex
             )
         )
 
-        # await cache_agent_messages(
-        #     role=self.role,
-        #     bot_id=context.bot.id,
-        #     run_id=context.run.id,
-        #     messages=messages,
-        # )
+        await cache_agent_messages(
+            role=self.role,
+            bot_id=context.bot.id,
+            run_id=context.run.id,
+            messages=messages,
+        )
 
 
 @async_retry()
@@ -81,8 +78,9 @@ async def persist_agent_message(
 ):
     if not message.id:
         return
-    if message.id in PERSISTENT_DB_CACHE_KEY:
-        return
+    async with db.DB_CACHED_MSG_IDS_LOCK:
+        if message.id in db.DB_CACHED_MSG_IDS:
+            return
 
     existed_message = await db.prisma.agentmessage.find_unique(
         where={"id": message.id},
@@ -98,39 +96,36 @@ async def persist_agent_message(
                 runId=run_id,
             )
         )
-        PERSISTENT_DB_CACHE_KEY.add(message.id)
+    async with db.DB_CACHED_MSG_IDS_LOCK:
+        db.DB_CACHED_MSG_IDS.add(message.id)
 
 
-@async_retry()
 async def persist_agent_messages(
     role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
 ):
-    await asyncio.gather(
-        *[
-            persist_agent_message(
-                role=role,
-                bot_id=bot_id,
-                run_id=run_id,
-                message=msg,
-            )
-            for msg in messages
-        ]
-    )
+    for msg in messages:
+        await persist_agent_message(
+            role=role,
+            bot_id=bot_id,
+            run_id=run_id,
+            message=msg,
+        )
 
 
 @async_retry()
 async def cache_agent_messages(
     role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
 ):
-    existing_msg_ids = set(msg.id for msg in AGENT_CACHED_MESSAGES)
+    async with db.AGENT_CACHED_MESSAGES_LOCK:
+        existing_msg_ids = set(msg.id for msg in db.AGENT_CACHED_MESSAGES if msg.id)
 
-    delta_messages = [
-        msg for msg in messages if msg.id and msg.id not in existing_msg_ids
-    ]
+        delta_messages = [
+            msg for msg in messages if msg.id and msg.id not in existing_msg_ids
+        ]
 
-    AGENT_CACHED_MESSAGES.extend(delta_messages)
+        db.AGENT_CACHED_MESSAGES.extend(delta_messages)
 
-    complete_messages = AGENT_CACHED_MESSAGES.copy()
+        complete_messages = db.AGENT_CACHED_MESSAGES.copy()
 
     delta_seconds = 10
     now = datetime.now(timezone.utc) - timedelta(

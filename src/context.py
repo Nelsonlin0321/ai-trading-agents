@@ -1,6 +1,6 @@
 from src.db import prisma
 from src.typings.context import Context
-from utils import async_retry
+from src.utils import async_retry
 
 
 @async_retry(silence_error=False)

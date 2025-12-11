@@ -52,7 +52,7 @@ async def handoff_to_specialist(
     """
     context = runtime.context
     if role not in agent_building_map:
-        raise ValueError(f"Invalid role: {role}. Must be one of: {SPECIALIST_ROLES}")
+        return f"Invalid role: {role}. Must be one of: {SPECIALIST_ROLES}"
 
     agent: LangGraphAgent = await agent_building_map[role](context)
 
