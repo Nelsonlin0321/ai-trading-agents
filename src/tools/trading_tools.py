@@ -9,6 +9,7 @@ from src.tools_adaptors.trading import (
     SellAct,
     RecommendStockAct,
     GetAnalystsRecommendationsAct,
+    WriteDownTickersToReviewAct,
 )
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
 
@@ -16,6 +17,7 @@ buy_act = BuyAct()
 sell_act = SellAct()
 recommend_stock_act = RecommendStockAct()
 get_analysts_recommendations_act = GetAnalystsRecommendationsAct()
+write_down_tickers_to_review_act = WriteDownTickersToReviewAct()
 
 
 class BuyInput(BaseModel):
@@ -57,6 +59,23 @@ async def buy_stock(
         volume=volume,
         rationale=rationale,
         confidence=confidence,
+    )
+
+
+@tool("write_down_tickers_to_review")
+async def write_down_tickers_to_review(
+    tickers: list[str],
+    runtime: ToolRuntime[Context],
+):
+    """Write down the tickers to review.
+
+    Args:
+        tickers: List of tickers to review
+    """
+    runId = runtime.context.run.id
+    return await write_down_tickers_to_review_act.arun(
+        run_id=runId,
+        tickers=tickers,
     )
 
 

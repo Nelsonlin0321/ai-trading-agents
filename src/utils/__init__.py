@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 from typing import Callable, Any, TypeVar, Coroutine
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
@@ -7,6 +8,9 @@ from functools import partial, wraps
 import pytz
 from tqdm import tqdm
 from html_to_markdown import convert, ConversionOptions
+from loguru import logger
+import traceback
+from src.utils.gmail import send_email_gmail
 
 
 def multi_threading(function, parameters, max_workers=5, desc=""):
@@ -160,6 +164,7 @@ def async_retry(
     max_retries: int = 5,
     exceptions: tuple[type[BaseException], ...] = (Exception,),
     max_delay_seconds: float = 5.0,
+    silence_error: bool = False,
 ):
     def decorator(
         func: Callable[..., Coroutine[Any, Any, T]],
@@ -169,7 +174,7 @@ def async_retry(
             while True:
                 try:
                     return await func(*args, **kwargs)
-                except exceptions:
+                except exceptions as e:
                     if retries < max_retries:
                         retries += 1
                         delay = min(
@@ -177,7 +182,15 @@ def async_retry(
                         )
                         await asyncio.sleep(delay)
                     else:
-                        raise
+                        error_message = f"Error running {func.__name__} after {max_retries} retries: {e} Traceback: {traceback.format_exc()}"
+                        if recipient := os.getenv("EMAIL"):
+                            send_email_gmail(
+                                subject=f"Error running {func.__name__}",
+                                recipient=recipient,
+                                html_body=error_message,
+                            )
+                        if not silence_error:
+                            raise
 
         return wrapper
 
@@ -196,6 +209,30 @@ def async_timeout(
         @wraps(func)
         async def wrapper(*args, **kwargs) -> T:
             return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
+
+        return wrapper
+
+    return decorator
+
+
+def retry(retries: int = 3, base_delay: float = 1.0, silence_error=True):
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> T:
+            attempt = 0
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    attempt += 1
+                    if attempt >= retries:
+                        logger.error(
+                            f"Function {func.__name__} failed after {attempt} attempts: {e}"
+                        )
+                        if not silence_error:
+                            raise
+                    sleep_time = base_delay * (2**attempt - 1)  # Exponential backoff
+                    time.sleep(sleep_time)
 
         return wrapper
 
