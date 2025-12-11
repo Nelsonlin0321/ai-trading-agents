@@ -5,16 +5,10 @@ from src.services.sandx_ai.api_send_summary import send_summary_email
 
 
 async def get_cash_balance(bot_id: str):
-    try:
-        await db.connect()
-        portfolio = await db.prisma.portfolio.find_unique(where={"botId": bot_id})
-        if portfolio is None:
-            raise ValueError("Portfolio not found")
-        return portfolio.cash
-    except Exception as e:
-        raise ValueError("Failed to get cash balance") from e
-    finally:
-        await db.disconnect()
+    portfolio = await db.prisma.portfolio.find_unique(where={"botId": bot_id})
+    if portfolio is None:
+        raise ValueError("Portfolio not found")
+    return portfolio.cash
 
 
 __all__ = [

@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime, timezone, timedelta
-from typing import TypedDict
+from typing import TypedDict, Any
 from langchain_core.messages import AnyMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
@@ -49,18 +49,13 @@ class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Contex
                 messages=messages,
             )
         )
-        await cache_agent_messages(
-            role=self.role,
-            bot_id=context.bot.id,
-            run_id=context.run.id,
-            messages=messages,
-        )
-        await cache_agent_messages(
-            role=self.role,
-            bot_id=context.bot.id,
-            run_id=context.run.id,
-            messages=messages,
-        )
+
+        # await cache_agent_messages(
+        #     role=self.role,
+        #     bot_id=context.bot.id,
+        #     run_id=context.run.id,
+        #     messages=messages,
+        # )
 
 
 @async_retry()
@@ -93,7 +88,6 @@ async def persist_agent_message(
 async def persist_agent_messages(
     role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
 ):
-    await db.connect()
     await asyncio.gather(
         *[
             persist_agent_message(
@@ -105,7 +99,6 @@ async def persist_agent_messages(
             for msg in messages
         ]
     )
-    await db.disconnect()
 
 
 CachedAgentMessage = TypedDict(
@@ -117,7 +110,7 @@ CachedAgentMessage = TypedDict(
         "runId": str,
         "createdAt": str,
         "updatedAt": str,
-        "messages": str,
+        "messages": dict[str, Any],
     },
 )
 
@@ -137,7 +130,7 @@ async def cache_agent_messages(
             runId=run_id,
             createdAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
             updatedAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
-            messages=msg.model_dump_json(),
+            messages=msg.model_dump(),
         )
         for (idx, msg) in enumerate(messages)
         if msg.id

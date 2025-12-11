@@ -5,7 +5,8 @@ from typing import Awaitable, Callable, TypeVar, cast
 import httpx
 from loguru import logger
 from prisma import types
-from src import db
+from src.db import prisma, redis
+import traceback
 
 T = TypeVar("T")
 
@@ -62,7 +63,6 @@ def in_db_cache(
         async def wrapper(*args, **kwargs) -> T:
             try:
                 pos_args = args[1:] if len(args) > 0 else args
-
                 if "start" in kwargs:
                     start = kwargs["start"]
                     kwargs["start"] = datetime.fromisoformat(
@@ -81,8 +81,6 @@ def in_db_cache(
 
                 key_payload = {"args": pos_args, "kwargs": kwargs}
                 cache_key = json.dumps(key_payload, sort_keys=True)
-
-                prisma = await db.connect()
                 now = datetime.now(timezone.utc)
 
                 # Try existing unexpired cache
@@ -126,9 +124,12 @@ def in_db_cache(
                         )
                     )
                 return result
-            finally:
-                # logger.info("disconnect prisma")
-                await db.disconnect()
+
+            except Exception as e:
+                logger.error(
+                    f"Error in {function_name} with args {args} and kwargs {kwargs}: {e} Traceback: {traceback.format_exc()}"
+                )
+                raise
 
         return wrapper
 
@@ -178,7 +179,7 @@ def redis_cache(
             }
             cache_key = json.dumps(key_payload, sort_keys=True)
 
-            existing = await db.redis.get(cache_key)
+            existing = await redis.get(cache_key)
 
             if existing:
                 logger.info(f"Cache Redis hit for {function_name} with key {cache_key}")
@@ -186,7 +187,7 @@ def redis_cache(
 
             # Compute fresh result
             result = await func(*args, **kwargs)
-            await db.redis.set(cache_key, json.dumps(result), ex=ttl)
+            await redis.set(cache_key, json.dumps(result), ex=ttl)
             return result
 
         return wrapper

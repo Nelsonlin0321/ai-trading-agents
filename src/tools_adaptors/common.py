@@ -11,11 +11,10 @@ class GetUserInvestmentStrategyAct(Action):
 
     @async_retry()
     async def arun(self, botId: str) -> str:
-        await db.connect()
         bot = await db.prisma.bot.find_unique(where={"id": botId})
         if not bot:
             raise ValueError(f"Bot with ID {botId} not found.")
-        await db.disconnect()
+
         return bot.strategy
 
 
@@ -26,7 +25,6 @@ class SendInvestmentReportEmailAct(Action):
 
     @async_retry()
     async def arun(self, run_id: str, investment_summary: str) -> str:
-        await db.connect()
         await db.prisma.run.update(
             where={"id": run_id}, data={"summary": investment_summary}
         )

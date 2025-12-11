@@ -125,7 +125,7 @@ async def _run() -> None:
 
     try:
         data = await get_latest_quotes(
-            symbols=["ASML", "NVDA", "NBIS"],
+            symbols=["NVDA"],
         )
         print("Latest quotes response (truncated):")
         print(json.dumps(data, indent=2)[:2000])
