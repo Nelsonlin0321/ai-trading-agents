@@ -1,7 +1,8 @@
 import asyncio
 import json
+from loguru import logger
 from datetime import datetime, timezone, timedelta
-from typing import TypedDict, Any
+from typing import TypedDict, Any, List
 from langchain_core.messages import AnyMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
@@ -15,9 +16,25 @@ from src.utils.constants import ALL_ROLES
 from src.typings.agent_roles import AgentRole
 from src.utils import async_retry
 
+
 langchain_model = get_model("deepseek")
 
-EPHEMERAL_CACHE = {}
+CachedAgentMessage = TypedDict(
+    "CachedAgentMessage",
+    {
+        "id": str,
+        "role": AgentRole,
+        "botId": str,
+        "runId": str,
+        "createdAt": str,
+        "updatedAt": str,
+        "messages": dict[str, Any],
+    },
+)
+
+PERSISTENT_DB_CACHE_KEY: set[str] = set()
+AGENT_CACHED_MESSAGES: List[AnyMessage] = []
+
 
 summarization_middleware = middleware.SummarizationMiddleware(
     model=langchain_model,
@@ -64,8 +81,7 @@ async def persist_agent_message(
 ):
     if not message.id:
         return
-
-    if message.id in EPHEMERAL_CACHE:
+    if message.id in PERSISTENT_DB_CACHE_KEY:
         return
 
     existed_message = await db.prisma.agentmessage.find_unique(
@@ -82,6 +98,7 @@ async def persist_agent_message(
                 runId=run_id,
             )
         )
+        PERSISTENT_DB_CACHE_KEY.add(message.id)
 
 
 @async_retry()
@@ -101,26 +118,24 @@ async def persist_agent_messages(
     )
 
 
-CachedAgentMessage = TypedDict(
-    "CachedAgentMessage",
-    {
-        "id": str,
-        "role": AgentRole,
-        "botId": str,
-        "runId": str,
-        "createdAt": str,
-        "updatedAt": str,
-        "messages": dict[str, Any],
-    },
-)
-
-
 @async_retry()
 async def cache_agent_messages(
     role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
 ):
+    existing_msg_ids = set(msg.id for msg in AGENT_CACHED_MESSAGES)
+
+    delta_messages = [
+        msg for msg in messages if msg.id and msg.id not in existing_msg_ids
+    ]
+
+    AGENT_CACHED_MESSAGES.extend(delta_messages)
+
+    complete_messages = AGENT_CACHED_MESSAGES.copy()
+
     delta_seconds = 10
-    now = datetime.now(timezone.utc) - timedelta(seconds=delta_seconds * len(messages))
+    now = datetime.now(timezone.utc) - timedelta(
+        seconds=delta_seconds * len(complete_messages)
+    )
 
     agent_messages = [
         CachedAgentMessage(
@@ -132,7 +147,7 @@ async def cache_agent_messages(
             updatedAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
             messages=msg.model_dump(),
         )
-        for (idx, msg) in enumerate(messages)
+        for (idx, msg) in enumerate(complete_messages)
         if msg.id
     ]
 
@@ -141,24 +156,6 @@ async def cache_agent_messages(
     is_success = await db.redis.set(
         key=f"agent_messages:{run_id}", value=content, ex=60 * 60 * 24
     )
-    assert is_success
 
-
-# await db.redis()
-
-
-# class ExampleLoggingMiddleware(middleware.AgentMiddleware):
-
-#     async def aafter_model(
-#         self, state: middleware.AgentState, runtime: Runtime
-#     ) -> None:
-#         messages = state["messages"]
-#         agent_message_id = messages[0].id
-#         print(f"agent_message_id: {agent_message_id}")
-
-#         __all__ = [
-#             "summarization_middleware",
-#             "todo_list_middleware",
-#             "LoggingMiddleware",
-#             "ExampleLoggingMiddleware"
-#         ]
+    if not is_success:
+        logger.warning(f"Failed to cache agent messages for run_id: {run_id}")
