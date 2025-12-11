@@ -182,7 +182,11 @@ def async_retry(
                         )
                         await asyncio.sleep(delay)
                     else:
-                        error_message = f"Error running {func.__name__} after {max_retries} retries: {e} Traceback: {traceback.format_exc()}"
+                        error_message = (
+                            f"Error running {func.__name__} after {max_retries} retries: {e}"
+                            f"\nArgs: {args}\nKwargs: {kwargs}\n"
+                            f"Traceback: {traceback.format_exc()}"
+                        )
                         if recipient := os.getenv("EMAIL"):
                             send_email_gmail(
                                 subject=f"Error running {func.__name__}",
