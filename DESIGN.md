@@ -65,6 +65,6 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Try Different Strategy: Done
 - Rationale when BUY/SELL: Done
 - Add the records of the ticker of reviewed: TODO
-- Add the CIO summarization: TODO
+- Add the CIO summarization: Done
 - Compile to be graph: TODO
-- Checkpoint of graph: TODO
+- Restore Checkpoint of graph: TODO
