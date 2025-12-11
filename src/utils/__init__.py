@@ -13,6 +13,10 @@ import traceback
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from src.typings import ErrorLiteral, ERROR
+
+
+T = TypeVar("T")
 
 
 def multi_threading(function, parameters, max_workers=5, desc=""):
@@ -168,10 +172,8 @@ def async_retry(
     max_delay_seconds: float = 5.0,
     silence_error: bool = os.getenv("SILENCE_ERROR") == "1",
 ):
-    def decorator(
-        func: Callable[..., Coroutine[Any, Any, T]],
-    ) -> Callable[..., Coroutine[Any, Any, T]]:
-        async def wrapper(*args, **kwargs) -> T:
+    def decorator(func: Callable[..., Coroutine[Any, Any, T]]):
+        async def wrapper(*args, **kwargs) -> T | ErrorLiteral:
             retries = 0
             while True:
                 try:
@@ -189,6 +191,7 @@ def async_retry(
                             f"\nArgs: {args}\nKwargs: {kwargs}\n"
                             f"Traceback: {traceback.format_exc()}"
                         )
+                        logger.error(error_message)
                         if recipient := os.getenv("EMAIL"):
                             send_email_gmail(
                                 subject=f"Error running {func.__name__}",
@@ -198,13 +201,12 @@ def async_retry(
 
                         if not silence_error:
                             raise
+                        else:
+                            return ERROR
 
         return wrapper
 
     return decorator
-
-
-T = TypeVar("T")
 
 
 def async_timeout(
@@ -222,10 +224,14 @@ def async_timeout(
     return decorator
 
 
-def retry(retries: int = 3, base_delay: float = 1.0, silence_error=True):
-    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+def retry(
+    retries: int = 3,
+    base_delay: float = 1.0,
+    silence_error: bool = os.getenv("SILENCE_ERROR") == "1",
+):
+    def decorator(func: Callable[..., T]):
         @wraps(func)
-        def wrapper(*args, **kwargs) -> T:
+        def wrapper(*args, **kwargs) -> T | ErrorLiteral:
             attempt = 0
             while True:
                 try:
@@ -238,7 +244,10 @@ def retry(retries: int = 3, base_delay: float = 1.0, silence_error=True):
                         )
                         if not silence_error:
                             raise
-                    sleep_time = base_delay * (2**attempt - 1)  # Exponential backoff
+                        return ERROR
+                    sleep_time = base_delay * (
+                        2 ** (attempt - 1)
+                    )  # Exponential backoff
                     time.sleep(sleep_time)
 
         return wrapper
