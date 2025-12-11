@@ -8,8 +8,15 @@ repos:
       files: \.ipynb$
       types: [file]
       pass_filenames: true
+    - id: pyright-check
+      name: Pyright type checking
+      entry: pyright --project .
+      language: system
+      files: ^src/.*\.py$
+      types: [file]
+      pass_filenames: false
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.14.5
+  rev: v0.14.8
   hooks:
     # Run the linter.
     - id: ruff-check

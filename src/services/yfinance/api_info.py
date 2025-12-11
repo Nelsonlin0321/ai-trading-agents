@@ -3,7 +3,7 @@ from src.utils import async_wrap
 from src.services.utils import redis_cache
 
 
-@async_wrap
+@async_wrap()
 def get_ticker_info(ticker: str) -> dict:
     yf_ticker = yf.Ticker(ticker=ticker)
     info = yf_ticker.info

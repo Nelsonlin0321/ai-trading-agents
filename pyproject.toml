@@ -36,3 +36,5 @@ exclude = [".venv/",
     "**/__pycache__",
     "uv.lock"
 ]
+venvPath = "."
+venv = ".venv"

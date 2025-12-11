@@ -55,3 +55,9 @@ pylint --generate-rcfile > .pylintrc
 ```shell
 npx codefetch --project-tree 5
 ```
+
+
+```shell
+source .venv/bin/activate
+pyright
+```

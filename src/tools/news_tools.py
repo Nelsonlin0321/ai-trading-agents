@@ -34,6 +34,8 @@ async def get_latest_market_news():
     """
 
     news = await market_news_action.arun()
+    if news == "ERROR":
+        return "Unknown error to get market news."
 
     # Convert each news item to markdown text
     markdown_news = "\n\n".join(convert_news_to_markdown_text(n) for n in news)

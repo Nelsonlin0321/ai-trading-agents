@@ -127,6 +127,9 @@ async def get_most_active_stockers():
     - Monitor for potential volatility expansion plays based on volume leadership
     """
     results = await most_active_stockers_act.arun()
+    if results == "ERROR":
+        return "Unknown error to get most active stockers."
+
     last_updated = results["last_updated"]
     most_active_stockers = results["most_actives"]
     markdown_table = utils.dicts_to_markdown_table(most_active_stockers)  # type: ignore

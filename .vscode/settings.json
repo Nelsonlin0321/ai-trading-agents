@@ -16,7 +16,8 @@
         "lookback",
         "lookbacks",
         "pfunc",
-        "Referer"
+        "Referer",
+        "venvpath"
     ],
     "cSpell.ignorePaths": [
         "**/*.ipynb",
