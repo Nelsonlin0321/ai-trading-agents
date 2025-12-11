@@ -1,5 +1,6 @@
 import asyncio
 import json
+import pickle
 from loguru import logger
 from datetime import datetime, timezone, timedelta
 from typing import TypedDict, Any
@@ -16,8 +17,8 @@ from src.utils.constants import ALL_ROLES
 from src.typings.agent_roles import AgentRole
 from src.utils import async_retry
 
-
-langchain_model = get_model("deepseek")
+PERSISTED_MSG_IDS: set[str] = set()
+MESSAGES_STATE_PATH = "all_agents_messages_state.pkl"
 
 CachedAgentMessage = TypedDict(
     "CachedAgentMessage",
@@ -31,6 +32,22 @@ CachedAgentMessage = TypedDict(
         "messages": dict[str, Any],
     },
 )
+
+
+def load_messages_state() -> list[AnyMessage]:
+    try:
+        with open(MESSAGES_STATE_PATH, "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return []
+
+
+def save_messages_state(cached_messages: list[AnyMessage]) -> None:
+    with open(MESSAGES_STATE_PATH, "wb") as f:
+        pickle.dump(cached_messages, f)
+
+
+langchain_model = get_model("deepseek")
 
 
 summarization_middleware = middleware.SummarizationMiddleware(
@@ -48,6 +65,7 @@ class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Contex
         assert role in ALL_ROLES
         self.role: AgentRole = role
 
+    #  Only one agent called this middleware at a time
     async def aafter_model(
         self, state: middleware.AgentState, runtime: Runtime[Context]
     ) -> None:
@@ -78,9 +96,9 @@ async def persist_agent_message(
 ):
     if not message.id:
         return
-    async with db.DB_CACHED_MSG_IDS_LOCK:
-        if message.id in db.DB_CACHED_MSG_IDS:
-            return
+
+    if message.id in PERSISTED_MSG_IDS:
+        return
 
     existed_message = await db.prisma.agentmessage.find_unique(
         where={"id": message.id},
@@ -96,8 +114,7 @@ async def persist_agent_message(
                 runId=run_id,
             )
         )
-    async with db.DB_CACHED_MSG_IDS_LOCK:
-        db.DB_CACHED_MSG_IDS.add(message.id)
+    PERSISTED_MSG_IDS.add(message.id)
 
 
 async def persist_agent_messages(
@@ -116,22 +133,21 @@ async def persist_agent_messages(
 async def cache_agent_messages(
     role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
 ):
-    async with db.AGENT_CACHED_MESSAGES_LOCK:
-        existing_msg_ids = set(msg.id for msg in db.AGENT_CACHED_MESSAGES if msg.id)
+    # Save and consolidated agent messages to local file because cross agent with different message states
+    existing_messages = load_messages_state()
+    existing_msg_ids = set(msg.id for msg in existing_messages if msg.id)
+    delta_messages = [
+        msg for msg in messages if msg.id and msg.id not in existing_msg_ids
+    ]
 
-        delta_messages = [
-            msg for msg in messages if msg.id and msg.id not in existing_msg_ids
-        ]
-
-        db.AGENT_CACHED_MESSAGES.extend(delta_messages)
-
-        complete_messages = db.AGENT_CACHED_MESSAGES.copy()
+    existing_messages.extend(delta_messages)
+    complete_messages = existing_messages.copy()
+    save_messages_state(complete_messages)
 
     delta_seconds = 10
     now = datetime.now(timezone.utc) - timedelta(
         seconds=delta_seconds * len(complete_messages)
     )
-
     agent_messages = [
         CachedAgentMessage(
             id=msg.id,
