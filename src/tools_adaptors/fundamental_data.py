@@ -1,7 +1,7 @@
 from src.tools_adaptors.base import Action
 from src.services.yfinance.api_info import async_get_ticker_info
 from src.tools_adaptors import utils
-from src.utils import constants
+from src.utils import constants, async_retry
 
 
 class FundamentalDataAct(Action):
@@ -9,6 +9,7 @@ class FundamentalDataAct(Action):
     def name(self):
         return "get_comprehensive_fundamental_data"
 
+    @async_retry()
     async def arun(self, ticker: str) -> str:
         info = await async_get_ticker_info(ticker)
         info = utils.preprocess_info_dict(info)

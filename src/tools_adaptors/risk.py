@@ -4,7 +4,7 @@ from src.services.alpaca import get_historical_price_bars
 from src.services.yfinance.api_info import async_get_ticker_info
 from src.tools_adaptors import utils
 from src.tools_adaptors.base import Action
-from src.utils import constants
+from src.utils import constants, async_retry
 
 
 class FundamentalRiskDataAct(Action):
@@ -12,6 +12,7 @@ class FundamentalRiskDataAct(Action):
     def name(self):
         return "get_comprehensive_fundamental_risk_data"
 
+    @async_retry()
     async def arun(self, ticker: str) -> str:
         info = await async_get_ticker_info(ticker)
         info = utils.preprocess_info_dict(info)
@@ -27,6 +28,7 @@ class VolatilityRiskAct(Action):
     def name(self):
         return "get_volatility_risk_indicators"
 
+    @async_retry()
     async def arun(self, ticker: str) -> str:
         """Get volatility risk indicators for a ticker"""
         start = (date.today() - timedelta(days=180 + 7)).isoformat()
@@ -45,6 +47,7 @@ class PriceRiskAct(Action):
     def name(self):
         return "get_price_risk_indicators"
 
+    @async_retry()
     async def arun(self, ticker: str) -> str:
         """Get price risk indicators for a ticker"""
         start = (date.today() - timedelta(days=180 + 7)).isoformat()

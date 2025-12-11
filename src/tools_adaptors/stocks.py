@@ -11,6 +11,7 @@ from src.services.alpaca.typing import PriceBar
 from src.tools_adaptors.base import Action
 from src import utils
 from src.utils.constants import ETF_TICKERS
+from src.utils import async_retry
 
 
 class StockRawSnapshotAct(Action):
@@ -18,6 +19,7 @@ class StockRawSnapshotAct(Action):
     def name(self):
         return "Get Stock Snapshot"
 
+    @async_retry()
     async def arun(self, tickers: list[str]) -> dict:
         """
         Fetch raw market snapshots for multiple tickers.
@@ -103,7 +105,7 @@ class StockHistoricalPriceChangesAct(Action):
         return "Stock Historical Price Changes"
 
     # disable: pylint:disable=too-many-locals
-
+    @async_retry()
     async def arun(self, tickers: list[str]) -> dict[str, HistoricalPriceChangePeriods]:
         """
         Compute percentage changes over standard periods using Alpaca daily bars.
@@ -232,6 +234,7 @@ class StockLivePriceChangeAct(Action):
     def name(self):
         return "get_stock_live_price_and_change"
 
+    @async_retry()
     async def arun(
         self, tickers: list[str]
     ) -> dict[str, StockPriceSnapshotWithHistory]:
@@ -275,6 +278,7 @@ class ETFLivePriceChangeAct(Action):
     def name(self):
         return "get_major_etf_live_price_and_historical_change"
 
+    @async_retry()
     async def arun(self) -> dict[str, ETFPriceSnapshotWithHistory]:
         """
         Fetch a complete price snapshot for multiple major ETF tickers.
@@ -341,6 +345,7 @@ class MostActiveStockersAct(Action):
     def name(self):
         return "get_most_active_stockers_with_historical_price_changes"
 
+    @async_retry()
     async def arun(self):
         """
         Get the most active stockers.
@@ -375,6 +380,7 @@ class MultiLatestQuotesAct(Action):
     def name(self):
         return "get_multi_symbols_latest_quotes"
 
+    @async_retry()
     async def arun(self, symbols: list[str]) -> str:
         """
         Fetch latest quotes for multiple symbols.
@@ -432,6 +438,7 @@ class SingleLatestQuotesAct(Action):
     def name(self):
         return "get_single_symbol_latest_quotes"
 
+    @async_retry()
     async def arun(self, symbol: str) -> str:
         """
         Fetch latest quotes for a single symbol.

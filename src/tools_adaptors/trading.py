@@ -6,6 +6,7 @@ from prisma.enums import TradeType
 from prisma.enums import Role
 from prisma.types import RecommendCreateInput
 from src import utils, db
+from src.utils import async_retry
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
@@ -347,7 +348,7 @@ class WriteDownTickersToReviewAct(Action):
     def name(self):
         return "write_down_tickers_to_review"
 
-    @utils.async_retry()
+    @async_retry()
     async def arun(self, run_id: str, tickers: list[str]) -> str:
         runId = run_id
         await db.connect()

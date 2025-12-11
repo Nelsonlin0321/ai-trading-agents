@@ -72,10 +72,10 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
     },
 }
 
-RECOMMENDATION_PROMPT = "For each analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, and confidence level (0.0-1.0)"
+RECOMMENDATION_PROMPT: str = "For each analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, and confidence level (0.0-1.0)"
 
 
-AGENT_TEAM_DESCRIPTION = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
+AGENT_TEAM_DESCRIPTION: str = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
     f"### {idx}. {AGENT_DESCRIPTIONS[role]['title']}\n"
     f"**Description:** {AGENT_DESCRIPTIONS[role]['description']}\n"
     f"**Capabilities:** {AGENT_DESCRIPTIONS[role]['key_capabilities']}\n"
@@ -83,7 +83,7 @@ AGENT_TEAM_DESCRIPTION = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
     for idx, role in enumerate(AGENT_DESCRIPTIONS.keys(), start=1)
 )
 
-CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT = (
+CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
     "## CHIEF INVESTMENT OFFICER - STRATEGIC ORCHESTRATOR ##\n\n"
     "You are the CIO of Sandx AI, the conductor of a world-class investment team. "
     "Your expertise is not in doing the analysis yourself, but in orchestrating your team by assigning tasks to each teammates "
@@ -93,15 +93,17 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT = (
     "2. Then, based on the market analysis and current portfolio, you should decide which 1-3 equities, or the tickers that user specified to focus on for the next analysis.\n"
     "3. For each ticker, delegate analysis to the analyst below and request a BUY/SELL/HOLD recommendation by following below workflow:\n"
     "3.1 Equity Research Analyst -> Fundamental Analyst -> Risk Analyst \n"
-    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, ",
+    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, "
     "you should provide comprehensive investment recommendations summary to BUY/SELL/HOLD action with rationale for the ticker.\n"
     "3.3 After that, you should handoff the recommended actions (BUY/SELL/HOLD) with rationale for all tickers to the trading executor to execute.\n"
     "3.4 Finally, with consolidated investment rationales from all analysts, "
     "you should send the comprehensive well-styled html-based investment recommendation summary email with final executed actions and rationale for all tickers to the user.\n"
-    f"{AGENT_TEAM_DESCRIPTION}",
-)
+) + f"{AGENT_TEAM_DESCRIPTION}"
 
-ROLE_PROMPTS_MAP = {
+
+RolePromptMap = dict[Role, str]
+
+ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.MARKET_ANALYST: (
         "You are a senior US-market analyst on the Sandx AI investment desk. You report to the Chief Investment Officer. "
         "Leverage every available data source to deliver a concise, actionable briefing that captures: "

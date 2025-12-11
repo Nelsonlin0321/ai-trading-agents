@@ -18,7 +18,10 @@ from src.tools_adaptors.portfolio import (
 
 from src.tools_adaptors.fundamental_data import FundamentalDataAct
 from src.tools_adaptors.risk import FundamentalRiskDataAct, VolatilityRiskAct
-
+from src.tools_adaptors.common import (
+    GetUserInvestmentStrategyAct,
+    SendInvestmentReportEmailAct,
+)
 
 __all__ = [
     "Action",
@@ -38,4 +41,6 @@ __all__ = [
     "FundamentalRiskDataAct",
     "VolatilityRiskAct",
     "GoogleEquityResearchAct",
+    "GetUserInvestmentStrategyAct",
+    "SendInvestmentReportEmailAct",
 ]

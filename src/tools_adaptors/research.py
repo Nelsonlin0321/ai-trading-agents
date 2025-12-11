@@ -5,7 +5,7 @@ from google.genai import types
 
 from src.tools_adaptors.base import Action
 from src.services.utils import redis_cache
-from src.utils import async_wrap
+from src.utils import async_wrap, async_retry
 from src.utils import get_current_date
 
 
@@ -33,8 +33,9 @@ class GoogleMarketResearchAct(Action):
     def name(self):
         return "google_finance_market_research"
 
+    @async_retry()  # pyright: ignore [reportArgumentType]
     @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
-    async def arun(self):  # type: ignore
+    async def arun(self):
         return await self.run()  # type: ignore
 
     @async_wrap
@@ -94,8 +95,9 @@ class GoogleEquityResearchAct(Action):
     def name(self):
         return "google_equity_research"
 
+    @async_retry()  # pyright: ignore [reportArgumentType]
     @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 6)
-    async def arun(self, ticker: str):  # type: ignore
+    async def arun(self, ticker: str):
         return await self.run(ticker)  # type: ignore
 
     @async_wrap

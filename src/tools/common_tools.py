@@ -1,7 +1,13 @@
 from langchain.tools import tool, ToolRuntime
 from src.context import Context
-from src import db
-from src.services.sandx_ai import send_summary_email
+from src.tools_adaptors import (
+    GetUserInvestmentStrategyAct,
+    SendInvestmentReportEmailAct,
+)
+
+
+get_user_investment_strategy_act = GetUserInvestmentStrategyAct()
+send_investment_report_email_act = SendInvestmentReportEmailAct()
 
 
 @tool("get_user_investment_strategy")
@@ -12,9 +18,8 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     This tool fetches the current investment strategy for the trading portfolio.
 
     Possible tool purposes:
-    - Allow an AI agent to decide which assets or sectors to trade based on the user’s stated risk tolerance or philosophy.
-    - Enable dynamic re-allocation logic that switches between conservative, balanced, or aggressive portfolios.
-    - Provide context to downstream tools (e.g., stock screeners, rebalancers) so they filter or rank opportunities in line with the user’s mandate.
+    - Allow you to decide which assets or sectors to trade based on the user’s stated risk tolerance or philosophy.
+    - Allow you to decide which analysts to heavily use for the investment strategy.
     - Surface the strategy to a dashboard or chat interface so the user can confirm or update it before orders are placed.
     - Act as a guard-rail that prevents trades violating the strategy (e.g., no crypto for a “dividend-income” strategy).
 
@@ -23,19 +28,7 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     Investment Strategy
         A string representing the current investment strategy for the trading portfolio.
     """
-    try:
-        await db.connect()
-        bot_id = runtime.context.bot.id
-        bot = await db.prisma.bot.find_unique(where={"id": bot_id})
-    except Exception as e:
-        raise e
-    finally:
-        await db.disconnect()
-
-    if not bot:
-        raise ValueError(f"Bot with ID {bot_id} not found.")
-
-    return bot.strategy
+    return await get_user_investment_strategy_act.arun(runtime.context.bot.id)
 
 
 @tool("send_investment_report_email")
@@ -65,15 +58,7 @@ async def send_summary_email_tool(
         - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
         - Line charts and bar charts rendered purely with HTML and CSS (no external images or scripts).
     """
-    try:
-        await db.connect()
-        run_id = runtime.context.run.id
-        await db.prisma.run.update(
-            where={"id": run_id}, data={"summary": investment_summary}
-        )
-        response = await send_summary_email(run_id)
-        return response
-    except Exception as e:
-        raise e
-    finally:
-        await db.disconnect()
+    return await send_investment_report_email_act.arun(
+        run_id=runtime.context.run.id,
+        investment_summary=investment_summary,
+    )

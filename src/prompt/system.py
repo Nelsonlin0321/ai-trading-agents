@@ -20,10 +20,10 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
 
     watchlist = context.bot.watchlist or []
 
-    watchlist = (
+    watchlist_prompt: str = (
         (
             "Here's the watchlist of user, you can trade only on these stocks or stock in the current positions:"
-            + ", ".join([w.ticker for w in watchlist])
+            ", ".join([w.ticker for w in watchlist])
         )
         if tickers
         else ""
@@ -38,7 +38,7 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
         ROLE_PROMPTS_MAP[role],
         # user_name,
         tickers,
-        watchlist,
+        watchlist_prompt,
         positions_markdown,
         performance_narrative,
     ]

@@ -10,7 +10,9 @@ from tqdm import tqdm
 from html_to_markdown import convert, ConversionOptions
 from loguru import logger
 import traceback
-from src.utils.gmail import send_email_gmail
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 
 def multi_threading(function, parameters, max_workers=5, desc=""):
@@ -164,7 +166,7 @@ def async_retry(
     max_retries: int = 5,
     exceptions: tuple[type[BaseException], ...] = (Exception,),
     max_delay_seconds: float = 5.0,
-    silence_error: bool = False,
+    silence_error: bool = os.getenv("SILENCE_ERROR") == "1",
 ):
     def decorator(
         func: Callable[..., Coroutine[Any, Any, T]],
@@ -193,6 +195,7 @@ def async_retry(
                                 recipient=recipient,
                                 html_body=error_message,
                             )
+
                         if not silence_error:
                             raise
 
@@ -241,3 +244,54 @@ def retry(retries: int = 3, base_delay: float = 1.0, silence_error=True):
         return wrapper
 
     return decorator
+
+
+@retry(retries=5, silence_error=True)
+def send_email_gmail(subject: str, recipient: str, html_body: str):
+    """
+    Send an email using Gmail SMTP server.
+
+    Args:
+        subject (str): Email subject
+        body (str): Email body in markdown format
+        email (str): Recipient email address
+
+    Returns:
+        str: Message ID of the sent email
+    """
+
+    # Create message
+    msg = MIMEMultipart()
+    sender = os.getenv("EMAIL")
+    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    if not sender:
+        logger.warning("EMAIL environment variable to send email is not set")
+        return
+
+    if not gmail_password:
+        logger.warning(
+            "GMAIL_APP_PASSWORD environment variable to send email is not set"
+        )
+        return
+
+    msg["From"] = sender
+    msg["To"] = recipient
+    msg["Subject"] = subject
+
+    # Attach HTML content
+    msg.attach(MIMEText(html_body, "html"))
+
+    # Create SMTP session
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()  # Enable TLS
+
+    # Login to Gmail
+    server.login(sender, gmail_password)
+
+    # Send email
+    server.send_message(msg)
+
+    # Close the connection
+    server.quit()
+
+    return f"Email Sent successfully to {recipient}"
