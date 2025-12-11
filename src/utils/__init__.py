@@ -181,6 +181,12 @@ def async_retry(
                 try:
                     return await func(*args, **kwargs)
                 except exceptions as e:
+                    error_message = (
+                        f"Error running {func.__name__} after {max_retries} retries: {e}"
+                        f"\nArgs: {args}\nKwargs: {kwargs}\n"
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    logger.error(error_message)
                     if retries < max_retries:
                         retries += 1
                         delay = min(
@@ -188,12 +194,6 @@ def async_retry(
                         )
                         await asyncio.sleep(delay)
                     else:
-                        error_message = (
-                            f"Error running {func.__name__} after {max_retries} retries: {e}"
-                            f"\nArgs: {args}\nKwargs: {kwargs}\n"
-                            f"Traceback: {traceback.format_exc()}"
-                        )
-                        logger.error(error_message)
                         if recipient := os.getenv("EMAIL"):
                             send_email_gmail(
                                 subject=f"Error running {func.__name__}",
@@ -227,7 +227,7 @@ def async_timeout(
 
 
 def retry(
-    retries: int = 3,
+    max_retries: int = 3,
     base_delay: float = 1.0,
     silence_error: bool = os.getenv("SILENCE_ERROR") == "1",
 ):
@@ -239,17 +239,18 @@ def retry(
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
+                    error_message = (
+                        f"Error running {func.__name__} after {max_retries} retries: {e}"
+                        f"\nArgs: {args}\nKwargs: {kwargs}\n"
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    logger.error(error_message)
                     attempt += 1
-                    if attempt >= retries:
-                        logger.error(
-                            f"Function {func.__name__} failed after {attempt} attempts: {e}"
-                        )
+                    if attempt >= max_retries:
                         if not silence_error:
                             raise
                         return ERROR
-                    sleep_time = base_delay * (
-                        2 ** (attempt - 1)
-                    )  # Exponential backoff
+                    sleep_time = base_delay * (2 ** (attempt - 1))
                     time.sleep(sleep_time)
 
         return wrapper
@@ -257,7 +258,7 @@ def retry(
     return decorator
 
 
-@retry(retries=5, silence_error=True)
+@retry(max_retries=3, silence_error=True)
 def send_email_gmail(subject: str, recipient: str, html_body: str):
     """
     Send an email using Gmail SMTP server.
