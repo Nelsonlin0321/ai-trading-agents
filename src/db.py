@@ -1,4 +1,5 @@
-from loguru import logger
+# import traceback
+# from loguru import logger
 from upstash_redis.asyncio import Redis
 from prisma import Prisma
 from prisma.engine.errors import AlreadyConnectedError, NotConnectedError
@@ -12,7 +13,9 @@ async def connect():
     try:
         await prisma.connect()
     except AlreadyConnectedError:
-        logger.info("Already connected to Prisma")
+        pass
+        # logger.warning(
+        #     f"Already connected to Prisma: {e} Traceback: {traceback.format_exc()}")
     finally:
         return prisma
 
