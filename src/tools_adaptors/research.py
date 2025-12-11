@@ -36,9 +36,9 @@ class GoogleMarketResearchAct(Action):
     @async_retry()  # pyright: ignore [reportArgumentType]
     @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
     async def arun(self):
-        return await self.run()  # type: ignore
+        return await self.run()
 
-    @async_wrap
+    @async_wrap()
     def run(self):
         self.client = genai.Client(
             vertexai=True,
@@ -98,9 +98,9 @@ class GoogleEquityResearchAct(Action):
     @async_retry()  # pyright: ignore [reportArgumentType]
     @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 6)
     async def arun(self, ticker: str):
-        return await self.run(ticker)  # type: ignore
+        return await self.run(ticker)
 
-    @async_wrap
+    @async_wrap()
     def run(self, ticker: str):
         self.client = genai.Client(
             vertexai=True,

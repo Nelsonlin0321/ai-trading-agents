@@ -146,15 +146,17 @@ def format_datetime(datetime_string: str = "2025-11-15T00:59:00.095784453Z") -> 
     return dt_ny.strftime("%b %d, %Y %H:%M:%S") + " EST"
 
 
-def async_wrap(func):
-    @wraps(func)
-    async def run(*args, loop=None, executor=None, **kwargs):
-        if loop is None:
-            loop = asyncio.get_event_loop()
-        pfunc = partial(func, *args, **kwargs)
-        return await loop.run_in_executor(executor, pfunc)
+def async_wrap():
+    def decorator(func: Callable[..., T]) -> Callable[..., Coroutine[Any, Any, T]]:
+        async def wrapper(*args, loop=None, executor=None, **kwargs):
+            if loop is None:
+                loop = asyncio.get_event_loop()
+            pfunc = partial(func, *args, **kwargs)
+            return await loop.run_in_executor(executor, pfunc)
 
-    return run
+        return wrapper
+
+    return decorator
 
 
 def get_new_york_datetime() -> datetime:
