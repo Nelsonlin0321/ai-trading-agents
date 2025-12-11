@@ -46,6 +46,7 @@ class StockCurrentPriceAndIntradayChangeAct(Action):
     def name(self):
         return "Stock Current Price and Intraday Change"
 
+    @async_retry()
     async def arun(
         self, tickers: list[str]
     ) -> dict[str, CurrentPriceAndIntradayChange]:
@@ -234,7 +235,8 @@ class StockLivePriceChangeAct(Action):
     def name(self):
         return "get_stock_live_price_and_change"
 
-    @async_retry()
+    # To need to retry because the sub-actions has retry decorator
+    # @async_retry()
     async def arun(
         self, tickers: list[str]
     ) -> dict[str, StockPriceSnapshotWithHistory]:
@@ -255,6 +257,12 @@ class StockLivePriceChangeAct(Action):
         current, historical = await asyncio.gather(current_task, historical_task)
 
         results = {}
+        if historical == "ERROR":
+            return results
+
+        if current == "ERROR":
+            return results
+
         for ticker in tickers:
             history: HistoricalPriceChangePeriods = historical[ticker]
             currency: CurrentPriceAndIntradayChange = current[ticker]
@@ -278,7 +286,8 @@ class ETFLivePriceChangeAct(Action):
     def name(self):
         return "get_major_etf_live_price_and_historical_change"
 
-    @async_retry()
+    # No need to retry because the sub-actions has retry decorator
+    # @async_retry()
     async def arun(self) -> dict[str, ETFPriceSnapshotWithHistory]:
         """
         Fetch a complete price snapshot for multiple major ETF tickers.
@@ -299,6 +308,11 @@ class ETFLivePriceChangeAct(Action):
         current, historical = await asyncio.gather(current_task, historical_task)
 
         results = {}
+        if current == "ERROR":
+            return results
+        if historical == "ERROR":
+            return results
+
         for ticker in tickers:
             history: HistoricalPriceChangePeriods = historical[ticker]
             currency: CurrentPriceAndIntradayChange = current[ticker]
