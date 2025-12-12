@@ -12,9 +12,9 @@ EmailResult = TypedDict(
     },
 )
 
+api_client = SandxAPIClient[EmailResult]("/run/send-summary-report")
+
 
 async def send_summary_email(runId: str):
-    response = await SandxAPIClient[EmailResult].get(
-        f"/run/send-summary-report?runId={runId}"
-    )
+    response = await api_client.get(params={"runId": runId})
     return response
