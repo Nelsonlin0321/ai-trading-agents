@@ -32,6 +32,7 @@ async def build_chief_investment_officer_agent(context: Context):
             tools.get_analysts_recommendations,
             tools.get_recommend_stock_tool(Role.CHIEF_INVESTMENT_OFFICER),
             tools.send_summary_email_tool,
+            tools.write_down_tickers_to_review,
             handoff_to_specialist,
         ],
         middleware=[
