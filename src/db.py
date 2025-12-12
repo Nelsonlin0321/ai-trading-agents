@@ -1,6 +1,10 @@
-from upstash_redis.asyncio import Redis
 from prisma import Prisma
+from upstash_redis.asyncio import Redis
 from prisma.engine.errors import AlreadyConnectedError, NotConnectedError
+from typing import TypedDict, Any
+from src.typings.agent_roles import AgentRole
+
+
 from src.utils import get_env
 
 
@@ -29,10 +33,26 @@ redis = Redis(
     url=get_env("UPSTASH_REDIS_REST_URL"), token=get_env("UPSTASH_REDIS_REST_TOKEN")
 )
 
+CachedAgentMessage = TypedDict(
+    "CachedAgentMessage",
+    {
+        "id": str,
+        "role": AgentRole,
+        "botId": str,
+        "runId": str,
+        "createdAt": str,
+        "updatedAt": str,
+        "messages": dict[str, Any],
+    },
+)
+
+CACHED_AGENTS_MESSAGES: list[CachedAgentMessage] = []
 
 __all__ = [
     "prisma",
     "redis",
     "connect",
     "disconnect",
+    "CachedAgentMessage",
+    "CACHED_AGENTS_MESSAGES",
 ]

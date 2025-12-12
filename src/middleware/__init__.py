@@ -1,9 +1,7 @@
 import asyncio
 import json
-import pickle
 from loguru import logger
-from datetime import datetime, timezone, timedelta
-from typing import TypedDict, Any
+from datetime import datetime, timezone
 from langchain_core.messages import AnyMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
@@ -11,6 +9,7 @@ from prisma.types import (
     AgentMessageCreateInput,
 )
 from src import db
+from src.db import CachedAgentMessage, CACHED_AGENTS_MESSAGES
 from src.typings.context import Context
 from src.models import get_model
 from src.utils.constants import ALL_ROLES
@@ -18,34 +17,6 @@ from src.typings.agent_roles import AgentRole
 from src.utils import async_retry
 
 PERSISTED_MSG_IDS: set[str] = set()
-MESSAGES_STATE_PATH = "all_agents_messages_state.pkl"
-
-CachedAgentMessage = TypedDict(
-    "CachedAgentMessage",
-    {
-        "id": str,
-        "role": AgentRole,
-        "botId": str,
-        "runId": str,
-        "createdAt": str,
-        "updatedAt": str,
-        "messages": dict[str, Any],
-    },
-)
-
-
-def load_messages_state() -> list[AnyMessage]:
-    try:
-        with open(MESSAGES_STATE_PATH, "rb") as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        return []
-
-
-def save_messages_state(cached_messages: list[AnyMessage]) -> None:
-    with open(MESSAGES_STATE_PATH, "wb") as f:
-        pickle.dump(cached_messages, f)
-
 
 langchain_model = get_model("deepseek")
 
@@ -134,35 +105,26 @@ async def cache_agent_messages(
     role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
 ):
     # Save and consolidated agent messages to local file because cross agent with different message states
-    existing_messages = load_messages_state()
-    existing_msg_ids = set(msg.id for msg in existing_messages if msg.id)
-    delta_messages = [
-        msg for msg in messages if msg.id and msg.id not in existing_msg_ids
-    ]
 
-    existing_messages.extend(delta_messages)
-    complete_messages = existing_messages.copy()
-    save_messages_state(complete_messages)
+    existing_msg_ids = set(msg["id"] for msg in CACHED_AGENTS_MESSAGES if msg["id"])
 
-    delta_seconds = 10
-    now = datetime.now(timezone.utc) - timedelta(
-        seconds=delta_seconds * len(complete_messages)
-    )
-    agent_messages = [
+    new_agent_messages = [
         CachedAgentMessage(
             id=msg.id,
             role=role,
             botId=bot_id,
             runId=run_id,
-            createdAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
-            updatedAt=(now + timedelta(seconds=delta_seconds * idx)).isoformat(),
+            createdAt=(datetime.now(timezone.utc)).isoformat(),
+            updatedAt=(datetime.now(timezone.utc)).isoformat(),
             messages=msg.model_dump(),
         )
-        for (idx, msg) in enumerate(complete_messages)
-        if msg.id
+        for msg in messages
+        if msg.id and msg.id not in existing_msg_ids
     ]
 
-    content = json.dumps(agent_messages)
+    CACHED_AGENTS_MESSAGES.extend(new_agent_messages)
+
+    content = json.dumps(CACHED_AGENTS_MESSAGES)
 
     is_success = await db.redis.set(
         key=f"agent_messages:{run_id}", value=content, ex=60 * 60 * 24
