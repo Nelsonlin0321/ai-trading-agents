@@ -127,7 +127,12 @@ def get_recommend_stock_tool(role: Role):
         trade_type: Literal["BUY", "SELL", "HOLD"],
         runtime: ToolRuntime[Context],
     ):
-        """Recommend a stock to buy, sell, or hold.
+        """Record a BUY, SELL, or HOLD recommendation for a stock.
+
+        Calling tool is mandatory to log your trading suggestions when you recommend a stock.
+        capturing the ticker symbol, desired action (buy, sell, or hold),
+        the number of shares involved, the reasoning behind the recommendation with the confidence level.
+        These recorded recommendations can later be reviewed or aggregated to guide final investment decisions.
 
         Args:
             ticker: Stock symbol to recommend to BUY, SELL, or HOLD
