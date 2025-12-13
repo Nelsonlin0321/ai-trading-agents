@@ -1,7 +1,7 @@
 from src import db
-from src.utils import async_retry
+from datetime import datetime
+from src.utils import async_retry, send_ses_email
 from src.tools_adaptors.base import Action
-from src.services.sandx_ai import send_summary_email
 
 
 class GetUserInvestmentStrategyAct(Action):
@@ -21,15 +21,28 @@ class GetUserInvestmentStrategyAct(Action):
 class SendInvestmentReportEmailAct(Action):
     @property
     def name(self) -> str:
-        return "send_investment_report_email"
+        return "write_and_send_investment_report_email"
 
     @async_retry()
-    async def arun(self, run_id: str, investment_summary: str) -> str:
+    async def arun(
+        self, user_id: str, bot_name: str, run_id: str, investment_summary: str
+    ) -> str:
         await db.prisma.run.update(
             where={"id": run_id}, data={"summary": investment_summary}
         )
-        response = await send_summary_email(run_id)
-        if not response["success"]:
-            return f"Failed to send email: {response['message']}"
 
-        return response.get("message", "Email sent successfully")
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        recipient = await db.prisma.user.find_unique(where={"id": user_id})
+
+        if not recipient:
+            return "User not found"
+
+        email = recipient.email
+        subject = f"SandX.AI Execution Summary — {bot_name} | {date_str} | {run_id}"
+        send_ses_email(
+            subject=subject,
+            recipient=email,
+            html_body=investment_summary,
+        )
+        return "Successfully written and sent investment report email!"

@@ -199,7 +199,7 @@ def async_retry(
                         )
                         await asyncio.sleep(delay)
                     else:
-                        if recipient := os.getenv("EMAIL"):
+                        if recipient := os.getenv("GMAIL"):
                             send_gmail_email(
                                 subject=f"Error running {func.__name__}",
                                 recipient=recipient,
@@ -266,10 +266,10 @@ def retry(
 @retry(max_retries=3, silence_error=True)
 def send_gmail_email(subject: str, recipient: str, html_body: str):
     msg = MIMEMultipart()
-    sender = os.getenv("EMAIL")
+    sender = os.getenv("GMAIL")
     gmail_password = os.getenv("GMAIL_APP_PASSWORD")
     if not sender:
-        logger.warning("EMAIL environment variable to send email is not set")
+        logger.warning("GMAIL environment variable to send email is not set")
         return
 
     if not gmail_password:
@@ -302,7 +302,12 @@ def send_gmail_email(subject: str, recipient: str, html_body: str):
 
 
 @retry(max_retries=3, silence_error=True)
-def send_ses_email(subject: str, recipient: str, html_body: str):
+def send_ses_email(
+    subject: str,
+    recipient: str,
+    sender: str = "notifications@sandx.ai",
+    html_body: str = "",
+):
     client = boto3.client("ses", region_name=os.getenv("AWS_REGION", "us-east-1"))
 
     response = client.send_email(
@@ -323,7 +328,7 @@ def send_ses_email(subject: str, recipient: str, html_body: str):
                 "Data": subject,
             },
         },
-        Source="notifications@sandx.ai",
+        Source=sender,
     )
 
     logger.info(f"Email sent! Message ID: {response['MessageId']}")
