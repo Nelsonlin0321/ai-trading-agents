@@ -31,7 +31,7 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     return await get_user_investment_strategy_act.arun(runtime.context.bot.id)
 
 
-@tool("send_investment_report_email")
+@tool("write_and_send_investment_report_email")
 async def send_summary_email_tool(
     investment_summary: str, runtime: ToolRuntime[Context]
 ):

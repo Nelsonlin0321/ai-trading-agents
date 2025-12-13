@@ -96,7 +96,7 @@ class GoogleEquityResearchAct(Action):
         return "google_equity_research"
 
     @async_retry()  # pyright: ignore [reportArgumentType]
-    @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 6)
+    @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 24)
     async def arun(self, ticker: str):
         return await self.run(ticker)
 

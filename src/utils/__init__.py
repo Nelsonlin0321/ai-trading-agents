@@ -1,18 +1,23 @@
-import asyncio
 import os
 import time
-from typing import Callable, Any, TypeVar, Coroutine
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from functools import partial, wraps
 import pytz
-from tqdm import tqdm
-from html_to_markdown import convert, ConversionOptions
-from loguru import logger
-import traceback
+import boto3
 import smtplib
-from email.mime.multipart import MIMEMultipart
+import asyncio
+import traceback
+
+
+from tqdm import tqdm
+from loguru import logger
+from datetime import datetime
 from email.mime.text import MIMEText
+from functools import partial, wraps
+from email.mime.multipart import MIMEMultipart
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Any, TypeVar, Coroutine
+from html_to_markdown import convert, ConversionOptions
+
+
 from src.typings import ErrorLiteral, ERROR
 
 
@@ -195,7 +200,7 @@ def async_retry(
                         await asyncio.sleep(delay)
                     else:
                         if recipient := os.getenv("EMAIL"):
-                            send_email_gmail(
+                            send_gmail_email(
                                 subject=f"Error running {func.__name__}",
                                 recipient=recipient,
                                 html_body=error_message,
@@ -259,20 +264,7 @@ def retry(
 
 
 @retry(max_retries=3, silence_error=True)
-def send_email_gmail(subject: str, recipient: str, html_body: str):
-    """
-    Send an email using Gmail SMTP server.
-
-    Args:
-        subject (str): Email subject
-        body (str): Email body in markdown format
-        email (str): Recipient email address
-
-    Returns:
-        str: Message ID of the sent email
-    """
-
-    # Create message
+def send_gmail_email(subject: str, recipient: str, html_body: str):
     msg = MIMEMultipart()
     sender = os.getenv("EMAIL")
     gmail_password = os.getenv("GMAIL_APP_PASSWORD")
@@ -305,5 +297,44 @@ def send_email_gmail(subject: str, recipient: str, html_body: str):
 
     # Close the connection
     server.quit()
+    logger.info(f"Email Sent successfully to {recipient}")
+    return f"Email Sent successfully to {recipient}"
+
+
+@retry(max_retries=3, silence_error=True)
+def send_ses_email(subject: str, recipient: str, html_body: str):
+    client = boto3.client("ses", region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+    response = client.send_email(
+        Destination={
+            "ToAddresses": [
+                recipient,
+            ],
+        },
+        Message={
+            "Body": {
+                "Html": {
+                    "Charset": "UTF-8",
+                    "Data": html_body,
+                }
+            },
+            "Subject": {
+                "Charset": "UTF-8",
+                "Data": subject,
+            },
+        },
+        Source="notifications@sandx.ai",
+    )
+
+    logger.info(f"Email sent! Message ID: {response['MessageId']}")
 
     return f"Email Sent successfully to {recipient}"
+
+
+if __name__ == "__main__":
+    #  python -m src.utils.__init__
+    send_ses_email(
+        subject="Test Email",
+        recipient="sandx.ai.contact@gmail.com",
+        html_body="<h1>Hello, World!</h1>",
+    )
