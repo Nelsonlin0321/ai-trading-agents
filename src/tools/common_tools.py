@@ -58,7 +58,10 @@ async def send_summary_email_tool(
         - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
         - Line charts and bar charts rendered purely with HTML and CSS (no external images or scripts).
     """
+    context = runtime.context
     return await send_investment_report_email_act.arun(
-        run_id=runtime.context.run.id,
+        run_id=context.run.id,
+        user_id=context.bot.userId,
+        bot_name=context.bot.name,
         investment_summary=investment_summary,
     )

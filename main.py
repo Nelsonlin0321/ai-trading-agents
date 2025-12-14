@@ -1,4 +1,7 @@
 import os
+import sys
+import traceback
+import asyncio
 from loguru import logger
 from prisma.enums import RunStatus
 from langchain_core.messages import HumanMessage
@@ -44,20 +47,22 @@ async def run_agent(run_id: str):
 
     await db.prisma.run.update(where={"id": run_id}, data={"status": RunStatus.RUNNING})
 
-    context = await build_context(run_id=run_id)
+    context = await build_context(run=run)
 
     if context == "ERROR":
         logger.error(f"Failed to build context for run {run_id}")
         exit(2)
 
     agent_graph = await build_chief_investment_officer_agent(context)
-    events = agent_graph.stream(
+
+    events = agent_graph.astream(
         input={
             "messages": start_messages,  # type: ignore
         },
+        context=context,
         stream_mode="values",
     )
-    for event in events:
+    async for event in events:
         if "messages" in event:
             message = event["messages"][-1]
             message.pretty_print()
@@ -67,6 +72,7 @@ async def run_agent(run_id: str):
 
 async def main(run_id: str):
     try:
+        await db.connect()
         await run_agent(run_id)
     except Exception as e:
         run = await db.prisma.run.find_unique(where={"id": run_id})
@@ -74,6 +80,14 @@ async def main(run_id: str):
             await db.prisma.run.update(
                 where={"id": run_id}, data={"status": RunStatus.FAILURE}
             )
+        logger.error(
+            f"Failed to run agent {run_id}: {e}. Traceback: {traceback.format_exc()}"
+        )
+    finally:
+        await db.disconnect()
+        exit(1)
 
-        logger.error(f"Failed to run agent {run_id}: {e}")
-        exit(2)
+
+if __name__ == "__main__":
+    runId = sys.argv[1]
+    asyncio.run(main(runId))

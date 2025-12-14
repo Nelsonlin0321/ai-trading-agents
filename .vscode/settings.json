@@ -4,6 +4,7 @@
         "agentmessage",
         "ainvoke",
         "arun",
+        "astream",
         "atrs",
         "awrap",
         "Axios",
