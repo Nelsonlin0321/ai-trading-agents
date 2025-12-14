@@ -197,6 +197,7 @@ enum RunStatus {
     SUCCESS
     FAILURE
     RUNNING
+    STARTING
 }
 
 model Run {

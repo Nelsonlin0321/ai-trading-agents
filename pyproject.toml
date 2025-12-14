@@ -30,9 +30,8 @@ dev = [
     "jupyter>=1.1.1",
     "ruff>=0.14.5",
 ]
-
 [tool.pyright]
-include = ["src"]
+include = ["src", "main.py"]
 exclude = [".venv/",
     "**/__pycache__",
     "uv.lock"

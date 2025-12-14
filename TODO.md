@@ -6,12 +6,12 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - MiddleWare:
   - SummarizationMiddleware: Done
   - TodoListMiddleware: Done
-- Portfolio Manager: WIP
+- Portfolio Manager: SKIP
 
 
 ## Context:
-- Construct the context to be LLM-friendly content: WIP
-- Make tool result LLM-friendly in markdown format: WIP
+- Construct the context to be LLM-friendly content: Done
+- Make tool result LLM-friendly in markdown format: Done
   - Us Market News: Done
   - Major ETF Price Statistics: Done
   - List Positions: Done
@@ -21,7 +21,7 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - in-database cache the results of the tools to avoid redundant calls: Done
 - Async Cache Decorator: Done
 - Refactor in-database cache to be decorator: Done
-- Sync Agent Message to Sandx AI Monitoring Dashboard: Done in PoC
+- Sync Agent Message to Sandx AI Monitoring Dashboard: Done
 - Pylint: Done
 - Yahoo Finance Fundamental Data API: Done
 - Write to DB middleware: Done
@@ -42,7 +42,7 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Get Jina DeepSearch Tool: Not Impressive and Slow - Avoid using it
 - BUY: Done
 - SELL: Done
-- Handoff Tool: WIP
+- Handoff Tool: Done
 
 
 ## Common Tools:
@@ -59,8 +59,8 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Handoff Tool: Done
 
 ## Other
-- Only Open Hour Can Run: WIP
-- Try google gemini flash lite: WIP
+- Only Open Hour Can Run: TO Decide
+- Try google gemini flash lite: TO Decide
 - Add To Do Middleware To CIO: Done
 - Display tool args: Done
 - Try Different Strategy: Done
@@ -68,5 +68,6 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 - Add the records of the ticker of reviewed: TODO
 - Add the CIO summarization: Done
 - Compile to be graph: TODO
-- Restore Checkpoint of graph: TODO
+- Restore To Run: TODO !Important
+  - Deserialize the message to be langchain message: TODO
 - And Based on the prediction of price increase or decrease, decide whether to buy or sell the stock: TODO
