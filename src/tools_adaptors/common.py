@@ -108,6 +108,15 @@ class SendInvestmentReportEmailAct(Action):
 
         email = recipient.email
         subject = f"SandX.AI Execution Summary — {bot_name} | {date_str} | {run_id}"
+
+        investment_report = investment_report.strip()
+        if investment_report.startswith("```html"):
+            investment_report = investment_report["```html".__len__() :]
+        if investment_report.endswith("```"):
+            investment_report = investment_report[:-3]
+
+        investment_report = investment_report.strip()
+
         send_ses_email(
             subject=subject,
             recipient=email,
