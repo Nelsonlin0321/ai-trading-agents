@@ -21,6 +21,7 @@ from src.tools_adaptors.risk import FundamentalRiskDataAct, VolatilityRiskAct
 from src.tools_adaptors.common import (
     GetUserInvestmentStrategyAct,
     SendInvestmentReportEmailAct,
+    WriteInvestmentReportEmailAct,
 )
 
 __all__ = [
@@ -43,4 +44,5 @@ __all__ = [
     "GoogleEquityResearchAct",
     "GetUserInvestmentStrategyAct",
     "SendInvestmentReportEmailAct",
+    "WriteInvestmentReportEmailAct",
 ]

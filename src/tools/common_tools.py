@@ -2,12 +2,14 @@ from langchain.tools import tool, ToolRuntime
 from src.context import Context
 from src.tools_adaptors import (
     GetUserInvestmentStrategyAct,
+    WriteInvestmentReportEmailAct,
     SendInvestmentReportEmailAct,
 )
 
 
 get_user_investment_strategy_act = GetUserInvestmentStrategyAct()
 send_investment_report_email_act = SendInvestmentReportEmailAct()
+write_investment_report_email_act = WriteInvestmentReportEmailAct()
 
 
 @tool("get_user_investment_strategy")
@@ -31,10 +33,40 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     return await get_user_investment_strategy_act.arun(runtime.context.bot.id)
 
 
+@tool(write_investment_report_email_act.name)
+async def write_summary_report(investment_summary: str, runtime: ToolRuntime[Context]):
+    """
+    Persist an HTML-formatted investment summary for the current trading run.
+
+    This tool stores the provided HTML summary in the database record for the active run
+    and then triggers an email containing that summary to the user.
+
+    The investment summary must consolidate insights from every analyst involved in the run,
+    presenting each analyst’s investment recommendation together with the detailed rationale
+    behind it. It must conclude with the final trading decision (buy, sell, or hold) for
+    the tickers, again including the rationale that led to that decision.
+
+    Parameters
+    ----------
+    investment_summary : str
+        A professionally formatted, self-contained, and stylish HTML string representing the consolidated investment report.
+        It must include fully-styled inline CSS (e.g., font-family, color, padding, borders) to ensure
+        consistent rendering across all major email clients. Plain text or Markdown are not acceptable.
+        Ensure the content contains:
+        - Aggregated insights from all analysts to comprehensively evaluate the tickers.
+        - Each analyst’s recommendation and its rationale.
+        - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
+        - Line charts and bar charts rendered purely with HTML and CSS (no external images or scripts).
+    """
+    context = runtime.context
+    return await write_investment_report_email_act.arun(
+        run_id=context.run.id,
+        investment_summary=investment_summary,
+    )
+
+
 @tool(send_investment_report_email_act.name)
-async def send_summary_email_tool(
-    investment_summary: str, runtime: ToolRuntime[Context]
-):
+async def send_summary_email_tool(runtime: ToolRuntime[Context]):
     """
     Persist and email an HTML-formatted investment summary for the current trading run.
 
@@ -63,5 +95,4 @@ async def send_summary_email_tool(
         run_id=context.run.id,
         user_id=context.bot.userId,
         bot_name=context.bot.name,
-        investment_summary=investment_summary,
     )

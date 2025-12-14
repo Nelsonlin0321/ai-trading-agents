@@ -41,25 +41,23 @@ async def restore_messages(run_id: str) -> list[BaseMessage] | None:
     if len(agent_messages) == 0:
         return
 
-    latest_cio_msg_idx = None
-    for idx, agt_msg in enumerate(agent_messages):
-        if agt_msg.role == "CHIEF_INVESTMENT_OFFICER":
-            latest_cio_msg_idx = idx
+    #  only Retry CIO messages
+    cio_agent_msgs = [
+        agt_msg
+        for agt_msg in agent_messages
+        if agt_msg.role == "CHIEF_INVESTMENT_OFFICER"
+    ]
 
-    if latest_cio_msg_idx is None:
-        return
+    deserialized_messages = [json.loads(agt_msg.messages) for agt_msg in cio_agent_msgs]
 
-    agent_messages = agent_messages[: latest_cio_msg_idx + 1]
-
-    deserialized_messages = [json.loads(agt_msg.messages) for agt_msg in agent_messages]
-
-    #  and make sure the last message is not AI.
     last_msg = deserialized_messages[-1]
-    if last_msg["type"] == "ai":
-        latest_cio_msg_idx -= 1
+    while last_msg["type"] == "ai":
         deserialized_messages.pop(-1)
+        last_msg = deserialized_messages[-1]
 
-    timestamp = agent_messages[latest_cio_msg_idx].createdAt
+    last_msg = deserialized_messages[-1]
+
+    timestamp = cio_agent_msgs[-1].createdAt
 
     #  delete the unfinished messages after the latest CIO message
     await prisma.agentmessage.delete_many(

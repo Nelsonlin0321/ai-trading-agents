@@ -5,7 +5,7 @@ from src.tools.handoff_tools import handoff_to_specialist
 from src.middleware import (
     LoggingMiddleware,
     todo_list_middleware,
-    summarization_middleware,
+    # summarization_middleware,
 )
 from src.models import get_model
 from src.context import Context
@@ -32,12 +32,13 @@ async def build_chief_investment_officer_agent(context: Context):
             tools.get_analysts_recommendations,
             tools.get_recommend_stock_tool(Role.CHIEF_INVESTMENT_OFFICER),
             tools.send_summary_email_tool,
+            tools.write_summary_report,
             tools.write_down_tickers_to_review,
             handoff_to_specialist,
         ],
         middleware=[
             todo_list_middleware,  # type: ignore
-            summarization_middleware,
+            # summarization_middleware,
             LoggingMiddleware("CHIEF_INVESTMENT_OFFICER"),
         ],
         system_prompt=system_prompt,

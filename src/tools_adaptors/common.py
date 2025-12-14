@@ -18,18 +18,34 @@ class GetUserInvestmentStrategyAct(Action):
         return bot.strategy
 
 
-class SendInvestmentReportEmailAct(Action):
+class WriteInvestmentReportEmailAct(Action):
     @property
     def name(self) -> str:
-        return "write_and_send_investment_report_email"
+        return "write_investment_report_email"
 
-    @async_retry()
-    async def arun(
-        self, user_id: str, bot_name: str, run_id: str, investment_summary: str
-    ) -> str:
+    # @async_retry()
+    async def arun(self, run_id: str, investment_summary: str) -> str:
         await db.prisma.run.update(
             where={"id": run_id}, data={"summary": investment_summary}
         )
+        return "Successfully writing investment report for email!"
+
+
+class SendInvestmentReportEmailAct(Action):
+    @property
+    def name(self) -> str:
+        return "send_investment_report_email"
+
+    @async_retry()
+    async def arun(self, user_id, run_id: str, bot_name: str) -> str:
+        run = await db.prisma.run.find_unique(where={"id": run_id})
+
+        if not run:
+            return "Run not found"
+
+        investment_report = run.summary
+        if not investment_report:
+            return "Investment report not found. please write it first."
 
         date_str = datetime.now().strftime("%Y-%m-%d")
 
@@ -43,6 +59,6 @@ class SendInvestmentReportEmailAct(Action):
         send_ses_email(
             subject=subject,
             recipient=email,
-            html_body=investment_summary,
+            html_body=investment_report,
         )
-        return "Successfully written and sent investment report email!"
+        return "Sent investment report email successfully!"
