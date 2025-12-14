@@ -49,7 +49,7 @@ class SendInvestmentReportEmailAct(Action):
 
         date_str = datetime.now().strftime("%Y-%m-%d")
 
-        recipient = await db.prisma.user.find_unique(where={"id": user_id})
+        recipient = await db.prisma.user.find_unique(where={"clerkId": user_id})
 
         if not recipient:
             return "User not found"
