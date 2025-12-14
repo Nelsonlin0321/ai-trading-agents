@@ -42,7 +42,7 @@ async def write_summary_report(runtime: ToolRuntime[Context]):
     Write the final investment report email for the current trading run.
     """
     states = runtime.state
-    messages: list[BaseMessage] = states.messages  # type: ignore
+    messages: list[BaseMessage] = states["messages"]  # type: ignore
     conversation = combine_ai_messages(messages)
     context = runtime.context
     return await write_investment_report_email_act.arun(

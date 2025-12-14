@@ -31,7 +31,7 @@ class WriteInvestmentReportEmailAct(Action):
     def name(self) -> str:
         return "write_investment_report_email"
 
-    # @async_retry()
+    @async_retry()
     async def arun(
         self, model_name: ModelName, botId: str, run_id: str, conversation: str
     ) -> str:
