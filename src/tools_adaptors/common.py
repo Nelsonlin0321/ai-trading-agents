@@ -62,7 +62,7 @@ class WriteInvestmentReportEmailAct(Action):
         - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
         - Line charts and bar charts rendered purely with HTML and CSS (no external images or scripts).
         
-        3. Include the link  {BASE_URL}/bots/{botId}/conversation?runId={run_id}
+        3. Must Include A BUTTON with the link  {BASE_URL}/bots/{botId}/conversation?runId={run_id}
         to allow users to view the full conversation.
 
         Conversation:
