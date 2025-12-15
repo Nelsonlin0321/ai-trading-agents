@@ -58,16 +58,18 @@ chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
 ## Orchestration Design:
 - Handoff Tool: Done
 
-## Other
+### Others
 - Only Open Hour Can Run: TO Decide
 - Try google gemini flash lite: TO Decide
 - Add To Do Middleware To CIO: Done
 - Display tool args: Done
 - Try Different Strategy: Done
 - Rationale when BUY/SELL: Done
-- Add the records of the ticker of reviewed: TODO
+- Add the records of the ticker of reviewed: Done
 - Add the CIO summarization: Done
-- Compile to be graph: TODO
-- Restore To Run: TODO !Important
-  - Deserialize the message to be langchain message: TODO
+- Compile to be graph: Done
+- Restore To Run: Done
+- Deserialize the message to be langchain message: Done
 - And Based on the prediction of price increase or decrease, decide whether to buy or sell the stock: TODO
+- Dockerize the project: TODO
+- Avoid revising the same ticker multiple times: TODO

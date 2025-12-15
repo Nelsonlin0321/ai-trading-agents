@@ -7,12 +7,14 @@ from src.tools_adaptors import (
     GetUserInvestmentStrategyAct,
     WriteInvestmentReportEmailAct,
     SendInvestmentReportEmailAct,
+    GetHistoricalReviewedTickersAct,
 )
 
 
 get_user_investment_strategy_act = GetUserInvestmentStrategyAct()
 send_investment_report_email_act = SendInvestmentReportEmailAct()
 write_investment_report_email_act = WriteInvestmentReportEmailAct()
+get_historical_reviewed_tickers_act = GetHistoricalReviewedTickersAct()
 
 
 @tool("get_user_investment_strategy")
@@ -64,3 +66,11 @@ async def send_summary_email_tool(runtime: ToolRuntime[Context]):
         user_id=context.bot.userId,
         bot_name=context.bot.name,
     )
+
+
+@tool(get_historical_reviewed_tickers_act.name)
+async def get_historical_reviewed_tickers(runtime: ToolRuntime[Context]):
+    """
+    Get the latest 7 analysis's tickers that have been reviewed for avoiding reviewing the same tickers again.
+    """
+    return await get_historical_reviewed_tickers_act.arun(runtime.context.bot.id)

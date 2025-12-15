@@ -19,6 +19,7 @@ from src.tools.common_tools import (
     get_user_investment_strategy,
     send_summary_email_tool,
     write_summary_report,
+    get_historical_reviewed_tickers,
 )
 
 from src.tools.fundamental_data_tools import (
@@ -66,5 +67,6 @@ __all__ = [
     "get_volatility_risk_indicators",
     "get_price_risk_indicators",
     "write_down_tickers_to_review",
+    "get_historical_reviewed_tickers",
     # "handoff_to_specialist", # Avoid circular import
 ]

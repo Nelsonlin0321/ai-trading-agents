@@ -3,6 +3,8 @@ from datetime import datetime
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from src import db
+from prisma.enums import RunStatus
+from src import utils
 from src.models import get_model
 from src.utils import async_retry, send_ses_email
 from src.tools_adaptors.base import Action
@@ -124,3 +126,34 @@ class SendInvestmentReportEmailAct(Action):
             html_body=investment_report,
         )
         return "Sent investment report email successfully!"
+
+
+class GetHistoricalReviewedTickersAct(Action):
+    @property
+    def name(self) -> str:
+        return "get_historical_reviewed_tickers"
+
+    @async_retry()
+    async def arun(self, botId: str) -> str:
+        bot = await db.prisma.bot.find_unique(where={"id": botId})
+        if not bot:
+            raise ValueError(f"Bot with ID {botId} not found.")
+
+        runs = await db.prisma.run.find_many(
+            where={"botId": botId, "status": RunStatus.SUCCESS},
+            order={"createdAt": "desc"},
+            take=7,
+        )
+        if not runs:
+            return "No previous tickers reviewed found."
+
+        run_tickers = []
+        for run in runs:
+            if run.tickers:
+                tmp_dict = {
+                    "tickers": run.tickers,
+                    "reviewed_at": run.createdAt.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                run_tickers.append(tmp_dict)
+        tickers_markdown = utils.dicts_to_markdown_table(run_tickers)
+        return tickers_markdown
