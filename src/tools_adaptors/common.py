@@ -112,6 +112,8 @@ class SendInvestmentReportEmailAct(Action):
         investment_report = investment_report.strip()
         if investment_report.startswith("```html"):
             investment_report = investment_report["```html".__len__() :]
+        if investment_report.startswith("```"):
+            investment_report = investment_report[3:]
         if investment_report.endswith("```"):
             investment_report = investment_report[:-3]
 

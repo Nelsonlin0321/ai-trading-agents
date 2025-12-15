@@ -37,6 +37,7 @@ model Bot {
     portfolio                  Portfolio?
     accumulatedPL              Float?
     accumulatedPLPercent       Float?
+    llmModel                   String?                      @default("deepseek-v3.2")
     watchlist                  WatchlistItem[]
     depositWithdrawCash        DepositWithdrawCash[]
     trades                     Trade[]
@@ -211,6 +212,7 @@ model Run {
     agentMessages AgentMessage[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
+    completedAt   DateTime?
     recommends    Recommend[]
 
     @@index([botId, status])
