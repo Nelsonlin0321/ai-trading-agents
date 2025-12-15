@@ -206,6 +206,7 @@ model Run {
     botId         String
     bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
     status        RunStatus
+    instruction   String?
     summary       String?
     tickers       String?
     trades        Trade[]

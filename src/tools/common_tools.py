@@ -46,7 +46,7 @@ async def write_summary_report(runtime: ToolRuntime[Context]):
     conversation = combine_ai_messages(messages)
     context = runtime.context
     return await write_investment_report_email_act.arun(
-        model_name=context.model_name,
+        llm_model=context.llm_model,
         botId=context.bot.id,
         run_id=context.run.id,
         conversation=conversation,

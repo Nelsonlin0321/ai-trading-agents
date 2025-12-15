@@ -6,7 +6,6 @@ from src import db
 from src.models import get_model
 from src.utils import async_retry, send_ses_email
 from src.tools_adaptors.base import Action
-from src.typings.context import ModelName
 
 
 BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
@@ -33,7 +32,7 @@ class WriteInvestmentReportEmailAct(Action):
 
     @async_retry()
     async def arun(
-        self, model_name: ModelName, botId: str, run_id: str, conversation: str
+        self, llm_model: str, botId: str, run_id: str, conversation: str
     ) -> str:
         system_prompt = (
             "You are the Synthesis & Communications Officer (SCO) for an AI investment team. "
@@ -70,7 +69,7 @@ class WriteInvestmentReportEmailAct(Action):
         {conversation}
         """
 
-        langchain_model = get_model(model_name)
+        langchain_model = get_model(llm_model)
         agent = create_agent(
             model=langchain_model,
             system_prompt=system_prompt,

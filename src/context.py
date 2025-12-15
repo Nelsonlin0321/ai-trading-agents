@@ -27,7 +27,7 @@ async def build_context(run: Run):
     if not bot.active:
         raise ValueError(f"Bot with ID {bot.id} is not active.")
 
-    context = Context(run=run, bot=bot, model_name="deepseek")
+    context = Context(run=run, bot=bot, llm_model=bot.llmModel or "deepseek-v3.2")
 
     return context
 

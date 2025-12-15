@@ -9,7 +9,7 @@ from src.prompt import build_agent_system_prompt
 
 async def build_risk_analyst_agent(context: Context):
     system_prompt = await build_agent_system_prompt(context, Role.RISK_ANALYST)
-    langchain_model = get_model(context.model_name)
+    langchain_model = get_model(context.llm_model)
     agent = create_agent(
         model=langchain_model,
         tools=[
