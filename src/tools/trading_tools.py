@@ -4,6 +4,7 @@ from prisma.enums import Role, TradeType
 from pydantic import BaseModel, Field
 from langchain.tools import tool, ToolRuntime
 from src.context import Context
+from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.trading import (
     BuyAct,
     SellAct,
@@ -50,6 +51,11 @@ async def buy_stock(
         rationale: Rationale for the buy order
         confidence: Confidence in the buy order (0.0-1.0)
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
+
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
     return await buy_act.arun(
@@ -72,6 +78,13 @@ async def write_down_tickers_to_review(
     Args:
         tickers: List of tickers to review
     """
+
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+
     runId = runtime.context.run.id
     return await write_down_tickers_to_review_act.arun(
         run_id=runId,
@@ -95,6 +108,11 @@ async def sell_stock(
         rationale: Rationale for the sell order
         confidence: Confidence in the sell order (0.0-1.0)
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
+
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
     return await sell_act.arun(
@@ -109,7 +127,9 @@ async def sell_stock(
 
 @tool("get_market_status")
 async def get_market_status():
-    """Get the current market status. It's either open or closed."""
+    """Get the current market status. It's either open or closed.
+    If the market is closed, you cannot buy or sell stock.
+    """
     clock = alpaca_trading_client.get_clock()
     if not clock.is_open:  # type: ignore
         return "Market is closed. Cannot buy stock."
@@ -141,6 +161,10 @@ def get_recommend_stock_tool(role: Role):
             confidence: Confidence in the recommendation (0.0-1.0)
             trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
         """
+        ticker = ticker.upper().strip()
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
 
         bot_id = runtime.context.bot.id
         run_id = runtime.context.run.id

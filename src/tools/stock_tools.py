@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from langchain.tools import tool
 from src import tools_adaptors
 from src import utils
+from src.utils.ticker import is_valid_ticker
 
 eft_live_price_change_act = tools_adaptors.ETFLivePriceChangeAct()
 stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
@@ -86,6 +87,12 @@ async def get_stock_live_historical_price_change(tickers: list[str]):
     - Generate quick market commentary on price action
     - Monitor portfolio positions for risk or opportunity signals
     """
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+
     results = await stock_live_price_change_act.arun(tickers)
     metrics_list = []
     for ticker, metrics in results.items():
@@ -165,6 +172,12 @@ async def get_latest_quotes(tickers: list[str]):
     Returns:
         A markdown-formatted table with latest quote data for each symbol.
     """
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+
     quotes_data = await multi_latest_quotes_act.arun(tickers)
     return quotes_data
 
@@ -196,6 +209,10 @@ async def get_latest_quote(ticker: str):
     Returns:
         A markdown-formatted table with latest quote data for each symbol.
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
     quotes_data = await single_latest_quotes_act.arun(ticker)
     return quotes_data
 

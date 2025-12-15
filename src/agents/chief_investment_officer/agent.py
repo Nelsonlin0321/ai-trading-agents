@@ -34,6 +34,7 @@ async def build_chief_investment_officer_agent(context: Context):
             tools.send_summary_email_tool,
             tools.write_summary_report,
             tools.write_down_tickers_to_review,
+            tools.get_market_status,
             handoff_to_specialist,
         ],
         middleware=[

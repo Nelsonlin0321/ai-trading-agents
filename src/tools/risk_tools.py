@@ -1,4 +1,5 @@
 from langchain.tools import tool
+from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.risk import (
     FundamentalRiskDataAct,
     VolatilityRiskAct,
@@ -31,6 +32,10 @@ async def get_fundamental_risk_data(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
     return await fundamental_risk_act.arun(ticker)
 
 
@@ -53,6 +58,10 @@ async def get_volatility_risk_indicators(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
     return await volatility_risk_act.arun(ticker)
 
 
@@ -76,6 +85,10 @@ async def get_price_risk_indicators(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
     return await price_risk_act.arun(ticker)
 
 
