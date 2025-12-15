@@ -124,14 +124,6 @@ class StockHistoricalPriceChangesAct(Action):
             Mapping of ticker to period percent changes, e.g. {"AAPL": {"1w": 0.02, ...}}.
         """
 
-        def _to_iso_z(dt: datetime) -> str:
-            return (
-                dt.astimezone(timezone.utc)
-                .replace(microsecond=0)
-                .isoformat()
-                .replace("+00:00", "Z")
-            )
-
         def _parse_ts(ts: str) -> datetime:
             try:
                 return datetime.fromisoformat(ts.replace("Z", "+00:00"))
@@ -500,6 +492,65 @@ class SingleLatestQuotesAct(Action):
         return heading + "\n\n" + note + "\n\n" + markdown_table
 
 
+class GetPriceTrendAct(Action):
+    @property
+    def name(self):
+        return "get_price_trend"
+
+    @async_retry()
+    async def arun(self, symbols: List[str]) -> str:
+        """
+        Get the price trend of a stock.
+
+        Returns:
+            str: The price trend of the stock.
+        """
+
+        start = (date.today() - timedelta(days=31)).isoformat()
+        end = date.today().isoformat()
+
+        bars_by_symbol = await get_historical_price_bars(
+            symbols=symbols,
+            timeframe="1Day",
+            start=start,
+            end=end,
+            sort="desc",  # IMPORTANT: sort by descending timestamp
+        )
+
+        markdown_tables = []
+        for ticker in symbols:
+            bars = bars_by_symbol[ticker]
+            bars_ = []
+            for index, bar in enumerate(bars):
+                if index == len(bars) - 1:
+                    break
+                next_price = bars[index + 1]["close_price"]
+                bars_.append(
+                    {
+                        "date": bar["timestamp"],
+                        "price": bar["close_price"],
+                        "change_percent": utils.format_percent(
+                            (bar["close_price"] - next_price) / next_price
+                        ),
+                    }
+                )
+
+            markdown_table = utils.dicts_to_markdown_table(bars_)
+            markdown_table = "**" + ticker + "**\n" + markdown_table
+            markdown_tables.append(markdown_table)
+        markdown_tables_str = "\n".join(markdown_tables)
+
+        stock_price_changes = (
+            (
+                "Note: change_percent = (current_price - previous_day_price) / previous_day_price "
+                "Measuring the change percent of the stock price relative to the previous day's price"
+            )
+            + "\n"
+            + markdown_tables_str
+        )
+        return stock_price_changes
+
+
 # only Act
 __all__ = [
     "StockRawSnapshotAct",
@@ -511,6 +562,7 @@ __all__ = [
     "SingleLatestQuotesAct",
     "MultiLatestQuotesAct",
 ]
+
 
 if __name__ == "__main__":
     # python -m src.tools.actions.stocks

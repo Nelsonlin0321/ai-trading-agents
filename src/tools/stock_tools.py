@@ -9,6 +9,7 @@ stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
 most_active_stockers_act = tools_adaptors.MostActiveStockersAct()
 single_latest_quotes_act = tools_adaptors.SingleLatestQuotesAct()
 multi_latest_quotes_act = tools_adaptors.MultiLatestQuotesAct()
+get_price_trend_act = tools_adaptors.GetPriceTrendAct()
 
 
 @tool(eft_live_price_change_act.name)
@@ -56,9 +57,9 @@ async def get_stock_live_historical_price_change(tickers: list[str]):
     Fetch comprehensive percent-change metrics for the provided stock tickers.
 
     This function queries live and historical price data for each ticker and
-    calculates percentage changes over multiple time windows:
+    calculates percentage changes over multiple time windows for momentum analysis:
     - Current intraday percent change (vs. previous close)
-    - 1-day, 1-week, 1-month, 3-month, and 1-year, 3-year percent changes
+    - 1-day, 1-week, 1-month, 3-month, 1-year, and 3-year percent changes.
 
     The returned data enables quick assessment of momentum, trend strength,
     and relative performance for portfolio monitoring, screening, or market
@@ -217,10 +218,34 @@ async def get_latest_quote(ticker: str):
     return quotes_data
 
 
+@tool(get_price_trend_act.name)
+async def get_price_trend(tickers: list[str]):
+    """
+    This tool provides the price trend for multiple stock tickers.
+
+    Use this tool when you need:
+    - To get the price trend for a single stock ticker.
+
+    Args:
+        tickers: List of stock tickers, e.g. ['AAPL', 'MSFT']
+
+    Returns:
+        A markdown-formatted string with the price trend for the stock tickers.
+    """
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+    price_trend = await get_price_trend_act.arun(tickers)
+    return price_trend
+
+
 __all__ = [
     "get_etf_live_historical_price_change",
     "get_stock_live_historical_price_change",
     "get_most_active_stockers",
     "get_latest_quotes",
     "get_latest_quote",
+    "get_price_trend",
 ]

@@ -13,6 +13,7 @@ async def build_risk_analyst_agent(context: Context):
     agent = create_agent(
         model=langchain_model,
         tools=[
+            tools.get_price_trend,
             tools.get_fundamental_risk_data,
             tools.get_price_risk_indicators,
             tools.get_volatility_risk_indicators,

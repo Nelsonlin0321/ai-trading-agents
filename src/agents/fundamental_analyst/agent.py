@@ -15,6 +15,7 @@ async def build_fundamental_analyst_agent(context: Context):
         tools=[
             tools.get_fundamental_data,
             tools.get_stock_live_historical_price_change,
+            tools.get_price_trend,
             tools.get_recommend_stock_tool(Role.FUNDAMENTAL_ANALYST),
         ],
         middleware=[

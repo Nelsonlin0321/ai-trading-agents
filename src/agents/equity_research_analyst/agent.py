@@ -17,6 +17,7 @@ async def build_equity_research_analyst_agent(context: Context):
         tools=[
             tools.do_google_equity_research,
             tools.get_latest_equity_news,
+            tools.get_price_trend,
             tools.get_recommend_stock_tool(Role.EQUITY_RESEARCH_ANALYST),
         ],
         middleware=[

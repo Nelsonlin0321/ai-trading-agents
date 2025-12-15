@@ -10,6 +10,7 @@ from src.tools_adaptors.stocks import (
     MostActiveStockersAct,
     SingleLatestQuotesAct,
     MultiLatestQuotesAct,
+    GetPriceTrendAct,
 )
 from src.tools_adaptors.portfolio import (
     ListPositionsAct,
@@ -27,6 +28,7 @@ from src.tools_adaptors.common import (
 
 __all__ = [
     "Action",
+    "GetPriceTrendAct",
     "SingleLatestQuotesAct",
     "MultiLatestQuotesAct",
     "MarketNewsAct",

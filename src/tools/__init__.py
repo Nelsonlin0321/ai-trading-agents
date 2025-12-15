@@ -6,6 +6,7 @@ from src.tools.stock_tools import (
     get_most_active_stockers,
     get_latest_quotes,
     get_latest_quote,
+    get_price_trend,
 )
 from src.tools.portfolio_tools import (
     list_current_positions,
@@ -43,6 +44,7 @@ from src.tools.trading_tools import (
 # from src.tools.handoff_tools import handoff_to_specialist
 
 __all__ = [
+    "get_price_trend",
     "buy_stock",
     "sell_stock",
     "get_recommend_stock_tool",
