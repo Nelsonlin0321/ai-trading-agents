@@ -35,7 +35,8 @@ async def run_agent(run_id: str):
         logger.error(f"Run {run_id} is finished")
         exit(2)
 
-    start_messages = [HumanMessage(content=DEFAULT_USER_PROMPT)]
+    instruction = run.instruction or DEFAULT_USER_PROMPT
+    start_messages = [HumanMessage(content=instruction)]
     deserialized_messages = await restore_messages(run_id)
 
     if deserialized_messages == "ERROR":
