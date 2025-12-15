@@ -61,3 +61,8 @@ npx codefetch --project-tree 5
 source .venv/bin/activate
 pyright
 ```
+
+### Build the image:
+```bash
+docker build -t ai-trading-agents:latest .
+```

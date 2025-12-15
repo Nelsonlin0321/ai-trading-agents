@@ -13,11 +13,11 @@ dependencies = [
     { name = "alpaca-py" },
     { name = "boto3" },
     { name = "google-genai" },
-    { name = "html-to-markdown" },
     { name = "langchain" },
     { name = "langchain-deepseek" },
     { name = "langchain-openai" },
     { name = "loguru" },
+    { name = "markdownify" },
     { name = "numpy" },
     { name = "pre-commit" },
     { name = "prisma" },
@@ -41,11 +41,11 @@ requires-dist = [
     { name = "alpaca-py", specifier = ">=0.43.2" },
     { name = "boto3", specifier = ">=1.42.9" },
     { name = "google-genai", specifier = ">=1.50.1" },
-    { name = "html-to-markdown", specifier = ">=2.9.2" },
     { name = "langchain", specifier = ">=1.0.7" },
     { name = "langchain-deepseek", specifier = ">=1.0.1" },
     { name = "langchain-openai", specifier = ">=1.0.3" },
     { name = "loguru", specifier = ">=0.7.3" },
+    { name = "markdownify", specifier = ">=1.2.2" },
     { name = "numpy", specifier = ">=2.3.5" },
     { name = "pre-commit", specifier = ">=4.4.0" },
     { name = "prisma", specifier = ">=0.15.0" },
@@ -597,17 +597,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz", hash = "sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1", size = 101250 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86", size = 37515 },
-]
-
-[[package]]
-name = "html-to-markdown"
-version = "2.9.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5c/47/cf6bd7513e8349adf084775494bd0cb9f2621fd73ba8e2f9505e26893346/html_to_markdown-2.9.2.tar.gz", hash = "sha256:5071728992050f2234c29fcb87c89fe7716faebfb37ccd62d07202891e9f2c3f", size = 128680 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/04/e0/5ccc79531b81a085257031efcceaf7c232b9d14e4e448ced17496ec76991/html_to_markdown-2.9.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:c323c938f9e57dca1f3ad4e9051cec124e181564d4b5c6737b107589e7175bd8", size = 4495653 },
-    { url = "https://files.pythonhosted.org/packages/1d/b9/0a8bb6b0906f3d31506da26d7689b40c684440387323d92e946cad929c92/html_to_markdown-2.9.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:cfac38987d7951b211c80800c4237d765b9046ec14443628172c424e832714e5", size = 5012645 },
-    { url = "https://files.pythonhosted.org/packages/8e/cc/bbe606bb65677537584a56093031635141af17abdb8b6d3ccc87dd920376/html_to_markdown-2.9.2-cp310-abi3-win_amd64.whl", hash = "sha256:c50b337a780010109681f6f3a6d4bd0a603c575b7472bb6e8afe4e168c594c67", size = 4920654 },
 ]
 
 [[package]]
@@ -1259,6 +1248,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl", hash = "sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c", size = 61595 },
+]
+
+[[package]]
+name = "markdownify"
+version = "1.2.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "six" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3f/bc/c8c8eea5335341306b0fa7e1cb33c5e1c8d24ef70ddd684da65f41c49c92/markdownify-1.2.2.tar.gz", hash = "sha256:b274f1b5943180b031b699b199cbaeb1e2ac938b75851849a31fd0c3d6603d09", size = 18816 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/ce/f1e3e9d959db134cedf06825fae8d5b294bd368aacdd0831a3975b7c4d55/markdownify-1.2.2-py3-none-any.whl", hash = "sha256:3f02d3cc52714084d6e589f70397b6fc9f2f3a8531481bf35e8cc39f975e186a", size = 15724 },
 ]
 
 [[package]]

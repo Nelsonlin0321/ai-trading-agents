@@ -15,7 +15,7 @@ from functools import partial, wraps
 from email.mime.multipart import MIMEMultipart
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Any, TypeVar, Coroutine
-from html_to_markdown import convert, ConversionOptions
+from markdownify import markdownify as md
 
 
 from src.typings import ErrorLiteral, ERROR
@@ -169,7 +169,7 @@ def get_new_york_datetime() -> datetime:
 
 
 def convert_html_to_markdown(html: str) -> str:
-    return convert(html, options=ConversionOptions(strip_tags={"a"}))
+    return md(html, strip=["a"])
 
 
 def async_retry(
