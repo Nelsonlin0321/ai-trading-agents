@@ -1,0 +1,7 @@
+.pylintrc
+.pre-commit-config.yaml
+DESIGN.md
+PROMPT.md
+extensions.json
+uv.lock
+*.ipynb

@@ -1,0 +1,28 @@
+{
+    "cSpell.words": [
+        "aafter",
+        "agentmessage",
+        "ainvoke",
+        "arun",
+        "astream",
+        "atrs",
+        "awrap",
+        "Axios",
+        "drawdowns",
+        "garman",
+        "genai",
+        "intraday",
+        "kimi",
+        "klass",
+        "lookback",
+        "lookbacks",
+        "markdownify",
+        "pfunc",
+        "Referer",
+        "venvpath"
+    ],
+    "cSpell.ignorePaths": [
+        "**/*.ipynb",
+        "src/utils/constants.py"
+    ]
+}

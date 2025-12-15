@@ -1,0 +1,27 @@
+repos:
+- repo: local
+  hooks:
+    - id: clear-notebook-outputs
+      name: Clear Jupyter notebook outputs
+      entry: python3 scripts/clear_notebook_outputs.py
+      language: system
+      files: \.ipynb$
+      types: [file]
+      pass_filenames: true
+    - id: pyright-check
+      name: Pyright type checking
+      entry: pyright --project .
+      language: system
+      files: ^src/.*\.py$
+      types: [file]
+      pass_filenames: false
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.14.8
+  hooks:
+    # Run the linter.
+    - id: ruff-check
+      types_or: [ python, pyi ]
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+      types_or: [ python, pyi ]

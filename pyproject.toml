@@ -1,0 +1,40 @@
+[project]
+name = "ai-trading-agents"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alpaca-py>=0.43.2",
+    "boto3>=1.42.9",
+    "google-genai>=1.50.1",
+    "langchain>=1.0.7",
+    "langchain-deepseek>=1.0.1",
+    "langchain-openai>=1.0.3",
+    "loguru>=0.7.3",
+    "markdownify>=1.2.2",
+    "numpy>=2.3.5",
+    "pre-commit>=4.4.0",
+    "prisma>=0.15.0",
+    "pytz>=2025.2",
+    "tqdm>=4.67.1",
+    "types-pytz>=2025.2.0.20251108",
+    "types-tqdm>=4.67.0.20250809",
+    "upstash-redis>=1.5.0",
+    "yfinance>=0.2.66",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
+    "jupyter>=1.1.1",
+    "ruff>=0.14.5",
+]
+[tool.pyright]
+include = ["src", "main.py"]
+exclude = [".venv/",
+    "**/__pycache__",
+    "uv.lock"
+]
+venvPath = "."
+venv = ".venv"

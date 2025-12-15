@@ -1,0 +1,31 @@
+# .github/workflows/cicd.yml
+name: CI/CD for ai-trading-agents image building
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    ai-trading-agents-build:
+        runs-on: ubuntu-latest
+        env:
+            IMAGE_NAME: ai-trading-agents
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Build Docker image
+              run: |
+                  docker build -t ${IMAGE_NAME}:latest -f ./Dockerfile .
+
+            - name: Push To ECR
+              run: |
+                  aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+                  docker tag ${IMAGE_NAME}:latest ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/sandx.ai/${IMAGE_NAME}:latest
+                  docker push ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/sandx.ai/${IMAGE_NAME}:latest
+              env:
+                  AWS_DEFAULT_REGION: us-east-1
+                  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  ACCOUNT_ID: ${{ secrets.ACCOUNT_ID }}

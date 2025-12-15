@@ -1,0 +1,14 @@
+alpaca-py>=0.43.2
+boto3>=1.42.9
+google-genai>=1.50.1
+langchain>=1.0.7
+langchain-deepseek>=1.0.1
+langchain-openai>=1.0.3
+loguru>=0.7.3
+numpy>=2.3.5
+prisma>=0.15.0
+pytz>=2025.2
+tqdm>=4.67.1
+upstash-redis>=1.5.0
+yfinance>=0.2.66
+markdownify>=1.2.2

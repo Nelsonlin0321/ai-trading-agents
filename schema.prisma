@@ -1,0 +1,295 @@
+generator client {
+    provider             = "prisma-client-py"
+    recursive_type_depth = 10
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id        String   @id @default(uuid())
+    clerkId   String   @unique
+    email     String   @unique
+    imageUrl  String?
+    firstName String?
+    lastName  String?
+    isDeleted Boolean?
+    Bot       Bot[]
+}
+
+model Bot {
+    id                         String                       @id @default(uuid())
+    name                       String
+    strategy                   String // prompt
+    status                     BotStatus
+    intervalInSecond           Int
+    startHour                  Int?
+    startMinute                Int?
+    startTimeZone              String?
+    active                     Boolean                      @default(false)
+    lastRunAt                  DateTime?
+    nextRunAt                  DateTime?
+    userId                     String
+    user                       User                         @relation(fields: [userId], references: [clerkId], onDelete: Cascade)
+    public                     Boolean?                     @default(false)
+    portfolio                  Portfolio?
+    accumulatedPL              Float?
+    accumulatedPLPercent       Float?
+    llmModel                   String?                      @default("deepseek-v3.2")
+    watchlist                  WatchlistItem[]
+    depositWithdrawCash        DepositWithdrawCash[]
+    trades                     Trade[]
+    InitPortfolio              InitPortfolio?
+    DailyPortfolioSnapshot     DailyPortfolioSnapshot[]
+    InitDailyPortfolioSnapshot InitDailyPortfolioSnapshot[]
+    QQQBenchmarkPointsCache    QQQBenchmarkPointsCache[]
+    QQQInitShareCache          QQQInitShareCache?
+    runs                       Run[]
+    agentMessages              AgentMessage[]
+    recommends                 Recommend[]
+    createdAt                  DateTime                     @default(now())
+    updatedAt                  DateTime                     @updatedAt
+
+    @@index([userId])
+    @@index([active])
+    @@index([public])
+}
+
+enum BotStatus {
+    STOPPED
+    RUNNING
+    IDLE
+}
+
+model Portfolio {
+    id        String     @id @default(uuid())
+    cash      Float      @default(0)
+    botId     String     @unique
+    bot       Bot        @relation(fields: [botId], references: [id], onDelete: Cascade)
+    positions Position[]
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+}
+
+model Position {
+    id          String    @id @default(uuid())
+    ticker      String
+    volume      Float
+    cost        Float
+    portfolioId String
+    portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    @@unique([portfolioId, ticker])
+}
+
+model InitPortfolio {
+    id            String         @id @default(uuid())
+    cash          Float          @default(0)
+    botId         String         @unique
+    bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
+    initPositions InitPosition[]
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+}
+
+model InitPosition {
+    id              String        @id @default(uuid())
+    ticker          String
+    volume          Float
+    cost            Float
+    portfolioId     String
+    initPortfolio   InitPortfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+    initPortfolioId String?
+}
+
+model WatchlistItem {
+    id     String @id @default(uuid())
+    ticker String
+    botId  String
+    bot    Bot    @relation(fields: [botId], references: [id], onDelete: Cascade)
+}
+
+model DepositWithdrawCash {
+    id        String   @id @default(uuid())
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    amount    Float
+    createdAt DateTime @default(now())
+}
+
+model WaitList {
+    id        String   @id @default(uuid())
+    email     String
+    createdAt DateTime @default(now())
+
+    @@unique([email])
+}
+
+model Ticker {
+    id      String @id @default(uuid())
+    cik_str String
+    ticker  String
+    title   String
+
+    @@unique([ticker])
+}
+
+model DailyPortfolioSnapshot {
+    id             String   @id @default(uuid())
+    botId          String
+    bot            Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    date           DateTime // Date at midnight (UTC), e.g., 2025-04-05T00:00:00.000Z
+    portfolioValue Float
+    positionsValue Float
+    cash           Float
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    @@unique([botId, date])
+    @@index([botId])
+    @@index([date])
+}
+
+model InitDailyPortfolioSnapshot {
+    id             String   @id @default(uuid())
+    botId          String
+    bot            Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    date           DateTime // Date at midnight (UTC), e.g., 2025-04-05T00:00:00.000Z
+    portfolioValue Float
+    positionsValue Float
+    cash           Float
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    @@unique([botId, date])
+    @@index([botId])
+    @@index([date])
+}
+
+model QQQBenchmarkPointsCache {
+    id        String   @id @default(uuid())
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    points    String
+    startISO  DateTime // Date at midnight (UTC), e.g., 2025-04-05T00:00:00.000Z
+    endISO    DateTime
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([botId, startISO, endISO])
+}
+
+model QQQInitShareCache {
+    id        String   @id @default(uuid())
+    botId     String   @unique
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    share     Float
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum RunStatus {
+    SUCCESS
+    FAILURE
+    RUNNING
+    STARTING
+}
+
+model Run {
+    id            String         @id @default(uuid())
+    botId         String
+    bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
+    status        RunStatus
+    instruction   String?
+    summary       String?
+    tickers       String?
+    trades        Trade[]
+    agentMessages AgentMessage[]
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+    completedAt   DateTime?
+    recommends    Recommend[]
+
+    @@index([botId, status])
+}
+
+enum Role {
+    MARKET_ANALYST
+    EQUITY_RESEARCH_ANALYST
+    CHIEF_INVESTMENT_OFFICER
+    RISK_ANALYST
+    TRADING_EXECUTOR
+    QUANTITATIVE_ANALYST
+    PORTFOLIO_MANAGER
+    FUNDAMENTAL_ANALYST
+    USER
+}
+
+model AgentMessage {
+    id        String   @id @default(uuid())
+    role      Role
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    messages  String //json: list[AIMessage|HumanMessage|ToolMessage]: Change to json of AIMessage|HumanMessage|ToolMessage
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+    runId     String
+}
+
+model Trade {
+    id                  String    @id @default(uuid())
+    type                TradeType
+    price               Float
+    ticker              String
+    amount              Float
+    run                 Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
+    runId               String
+    bot                 Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+    botId               String
+    rationale           String
+    confidence          Float
+    realizedPL          Float? // Only applicable for sell trades
+    realizedPLPercent   Float? // Only applicable for sell trades
+    unrealizedPL        Float? // Only applicable for buy trades
+    unrealizedPLPercent Float? // Only applicable for buy trades
+    createdAt           DateTime  @default(now())
+}
+
+model Recommend {
+    id         String    @id @default(uuid())
+    type       TradeType
+    ticker     String
+    amount     Float
+    rationale  String
+    confidence Float
+    role       Role
+    run        Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
+    runId      String
+    bot        Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+    botId      String
+    createdAt  DateTime  @default(now())
+}
+
+enum TradeType {
+    SELL
+    BUY
+    HOLD
+}
+
+model Cache {
+    id        String   @id @default(uuid())
+    function  String
+    key       String
+    content   String
+    createdAt DateTime @default(now())
+    expiresAt DateTime
+
+    @@index([function, key, expiresAt])
+}
