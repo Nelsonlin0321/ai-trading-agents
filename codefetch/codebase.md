@@ -4,15 +4,17 @@ Project Structure:
 │   └── clear_notebook_outputs.py
 ├── src
 │   ├── agents
+│   │   ├── chief_investment_officer
+│   │   │   └── agent.py
 │   │   ├── equity_research_analyst
 │   │   │   └── agent.py
 │   │   ├── fundamental_analyst
 │   │   │   └── agent.py
 │   │   ├── market_analyst
 │   │   │   └── agent.py
-│   │   ├── portfolio_manager
-│   │   │   └── agent.py
 │   │   ├── risk_analyst
+│   │   │   └── agent.py
+│   │   ├── trading_executive
 │   │   │   └── agent.py
 │   │   └── __init__.py
 │   ├── middleware
@@ -50,6 +52,7 @@ Project Structure:
 │   │   ├── __init__.py
 │   │   ├── common_tools.py
 │   │   ├── fundamental_data_tools.py
+│   │   ├── handoff_tools.py
 │   │   ├── news_tools.py
 │   │   ├── portfolio_tools.py
 │   │   ├── research_tools.py
@@ -61,9 +64,11 @@ Project Structure:
 │   │   │   ├── __init__.py
 │   │   │   ├── fundamental_data_utils.py
 │   │   │   ├── portfolio_timeline_value.py
+│   │   │   ├── recommendations.py
 │   │   │   └── risk_analysis.py
 │   │   ├── __init__.py
 │   │   ├── base.py
+│   │   ├── common.py
 │   │   ├── fundamental_data.py
 │   │   ├── google_equity_research.md
 │   │   ├── google_research.md
@@ -74,25 +79,180 @@ Project Structure:
 │   │   ├── stocks.py
 │   │   └── trading.py
 │   ├── typings
-│   │   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── agent_roles.py
+│   │   ├── context.py
+│   │   └── langgraph_agents.py
 │   ├── utils
 │   │   ├── __init__.py
-│   │   ├── config.py
 │   │   ├── constants.py
+│   │   ├── message.py
 │   │   └── ticker.py
 │   ├── context.py
 │   ├── db.py
+│   ├── main.py
 │   └── models.py
+├── .dockerignore
 ├── .python-version
+├── Dockerfile
+├── TODO.md
 ├── pyproject.toml
+├── requirements.txt
 └── schema.prisma
 
 </filetree>
 
 <source_code>
+.dockerignore
+```
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.DS_Store
+.mypy_cache
+.pytest_cache
+.hypothesis
+.DS_Store
+images/
+notebooks/
+uv.lock
+```
+
 .python-version
 ```
 3.12
+```
+
+Dockerfile
+```
+FROM python:3.12-slim
+
+# Create a non-root user
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements.txt first for better caching
+COPY requirements.txt .
+
+# Install system dependencies for PDF processing
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies from requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the project files
+COPY . .
+
+# Change ownership of the app directory to the non-root user
+RUN chown -R appuser:appgroup /app
+
+# Switch to the non-root user
+USER appuser
+
+# Make the main.py file executable
+RUN chmod +x src/main.py
+
+# Set the entrypoint to python and default command to show usage
+ENTRYPOINT ["python", "main.py"]
+```
+
+TODO.md
+```
+chat: https://chat.deepseek.com/a/chat/s/0aa783f0-51fc-4e79-bd43-6221268b26a5
+
+# Agents:
+
+## Agent Architecture:
+- MiddleWare:
+  - SummarizationMiddleware: Done
+  - TodoListMiddleware: Done
+- Portfolio Manager: SKIP
+
+
+## Context:
+- Construct the context to be LLM-friendly content: Done
+- Make tool result LLM-friendly in markdown format: Done
+  - Us Market News: Done
+  - Major ETF Price Statistics: Done
+  - List Positions: Done
+  
+
+## Technical Implementation:
+- in-database cache the results of the tools to avoid redundant calls: Done
+- Async Cache Decorator: Done
+- Refactor in-database cache to be decorator: Done
+- Sync Agent Message to Sandx AI Monitoring Dashboard: Done
+- Pylint: Done
+- Yahoo Finance Fundamental Data API: Done
+- Write to DB middleware: Done
+- SES Send Email: Done
+
+## Market Research Agent: Done
+## Chief Investment Officer Agent: WIP
+## Trader Agent: WIP
+
+
+### Tools:
+- Get the latest news from : https://tradingeconomics.com/united-states/news: Done
+- Google Market Research: Done
+- Optimize Google Market Research Prompt: Done
+- Get the major ETF price statistics Done
+- Get the latest stock price statistics: Done
+- Get the most active stocks: Done
+- Get Jina DeepSearch Tool: Not Impressive and Slow - Avoid using it
+- BUY: Done
+- SELL: Done
+- Handoff Tool: Done
+
+
+## Common Tools:
+- Get positions with latest price and change: Done
+
+## Deep Agent
+- Learn About Langchain Deep Agent: Done
+
+## Resources:
+- https://github.com/The-Swarm-Corporation/AutoHedge: Less Useful
+- https://docs.langchain.com/oss/python/langchain/supervisor
+
+## Orchestration Design:
+- Handoff Tool: Done
+
+### Others
+- Only Open Hour Can Run: TO Decide
+- Try google gemini flash lite: TO Decide
+- Add To Do Middleware To CIO: Done
+- Display tool args: Done
+- Try Different Strategy: Done
+- Rationale when BUY/SELL: Done
+- Add the records of the ticker of reviewed: Done
+- Add the CIO summarization: Done
+- Compile to be graph: Done
+- Restore To Run: Done
+- Deserialize the message to be langchain message: Done
+- And Based on the prediction of price increase or decrease, decide whether to buy or sell the stock: TODO
+- Dockerize the project: TODO
+- Avoid revising the same ticker multiple times: TODO
 ```
 
 pyproject.toml
@@ -105,12 +265,13 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "alpaca-py>=0.43.2",
+    "boto3>=1.42.9",
     "google-genai>=1.50.1",
-    "html-to-markdown>=2.9.2",
     "langchain>=1.0.7",
     "langchain-deepseek>=1.0.1",
     "langchain-openai>=1.0.3",
     "loguru>=0.7.3",
+    "markdownify>=1.2.2",
     "numpy>=2.3.5",
     "pre-commit>=4.4.0",
     "prisma>=0.15.0",
@@ -128,13 +289,32 @@ dev = [
     "jupyter>=1.1.1",
     "ruff>=0.14.5",
 ]
-
 [tool.pyright]
-include = ["src"]
+include = ["src", "main.py"]
 exclude = [".venv/",
     "**/__pycache__",
     "uv.lock"
 ]
+venvPath = "."
+venv = ".venv"
+```
+
+requirements.txt
+```
+alpaca-py>=0.43.2
+boto3>=1.42.9
+google-genai>=1.50.1
+langchain>=1.0.7
+langchain-deepseek>=1.0.1
+langchain-openai>=1.0.3
+loguru>=0.7.3
+numpy>=2.3.5
+prisma>=0.15.0
+pytz>=2025.2
+tqdm>=4.67.1
+upstash-redis>=1.5.0
+yfinance>=0.2.66
+markdownify>=1.2.2
 ```
 
 schema.prisma
@@ -166,12 +346,19 @@ model Bot {
     strategy                   String // prompt
     status                     BotStatus
     intervalInSecond           Int
+    startHour                  Int?
+    startMinute                Int?
+    startTimeZone              String?
     active                     Boolean                      @default(false)
     lastRunAt                  DateTime?
     nextRunAt                  DateTime?
     userId                     String
     user                       User                         @relation(fields: [userId], references: [clerkId], onDelete: Cascade)
+    public                     Boolean?                     @default(false)
     portfolio                  Portfolio?
+    accumulatedPL              Float?
+    accumulatedPLPercent       Float?
+    llmModel                   String?                      @default("deepseek-v3.2")
     watchlist                  WatchlistItem[]
     depositWithdrawCash        DepositWithdrawCash[]
     trades                     Trade[]
@@ -182,9 +369,13 @@ model Bot {
     QQQInitShareCache          QQQInitShareCache?
     runs                       Run[]
     agentMessages              AgentMessage[]
+    recommends                 Recommend[]
+    createdAt                  DateTime                     @default(now())
+    updatedAt                  DateTime                     @updatedAt
 
     @@index([userId])
     @@index([active])
+    @@index([public])
 }
 
 enum BotStatus {
@@ -220,7 +411,7 @@ model InitPortfolio {
     id            String         @id @default(uuid())
     cash          Float          @default(0)
     botId         String         @unique
-    bot           Bot            @relation(fields: [botId], references: [id])
+    bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
     initPositions InitPosition[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
@@ -245,18 +436,12 @@ model WatchlistItem {
     bot    Bot    @relation(fields: [botId], references: [id], onDelete: Cascade)
 }
 
-enum DepositWithdrawCashType {
-    DEPOSIT
-    WITHDRAW
-}
-
 model DepositWithdrawCash {
-    id            String                  @id @default(uuid())
-    botId         String
-    bot           Bot                     @relation(fields: [botId], references: [id], onDelete: Cascade)
-    addCashAmount Float
-    type          DepositWithdrawCashType
-    createdAt     DateTime                @default(now())
+    id        String   @id @default(uuid())
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    amount    Float
+    createdAt DateTime @default(now())
 }
 
 model WaitList {
@@ -334,6 +519,7 @@ enum RunStatus {
     SUCCESS
     FAILURE
     RUNNING
+    STARTING
 }
 
 model Run {
@@ -341,10 +527,15 @@ model Run {
     botId         String
     bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
     status        RunStatus
+    instruction   String?
+    summary       String?
+    tickers       String?
     trades        Trade[]
     agentMessages AgentMessage[]
     createdAt     DateTime       @default(now())
     updatedAt     DateTime       @updatedAt
+    completedAt   DateTime?
+    recommends    Recommend[]
 
     @@index([botId, status])
 }
@@ -354,6 +545,7 @@ enum Role {
     EQUITY_RESEARCH_ANALYST
     CHIEF_INVESTMENT_OFFICER
     RISK_ANALYST
+    TRADING_EXECUTOR
     QUANTITATIVE_ANALYST
     PORTFOLIO_MANAGER
     FUNDAMENTAL_ANALYST
@@ -365,7 +557,7 @@ model AgentMessage {
     role      Role
     botId     String
     bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
-    messages  String // json: [{"role": "assistant","parts": [{"text": "", "type": "text"}]}]
+    messages  String //json: list[AIMessage|HumanMessage|ToolMessage]: Change to json of AIMessage|HumanMessage|ToolMessage
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
     run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
@@ -373,22 +565,43 @@ model AgentMessage {
 }
 
 model Trade {
+    id                  String    @id @default(uuid())
+    type                TradeType
+    price               Float
+    ticker              String
+    amount              Float
+    run                 Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
+    runId               String
+    bot                 Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
+    botId               String
+    rationale           String
+    confidence          Float
+    realizedPL          Float? // Only applicable for sell trades
+    realizedPLPercent   Float? // Only applicable for sell trades
+    unrealizedPL        Float? // Only applicable for buy trades
+    unrealizedPLPercent Float? // Only applicable for buy trades
+    createdAt           DateTime  @default(now())
+}
+
+model Recommend {
     id         String    @id @default(uuid())
     type       TradeType
-    price      Float
     ticker     String
     amount     Float
+    rationale  String
+    confidence Float
+    role       Role
     run        Run       @relation(fields: [runId], references: [id], onDelete: Cascade)
     runId      String
     bot        Bot       @relation(fields: [botId], references: [id], onDelete: Cascade)
     botId      String
-    realizedPL Float? // Only applicable for sell trades
     createdAt  DateTime  @default(now())
 }
 
 enum TradeType {
     SELL
     BUY
+    HOLD
 }
 
 model Cache {
@@ -399,122 +612,8 @@ model Cache {
     createdAt DateTime @default(now())
     expiresAt DateTime
 
-    @@unique([function, key, expiresAt])
+    @@index([function, key, expiresAt])
 }
-```
-
-src/context.py
-```
-from dataclasses import dataclass
-
-from prisma.models import Bot, Run
-from src import db
-
-
-@dataclass
-class UserContext:
-    user_id: str
-
-
-@dataclass
-class Context:
-    run: Run
-    bot: Bot
-
-
-async def build_context(run_id: str) -> Context:
-    try:
-        prisma = await db.connect()
-
-        run = await prisma.run.find_unique(where={"id": run_id})
-
-        if run is None:
-            raise ValueError(f"Run with ID {run_id} not found.")
-
-        if run.status != "RUNNING":
-            raise ValueError(f"Run with ID {run_id} is not running.")
-
-        bot = await prisma.bot.find_unique(
-            where={"id": run.botId},
-            include={
-                "user": True,
-                "portfolio": {"include": {"positions": True}},
-                "watchlist": True,
-                "trades": True,
-                # "DailyPortfolioSnapshot": True,
-                # "InitDailyPortfolioSnapshot": True,
-                # "QQQBenchmarkPointsCache": True,
-            },
-        )
-        if not bot:
-            raise ValueError(f"Bot with ID {run.botId} not found.")
-
-        if not bot.active:
-            raise ValueError(f"Bot with ID {bot.id} is not active.")
-
-        context = Context(run=run, bot=bot)
-        await db.disconnect()
-        return context
-    except Exception as e:
-        await db.disconnect()
-        raise e
-```
-
-src/db.py
-```
-from loguru import logger
-from upstash_redis.asyncio import Redis
-from prisma import Prisma
-from prisma.engine.errors import AlreadyConnectedError, NotConnectedError
-from src.utils import get_env
-
-
-prisma = Prisma(auto_register=True)
-
-
-async def connect():
-    try:
-        await prisma.connect()
-    except AlreadyConnectedError:
-        logger.info("Already connected to Prisma")
-    finally:
-        return prisma
-
-
-async def disconnect():
-    try:
-        await prisma.disconnect()
-    except NotConnectedError:
-        pass
-
-
-redis = Redis(
-    url=get_env("UPSTASH_REDIS_REST_URL"), token=get_env("UPSTASH_REDIS_REST_TOKEN")
-)
-
-__all__ = ["prisma", "redis", "connect", "disconnect"]
-```
-
-src/models.py
-```
-from pydantic import SecretStr
-from langchain_openai import ChatOpenAI
-from src.typings import ModelName
-from src.utils.config import model_mapping
-from src.utils import get_env
-
-OPENAI_API_KEY = SecretStr(get_env("OPENAI_API_KEY"))
-OPENAI_API_URL = get_env("OPENAI_API_URL")
-
-
-def get_model(model_name: ModelName):
-    model_config_name = model_mapping[model_name]
-
-    return ChatOpenAI(
-        model=model_config_name,
-        api_key=OPENAI_API_KEY,
-        base_url=OPENAI_API_URL,
-    )
 ```
 
 scripts/clear_notebook_outputs.py
@@ -580,41 +679,416 @@ if __name__ == "__main__":
     main()
 ```
 
+src/context.py
+```
+import json
+from prisma.types import AgentMessageWhereInput
+from prisma.models import Run
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
+
+from src.db import prisma
+from src.typings.context import Context
+from src.utils import async_retry
+
+message_type_map = {"ai": AIMessage, "human": HumanMessage, "tool": ToolMessage}
+
+
+@async_retry(silence_error=False)
+async def build_context(run: Run):
+    bot = await prisma.bot.find_unique(
+        where={"id": run.botId},
+        include={
+            "user": True,
+            "portfolio": {"include": {"positions": True}},
+            "watchlist": True,
+            "trades": True,
+        },
+    )
+    if not bot:
+        raise ValueError(f"Bot with ID {run.botId} not found.")
+
+    if not bot.active:
+        raise ValueError(f"Bot with ID {bot.id} is not active.")
+
+    context = Context(run=run, bot=bot, llm_model=bot.llmModel or "deepseek-v3.2")
+
+    return context
+
+
+@async_retry(silence_error=False)
+async def restore_messages(run_id: str) -> list[BaseMessage] | None:
+    agent_messages = await prisma.agentmessage.find_many(
+        where={"runId": run_id}, order={"createdAt": "asc"}
+    )
+
+    if len(agent_messages) == 0:
+        return
+
+    #  only Retry CIO messages
+    cio_agent_msgs = [
+        agt_msg
+        for agt_msg in agent_messages
+        if agt_msg.role == "CHIEF_INVESTMENT_OFFICER"
+    ]
+
+    deserialized_messages = [json.loads(agt_msg.messages) for agt_msg in cio_agent_msgs]
+
+    last_msg = deserialized_messages[-1]
+    while last_msg["type"] == "ai":
+        deserialized_messages.pop(-1)
+        last_msg = deserialized_messages[-1]
+
+    last_msg = deserialized_messages[-1]
+
+    timestamp = cio_agent_msgs[-1].createdAt
+
+    #  delete the unfinished messages after the latest CIO message
+    await prisma.agentmessage.delete_many(
+        where=AgentMessageWhereInput(runId=run_id, createdAt={"gt": timestamp})
+    )
+
+    serialized_messages = [
+        message_type_map[msg["type"]](**msg) for msg in deserialized_messages
+    ]
+
+    return serialized_messages
+```
+
+src/db.py
+```
+from prisma import Prisma
+from upstash_redis.asyncio import Redis
+from prisma.engine.errors import AlreadyConnectedError, NotConnectedError
+from typing import TypedDict, Any
+from src.typings.agent_roles import AgentRole
+
+
+from src.utils import get_env
+
+
+prisma = Prisma(auto_register=True)
+
+
+async def connect():
+    try:
+        await prisma.connect()
+    except AlreadyConnectedError:
+        pass
+        # logger.warning(
+        #     f"Already connected to Prisma: {e} Traceback: {traceback.format_exc()}")
+    finally:
+        return prisma
+
+
+async def disconnect():
+    try:
+        await prisma.disconnect()
+    except NotConnectedError:
+        pass
+
+
+redis = Redis(
+    url=get_env("UPSTASH_REDIS_REST_URL"), token=get_env("UPSTASH_REDIS_REST_TOKEN")
+)
+
+CachedAgentMessage = TypedDict(
+    "CachedAgentMessage",
+    {
+        "id": str,
+        "role": AgentRole,
+        "botId": str,
+        "runId": str,
+        "createdAt": str,
+        "updatedAt": str,
+        "messages": dict[str, Any],
+    },
+)
+
+CACHED_AGENTS_MESSAGES: list[CachedAgentMessage] = []
+
+__all__ = [
+    "prisma",
+    "redis",
+    "connect",
+    "disconnect",
+    "CachedAgentMessage",
+    "CACHED_AGENTS_MESSAGES",
+]
+```
+
+src/main.py
+```
+import os
+import sys
+import traceback
+import asyncio
+from loguru import logger
+from prisma.enums import RunStatus
+from langchain_core.messages import HumanMessage
+
+from src import secrets
+from src import db
+from src.context import build_context, restore_messages
+from src.agents.chief_investment_officer.agent import (
+    build_chief_investment_officer_agent,
+)
+
+
+SECRETS = secrets.load()
+
+ENV = os.environ.get("ENV", "dev")
+
+DEFAULT_USER_PROMPT = """ As AI Agentic Chief Investment Officer,Now,you're tasked to review your portfolio performance,
+identify new opportunities, and recommend appropriate actions to optimize portfolio performance aligned with the user's strategy by orchestrating different investment agents.
+Now, please review the user's strategy and portfolio performance, and provide your recommendations working with your teams of investment agents.
+"""
+
+
+async def run_agent(run_id: str):
+    run = await db.prisma.run.find_unique(where={"id": run_id})
+
+    if not run:
+        logger.error(f"Run {run_id} not found")
+        exit(2)
+
+    if run.status == "SUCCESS":
+        logger.error(f"Run {run_id} is finished")
+        exit(2)
+
+    instruction = run.instruction or DEFAULT_USER_PROMPT
+    start_messages = [HumanMessage(content=instruction)]
+    deserialized_messages = await restore_messages(run_id)
+
+    if deserialized_messages == "ERROR":
+        logger.error(f"Failed to restore messages for run {run_id}")
+        exit(2)
+
+    if deserialized_messages:
+        start_messages = deserialized_messages
+
+    await db.prisma.run.update(where={"id": run_id}, data={"status": RunStatus.RUNNING})
+
+    context = await build_context(run=run)
+
+    if context == "ERROR":
+        logger.error(f"Failed to build context for run {run_id}")
+        exit(2)
+
+    agent_graph = await build_chief_investment_officer_agent(context)
+
+    events = agent_graph.astream(
+        input={
+            "messages": start_messages,  # type: ignore
+        },
+        context=context,
+        stream_mode="values",
+    )
+    async for event in events:
+        if "messages" in event:
+            message = event["messages"][-1]
+            message.pretty_print()
+
+    await db.prisma.run.update(where={"id": run_id}, data={"status": RunStatus.SUCCESS})
+
+
+async def main(run_id: str):
+    try:
+        await db.connect()
+        await run_agent(run_id)
+    except Exception as e:
+        run = await db.prisma.run.find_unique(where={"id": run_id})
+        if run:
+            await db.prisma.run.update(
+                where={"id": run_id}, data={"status": RunStatus.FAILURE}
+            )
+        logger.error(
+            f"Failed to run agent {run_id}: {e}. Traceback: {traceback.format_exc()}"
+        )
+    finally:
+        await db.disconnect()
+        exit(1)
+
+
+if __name__ == "__main__":
+    runId = sys.argv[1]
+    asyncio.run(main(runId))
+```
+
+src/models.py
+```
+from pydantic import SecretStr
+from langchain_openai import ChatOpenAI
+from src.utils import get_env
+
+OPENAI_API_KEY = SecretStr(get_env("OPENAI_API_KEY"))
+OPENAI_API_URL = get_env("OPENAI_API_URL")
+
+
+def get_model(model_name: str):
+    return ChatOpenAI(
+        model=model_name,
+        api_key=OPENAI_API_KEY,
+        base_url=OPENAI_API_URL,
+    )
+```
+
 src/agents/__init__.py
 ```
 from src.agents.market_analyst.agent import build_market_analyst_agent
 from src.agents.fundamental_analyst.agent import build_fundamental_analyst_agent
 from src.agents.risk_analyst.agent import build_risk_analyst_agent
 from src.agents.equity_research_analyst.agent import build_equity_research_analyst_agent
+from src.agents.trading_executive.agent import build_trading_executor_agent
+from src.agents.chief_investment_officer.agent import (
+    build_chief_investment_officer_agent,
+)
 
 __all__ = [
+    "build_trading_executor_agent",
     "build_market_analyst_agent",
     "build_fundamental_analyst_agent",
     "build_risk_analyst_agent",
     "build_equity_research_analyst_agent",
+    "build_chief_investment_officer_agent",
 ]
 ```
 
 src/middleware/__init__.py
 ```
-from langchain.agents.middleware import SummarizationMiddleware, TodoListMiddleware
+import asyncio
+import json
+from loguru import logger
+from datetime import datetime, timezone
+from langchain_core.messages import AnyMessage
+from langgraph.runtime import Runtime
+from langchain.agents import middleware
+from prisma.types import (
+    AgentMessageCreateInput,
+)
+from src import db
+from src.db import CachedAgentMessage, CACHED_AGENTS_MESSAGES
+from src.typings.context import Context
 from src.models import get_model
+from src.utils.constants import ALL_ROLES
+from src.typings.agent_roles import AgentRole
+from src.utils import async_retry
+
+PERSISTED_MSG_IDS: set[str] = set()
 
 langchain_model = get_model("deepseek")
 
-summarization_middleware = SummarizationMiddleware(
+
+summarization_middleware = middleware.SummarizationMiddleware(
     model=langchain_model,
     max_tokens_before_summary=128_000,
     messages_to_keep=20,
 )
 
 
-todo_list_middleware = TodoListMiddleware()
+todo_list_middleware = middleware.TodoListMiddleware()
 
-__all__ = [
-    "summarization_middleware",
-    "todo_list_middleware",
-]
+
+class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Context]):
+    def __init__(self, role: AgentRole):
+        assert role in ALL_ROLES
+        self.role: AgentRole = role
+
+    #  Only one agent called this middleware at a time
+    async def aafter_model(
+        self, state: middleware.AgentState, runtime: Runtime[Context]
+    ) -> None:
+        context = runtime.context
+        messages = state["messages"]
+        # Fire-and-forget: schedule persistence in the background without awaiting
+
+        asyncio.create_task(
+            persist_agent_messages(  # type: ignore
+                role=self.role,
+                bot_id=context.bot.id,
+                run_id=context.run.id,
+                messages=messages,
+            )
+        )
+
+        await cache_agent_messages(
+            role=self.role,
+            bot_id=context.bot.id,
+            run_id=context.run.id,
+            messages=messages,
+        )
+
+
+@async_retry()
+async def persist_agent_message(
+    role: AgentRole, bot_id: str, run_id: str, message: AnyMessage
+):
+    if not message.id:
+        return
+
+    if message.id in PERSISTED_MSG_IDS:
+        return
+
+    existed_message = await db.prisma.agentmessage.find_unique(
+        where={"id": message.id},
+    )
+
+    if not existed_message:
+        await db.prisma.agentmessage.create(
+            data=AgentMessageCreateInput(
+                id=message.id,
+                role=role,
+                botId=bot_id,
+                messages=message.model_dump_json(),
+                runId=run_id,
+            )
+        )
+    PERSISTED_MSG_IDS.add(message.id)
+
+
+async def persist_agent_messages(
+    role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
+):
+    for msg in messages:
+        await persist_agent_message(
+            role=role,
+            bot_id=bot_id,
+            run_id=run_id,
+            message=msg,
+        )
+
+
+@async_retry()
+async def cache_agent_messages(
+    role: AgentRole, bot_id: str, run_id: str, messages: list[AnyMessage]
+):
+    # Save and consolidated agent messages to local file because cross agent with different message states
+
+    existing_msg_ids = set(msg["id"] for msg in CACHED_AGENTS_MESSAGES if msg["id"])
+
+    new_agent_messages = [
+        CachedAgentMessage(
+            id=msg.id,
+            role=role,
+            botId=bot_id,
+            runId=run_id,
+            createdAt=(datetime.now(timezone.utc)).isoformat(),
+            updatedAt=(datetime.now(timezone.utc)).isoformat(),
+            messages=msg.model_dump(),
+        )
+        for msg in messages
+        if msg.id and msg.id not in existing_msg_ids
+    ]
+
+    CACHED_AGENTS_MESSAGES.extend(new_agent_messages)
+
+    content = json.dumps(CACHED_AGENTS_MESSAGES)
+
+    is_success = await db.redis.set(
+        key=f"agent_messages:{run_id}", value=content, ex=60 * 60 * 24
+    )
+
+    if not is_success:
+        logger.warning(f"Failed to cache agent messages for run_id: {run_id}")
 ```
 
 src/prompt/__init__.py
@@ -643,20 +1117,115 @@ SANDX_AI_INTRODUCTION = (
 
 src/prompt/roles.py
 ```
+from typing import TypedDict
 from prisma.enums import Role
+from src.typings.agent_roles import SubAgentRole
 
 
-RECOMMENDATION_PROMPT = (
-    "Frame your final recommendation as a crisp, risk-adjusted call: "
-    "state Buy, Sell, or Hold, the explicit price target and horizon, "
-    "position-sizing vs. benchmark weight, and the key catalyst or stop-loss "
-    "that would invalidate the thesis. Ensure the call is fully aligned with "
-    "the user’s stated investment objective, mandate constraints, and risk tolerance."
+class AgentDescription(TypedDict):
+    title: str
+    description: str
+    key_capabilities: list[str]
+    strength_weight: float
+
+
+# Agent descriptions for reference in the CIO prompt
+AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
+    "MARKET_ANALYST": {
+        "title": "Market Analyst",
+        "description": "Senior US-market analyst who delivers concise, actionable briefings on market catalysts, drivers, and sentiment inflections.",
+        "key_capabilities": [
+            "Overnight and breaking headline catalysts",
+            "Key macro, sector, and single-stock drivers",
+            "Imminent event risk (earnings, Fed speakers, data releases)",
+            "Cross-asset flow and sentiment inflections",
+        ],
+        "strength_weight": 0.25,  # Market context is crucial
+    },
+    "RISK_ANALYST": {
+        "title": "Risk Analyst",
+        "description": "Meticulous risk analyst who quantifies downside scenarios, stress-tests portfolios, and designs hedging frameworks.",
+        "key_capabilities": [
+            "Quantifies downside scenarios and potential losses",
+            "Stress-tests portfolios under various market conditions",
+            "Designs hedging frameworks for risk mitigation",
+            "Assesses tail events and regulatory constraints",
+        ],
+        "strength_weight": 0.2,  # Risk management is equally important
+    },
+    "EQUITY_RESEARCH_ANALYST": {
+        "title": "Equity Research Analyst",
+        "description": "Senior equity research analyst focused on catalysts, drivers, and market inflections for specific securities.",
+        "key_capabilities": [
+            "Catalyst-driven analysis of specific equities",
+            "Sector and thematic research",
+            "Event risk assessment for individual stocks",
+            "Market sentiment and flow analysis for securities",
+        ],
+        "strength_weight": 0.5,  # Catalysts and timing are important
+    },
+    "FUNDAMENTAL_ANALYST": {
+        "title": "Fundamental Analyst",
+        "description": "Fundamental equity analyst who builds conviction from first principles using comprehensive financial metrics.",
+        "key_capabilities": [
+            "Data sanity checks and anomaly detection",
+            "Extracts 5-7 high-signal insights with metric labels and values",
+            "Assesses quality, durability, margins, returns, cash conversion",
+            "Evaluates valuation vs growth using DCF/comps",
+            "Analyzes capital returns and payout sustainability",
+            "Outlines key catalysts and risks with monitoring indicators",
+        ],
+        "strength_weight": 0.30,  # Fundamentals provide the valuation anchor
+    },
+    "TRADING_EXECUTOR": {
+        "title": "Trading Executor",
+        "description": "Trading executor who executes trades based on instructions from the Chief Investment Officer.",
+        "key_capabilities": [
+            "Verify watchlist/position, market hours, cash, holdings",
+            "Execute BUY/SELL exactly as instructed",
+            "Confirm trade booked, cash/position updated",
+            "Ensure cash sufficiency for buys",
+            "Never short-sell (≤ current holdings)",
+        ],
+        "strength_weight": 0,  # Execution role, lower weight in decision synthesis
+    },
+}
+
+RECOMMENDATION_PROMPT: str = "For each analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, and confidence level (0.0-1.0)"
+
+
+AGENT_TEAM_DESCRIPTION: str = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
+    f"### {idx}. {AGENT_DESCRIPTIONS[role]['title']}\n"
+    f"**Description:** {AGENT_DESCRIPTIONS[role]['description']}\n"
+    f"**Capabilities:** {AGENT_DESCRIPTIONS[role]['key_capabilities']}\n"
+    f"**Default Strength weight in decisions:** {int(AGENT_DESCRIPTIONS[role]['strength_weight'] * 100)}%\n"
+    for idx, role in enumerate(AGENT_DESCRIPTIONS.keys(), start=1)
 )
 
-ROLE_PROMPTS_MAP = {
+CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
+    "## CHIEF INVESTMENT OFFICER - STRATEGIC ORCHESTRATOR ##\n\n"
+    "You are the CIO of Sandx AI, the conductor of a world-class investment team. "
+    "Your expertise is not in doing the analysis yourself only, but also in orchestrating your team by assigning tasks to each teammates "
+    "with clear instructions effectively to deliver superior investment recommendation and actions (BUY/SELL/HOLD) through strategic coordination.\n\n"
+    "Here are the steps or framework to follow for performing scheduled regular tasks:\n"
+    "1. Firstly the investment recommendation should start with the market analysis perform by the market analyst agent.\n"
+    "2. Then, based on the market analysis and current portfolio, previous tickers reviewed in the last 7 analysis to avoid reviewing the same tickers,"
+    "you should decide which 1-3 equities, or the tickers that user specified to focus on for the next analysis.\n"
+    "3. For each ticker, delegate analysis to the analyst below and request a BUY/SELL/HOLD recommendation by following below workflow:\n"
+    "3.1 Equity Research Analyst -> Fundamental Analyst -> Risk Analyst \n"
+    "3.2 Based on the equity research analysis, fundamental analysis, and risk analysis, and their investment recommendation, "
+    "you should provide comprehensive investment recommendations summary to BUY/SELL/HOLD action with rationale for the ticker.\n"
+    "3.3 After that, you should handoff the recommended actions (BUY/SELL/HOLD) with rationale for all tickers to the trading executor to execute if the market is open.\n"
+    "3.4 Finally, with consolidated investment rationales from all analysts, "
+    "you should send the comprehensive well-styled html-based investment recommendation summary email with final executed actions and rationale for all tickers to the user.\n"
+) + f"{AGENT_TEAM_DESCRIPTION}"
+
+
+RolePromptMap = dict[Role, str]
+
+ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.MARKET_ANALYST: (
-        "You are a senior US-market analyst on the Sandx AI investment desk. "
+        "You are a senior US-market analyst on the Sandx AI investment desk. You report to the Chief Investment Officer. "
         "Leverage every available data source to deliver a concise, actionable briefing that captures: "
         "1) Overnight and breaking headline catalysts, "
         "2) Key macro, sector, and single-stock drivers, "
@@ -665,71 +1234,36 @@ ROLE_PROMPTS_MAP = {
         "Synthesize into a single paragraph prioritizing highest-conviction opportunities and clear risk flags."
     ),
     Role.EQUITY_RESEARCH_ANALYST: (
-        "You are a senior equity research analyst on the Sandx AI investment desk. "
-        "Leverage every available data source to deliver a concise, actionable briefing that captures: "
-        "1) Overnight and breaking headline catalysts, "
-        "2) Key macro, sector, and single-stock drivers, "
-        "3) Imminent event risk (earnings, Fed speakers, data releases), "
-        "4) Cross-asset flow and sentiment inflections. "
+        "You are a senior equity research analyst on the Sandx AI investment desk. You report to the Chief Investment Officer. "
+        "TOOLS: do_google_equity_research(ticker), get_latest_equity_news(symbol). "
+        "Analyze one ticker at a time; focus solely on the requested symbol. "
+        "Protocol: 1) Start with get_latest_equity_news(symbol) to capture the freshest headlines and company-specific events; "
+        "2) Run do_google_equity_research(ticker) to synthesize the current equity narrative, key drivers, risks, and opportunities; "
+        "3) Deliver a decision-ready brief for the specified ticker"
     ),
-    Role.CHIEF_INVESTMENT_OFFICER: (
-        "You are the CIO of Sandx AI, entrusted with steering our investment desk’s multi-asset mandates. "
-        "Distill top-down macro, policy, and sentiment inflections into decisive asset-allocation pivots; "
-        "pair them with bottom-up, high-conviction security calls sourced from analysts and quants. "
-        "Frame every recommendation in risk-adjusted terms, size positions within volatility budgets, "
-        "and communicate crystal-clear rationales to PMs, risk, and clients—prioritizing agility, transparency, "
-        "and alpha generation in fast-moving US markets."
-    ),
+    Role.CHIEF_INVESTMENT_OFFICER: CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT,
     Role.RISK_ANALYST: (
-        "You are a meticulous risk analyst who quantifies downside scenarios, stress-tests portfolios, and designs "
-        "hedging frameworks. Your insights ensure that every investment decision is taken with a clear understanding "
-        "of potential losses, tail events, and regulatory constraints."
+        "You are a data-driven risk analyst who transforms raw market, fundamental, and macro data into risk analytics, volatility-adjusted position limits, and early-warning report. "
+        "You report to the Chief Investment Officer. "
     ),
     Role.FUNDAMENTAL_ANALYST: (
-        "You are a fundamental equity analyst who builds conviction from first principles. "
+        "You are a fundamental equity analyst who builds conviction from first principles. You report to the Chief Investment Officer. "
         "Use the provided markdown tables of fundamentals (Valuation, Profitability & Margins, Financial Health & Liquidity, "
         "Growth, Dividend & Payout, Market & Trading Data, Analyst Estimates, Company Info, Ownership & Shares, Risk & Volatility, "
         "Technical Indicators, Additional Financial Metrics) to produce a decision-ready thesis. "
-        "Do the following: 1) Run a quick data sanity check and flag anomalies or unit mistakes; 2) Extract 5–7 high-signal insights with "
-        "metric labels and values (e.g., trailingPE=37.2, ROE=171%, FCF=78.9B, currentRatio=0.89, debtToEquity=152); 3) Assess quality and "
-        "durability (margins, returns, cash conversion, balance-sheet leverage, liquidity); 4) Evaluate valuation vs growth and peers using DCF/comps "
-        "and state implied upside/downside vs currentPrice and targetMeanPrice; 5) Summarize growth trajectory and drivers; 6) Analyze capital returns and "
-        "payout sustainability; 7) Note ownership/short-interest and sentiment context; 8) Outline key catalysts and risks with monitoring indicators. "
-        "Conclude with a concise recommendation including entry/exit triggers, position size within risk limits, and risk-management tactics. "
-        "Present output as a tight thesis paragraph followed by a short bullet list (Valuation, Quality, Growth, Capital Returns, Ownership/Sentiment, Risk/Catalysts, Trade Plan), "
-        "citing metrics inline as metric=value."
     ),
-    Role.QUANTITATIVE_ANALYST: (
-        "You are a quantitative analyst who transforms market noise into statistically robust signals. By mining "
-        "alternative datasets, calibrating factor models, and optimizing execution algorithms, you provide objective, "
-        "data-driven edges that sharpen alpha generation and minimize slippage."
-    ),
-    Role.PORTFOLIO_MANAGER: (
-        "You are the Portfolio Manager with FULL trading authority on the Sandx AI investment desk. "
-        "You synthesize inputs from all analysts into actionable portfolio decisions and execute trades directly. "
-        "YOUR RESPONSIBILITIES:"
-        "1. Analyze market conditions, fundamentals, and risk metrics"
-        "2. Make BUY/SELL/HOLD decisions with specific sizing"
-        "3. Execute trades using available tools"
-        "4. Monitor portfolio concentration and risk limits"
-        "5. Rebalance portfolio based on investment strategy"
-        "TRADING FRAMEWORK:"
-        "- Exit: Set profit targets (15-25%) and stop-losses (8%)"
-        "EXECUTION: Use buy_stock() and sell_stock() tools directly. "
-        "Always check current positions and cash before trading."
-        "1. You can execute trades directly (BUY/SELL) using available tools"
-        "2. Trading Rules:"
-        "- Only trade stocks in watchlist or current positions"
-        "- Check market hours before trading (markets closed on weekends/holidays)"
-        "- Ensure sufficient cash before buying"
-        "- Never sell more shares than currently held"
-        "- Respect risk limits (max position size: 10% of portfolio)"
-        "- Consider transaction costs in decisions"
-        "EXECUTION GUIDELINES:"
-        "- Use buy_stock(runId, bot_id, ticker, volume) for purchases"
-        "- Use sell_stock(runId, bot_id, ticker, volume) for sales"
-        "- For partial positions, use fractional volumes"
-        "- Always verify current portfolio positions before trading"
+    Role.TRADING_EXECUTOR: (
+        "You are the Sandx AI Trading Executor. You report to the CIO and execute only on their explicit instructions.\n"
+        "TOOLS: buy_stock(), sell_stock()\n"
+        "PROTOCOL:\n"
+        "1. Verify: watchlist/position, market hours, cash, holdings\n"
+        "2. Execute: BUY/SELL exactly as instructed\n"
+        "3. Confirm: trade booked, cash/position updated\n"
+        "RULES:\n"
+        "- Trade only watchlist or current positions\n"
+        "- Markets closed weekends/holidays\n"
+        "- Cash sufficiency for buys\n"
+        "- Never short-sell (≤ current holdings)"
     ),
     Role.USER: (
         "You are an intellectually curious investor eager to understand how markets function, why prices move, and how "
@@ -739,7 +1273,7 @@ ROLE_PROMPTS_MAP = {
 }
 
 
-__all__ = ["RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
+__all__ = ["RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP", "AGENT_TEAM_DESCRIPTION"]
 ```
 
 src/prompt/system.py
@@ -747,8 +1281,8 @@ src/prompt/system.py
 from prisma.enums import Role
 
 from src.context import Context
-from src.prompt import SANDX_AI_INTRODUCTION, RECOMMENDATION_PROMPT, ROLE_PROMPTS_MAP
-from src.tools_adaptors import ListPositionsAct, PortfolioPerformanceAnalysisAct
+from src.prompt import ROLE_PROMPTS_MAP
+from src.tools_adaptors import ListPositionsAct
 
 
 async def build_agent_system_prompt(context: Context, role: Role) -> str:
@@ -756,29 +1290,37 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
     if not user:
         raise ValueError("User not found.")
 
-    user_name = "You're serving the user: " + " ".join(
-        [user.firstName or "", user.lastName or ""]
+    tickers = context.run.tickers
+
+    tickers = (
+        f"Here's the tickers that user specified, you can trade only on these stocks: {tickers}"
+        if tickers
+        else ""
     )
 
     watchlist = context.bot.watchlist or []
 
-    watchlist = (
-        "Here's the watchlist of user, you can trade only on these stocks or stock in the current positions:"
-        + ", ".join([w.ticker for w in watchlist])
+    watchlist_prompt: str = (
+        (
+            "Here's the watchlist of user, you can trade only on these stocks or stock in the current positions:"
+            ", ".join([w.ticker for w in watchlist])
+        )
+        if tickers
+        else ""
     )
 
     positions_markdown = await ListPositionsAct().arun(bot_id=context.bot.id)
-    performance_narrative = await PortfolioPerformanceAnalysisAct().arun(
-        bot_id=context.bot.id
-    )
+    # performance_narrative = await PortfolioPerformanceAnalysisAct().arun(
+    #     bot_id=context.bot.id
+    # )
     sections = [
-        SANDX_AI_INTRODUCTION,
+        # SANDX_AI_INTRODUCTION,
         ROLE_PROMPTS_MAP[role],
-        RECOMMENDATION_PROMPT,
-        user_name,
-        watchlist,
+        # user_name,
+        tickers,
+        watchlist_prompt,
         positions_markdown,
-        performance_narrative,
+        # performance_narrative,
     ]
     return "\n\n".join([s for s in sections if s])
 ```
@@ -792,7 +1334,8 @@ from typing import Awaitable, Callable, TypeVar, cast
 import httpx
 from loguru import logger
 from prisma import types
-from src import db
+from src.db import prisma, redis
+import traceback
 
 T = TypeVar("T")
 
@@ -849,7 +1392,6 @@ def in_db_cache(
         async def wrapper(*args, **kwargs) -> T:
             try:
                 pos_args = args[1:] if len(args) > 0 else args
-
                 if "start" in kwargs:
                     start = kwargs["start"]
                     kwargs["start"] = datetime.fromisoformat(
@@ -868,8 +1410,6 @@ def in_db_cache(
 
                 key_payload = {"args": pos_args, "kwargs": kwargs}
                 cache_key = json.dumps(key_payload, sort_keys=True)
-
-                prisma = await db.connect()
                 now = datetime.now(timezone.utc)
 
                 # Try existing unexpired cache
@@ -913,9 +1453,12 @@ def in_db_cache(
                         )
                     )
                 return result
-            finally:
-                # logger.info("disconnect prisma")
-                await db.disconnect()
+
+            except Exception as e:
+                logger.error(
+                    f"Error in {function_name} with args {args} and kwargs {kwargs}: {e} Traceback: {traceback.format_exc()}"
+                )
+                raise
 
         return wrapper
 
@@ -965,7 +1508,7 @@ def redis_cache(
             }
             cache_key = json.dumps(key_payload, sort_keys=True)
 
-            existing = await db.redis.get(cache_key)
+            existing = await redis.get(cache_key)
 
             if existing:
                 logger.info(f"Cache Redis hit for {function_name} with key {cache_key}")
@@ -973,7 +1516,7 @@ def redis_cache(
 
             # Compute fresh result
             result = await func(*args, **kwargs)
-            await db.redis.set(cache_key, json.dumps(result), ex=ttl)
+            await redis.set(cache_key, json.dumps(result), ex=ttl)
             return result
 
         return wrapper
@@ -1030,6 +1573,7 @@ from src.tools.stock_tools import (
     get_most_active_stockers,
     get_latest_quotes,
     get_latest_quote,
+    get_price_trend,
 )
 from src.tools.portfolio_tools import (
     list_current_positions,
@@ -1039,7 +1583,13 @@ from src.tools.research_tools import (
     do_google_market_research,
     do_google_equity_research,
 )
-from src.tools.common_tools import get_user_investment_strategy
+from src.tools.common_tools import (
+    get_user_investment_strategy,
+    send_summary_email_tool,
+    write_summary_report,
+    get_historical_reviewed_tickers,
+)
+
 from src.tools.fundamental_data_tools import (
     get_fundamental_data,
 )
@@ -1051,11 +1601,24 @@ from src.tools.risk_tools import (
 from src.tools.trading_tools import (
     buy_stock,
     sell_stock,
+    get_market_status,
+    get_recommend_stock_tool,
+    get_analysts_recommendations,
+    write_down_tickers_to_review,
 )
 
+# avoid circular import
+# from src.tools.handoff_tools import handoff_to_specialist
+
 __all__ = [
+    "get_price_trend",
     "buy_stock",
     "sell_stock",
+    "get_recommend_stock_tool",
+    "get_analysts_recommendations",
+    "send_summary_email_tool",
+    "write_summary_report",
+    "get_market_status",
     "get_latest_quotes",
     "get_latest_quote",
     "get_latest_market_news",
@@ -1072,14 +1635,31 @@ __all__ = [
     "get_fundamental_risk_data",
     "get_volatility_risk_indicators",
     "get_price_risk_indicators",
+    "write_down_tickers_to_review",
+    "get_historical_reviewed_tickers",
+    # "handoff_to_specialist", # Avoid circular import
 ]
 ```
 
 src/tools/common_tools.py
 ```
 from langchain.tools import tool, ToolRuntime
+from langchain_core.messages import BaseMessage
+from src.utils.message import combine_ai_messages
 from src.context import Context
-from src import db
+
+from src.tools_adaptors import (
+    GetUserInvestmentStrategyAct,
+    WriteInvestmentReportEmailAct,
+    SendInvestmentReportEmailAct,
+    GetHistoricalReviewedTickersAct,
+)
+
+
+get_user_investment_strategy_act = GetUserInvestmentStrategyAct()
+send_investment_report_email_act = SendInvestmentReportEmailAct()
+write_investment_report_email_act = WriteInvestmentReportEmailAct()
+get_historical_reviewed_tickers_act = GetHistoricalReviewedTickersAct()
 
 
 @tool("get_user_investment_strategy")
@@ -1090,9 +1670,8 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     This tool fetches the current investment strategy for the trading portfolio.
 
     Possible tool purposes:
-    - Allow an AI agent to decide which assets or sectors to trade based on the user’s stated risk tolerance or philosophy.
-    - Enable dynamic re-allocation logic that switches between conservative, balanced, or aggressive portfolios.
-    - Provide context to downstream tools (e.g., stock screeners, rebalancers) so they filter or rank opportunities in line with the user’s mandate.
+    - Allow you to decide which assets or sectors to trade based on the user’s stated risk tolerance or philosophy.
+    - Allow you to decide which analysts to heavily use for the investment strategy.
     - Surface the strategy to a dashboard or chat interface so the user can confirm or update it before orders are placed.
     - Act as a guard-rail that prevents trades violating the strategy (e.g., no crypto for a “dividend-income” strategy).
 
@@ -1101,24 +1680,51 @@ async def get_user_investment_strategy(runtime: ToolRuntime[Context]):
     Investment Strategy
         A string representing the current investment strategy for the trading portfolio.
     """
-    try:
-        await db.connect()
-        bot_id = runtime.context.bot.id
-        bot = await db.prisma.bot.find_unique(where={"id": bot_id})
-    except Exception as e:
-        raise e
-    finally:
-        await db.disconnect()
+    return await get_user_investment_strategy_act.arun(runtime.context.bot.id)
 
-    if not bot:
-        raise ValueError(f"Bot with ID {bot_id} not found.")
 
-    return bot.strategy
+@tool(write_investment_report_email_act.name)
+async def write_summary_report(runtime: ToolRuntime[Context]):
+    """
+    Write the final investment report email for the current trading run.
+    """
+    states = runtime.state
+    messages: list[BaseMessage] = states["messages"]  # type: ignore
+    conversation = combine_ai_messages(messages)
+    context = runtime.context
+    return await write_investment_report_email_act.arun(
+        llm_model=context.llm_model,
+        botId=context.bot.id,
+        run_id=context.run.id,
+        conversation=conversation,
+    )
+
+
+@tool(send_investment_report_email_act.name)
+async def send_summary_email_tool(runtime: ToolRuntime[Context]):
+    """
+    Send the final investment report email for the current trading run.
+    """
+    context = runtime.context
+    return await send_investment_report_email_act.arun(
+        run_id=context.run.id,
+        user_id=context.bot.userId,
+        bot_name=context.bot.name,
+    )
+
+
+@tool(get_historical_reviewed_tickers_act.name)
+async def get_historical_reviewed_tickers(runtime: ToolRuntime[Context]):
+    """
+    Get the latest 7 analysis's tickers that have been reviewed for avoiding reviewing the same tickers again.
+    """
+    return await get_historical_reviewed_tickers_act.arun(runtime.context.bot.id)
 ```
 
 src/tools/fundamental_data_tools.py
 ```
 from langchain.tools import tool
+from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.fundamental_data import (
     FundamentalDataAct,
 )
@@ -1146,12 +1752,99 @@ async def get_fundamental_data(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
     return await fundamental_act.arun(ticker)
+```
+
+src/tools/handoff_tools.py
+```
+from typing import List, Annotated
+from langchain.tools import tool, ToolRuntime
+from langchain_core.messages import BaseMessage
+from src.context import Context
+from src import agents
+from src.typings.agent_roles import SubAgentRole
+from src.typings.langgraph_agents import LangGraphAgent
+from src.utils.message import combine_ai_messages
+from src.utils.constants import SPECIALIST_ROLES
+
+
+agent_building_map = {
+    "MARKET_ANALYST": agents.build_market_analyst_agent,
+    "RISK_ANALYST": agents.build_risk_analyst_agent,
+    "EQUITY_RESEARCH_ANALYST": agents.build_equity_research_analyst_agent,
+    "FUNDAMENTAL_ANALYST": agents.build_fundamental_analyst_agent,
+    "TRADING_EXECUTOR": agents.build_trading_executor_agent,
+}
+
+
+@tool("handoff_to_specialist")
+async def handoff_to_specialist(
+    role: Annotated[
+        SubAgentRole,
+        f"Role of the specialist agent to handoff to. Must be one of: {' | '.join(SPECIALIST_ROLES)}",
+    ],
+    task: Annotated[
+        str,
+        "A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
+    ],
+    runtime: ToolRuntime[Context],
+) -> str:
+    """
+    Delegate a specific investment-related task to a specialist agent and return the agent's response.
+
+    This function:
+    1. Validates that the requested role is one of the registered specialist roles.
+    2. Combines the agent's response messages into a single string and returns it.
+
+    The returned string consolidates all AI-generated messages from the specialist, providing
+    a concise summary or detailed output depending on the task performed.
+
+    Args:
+        role: Role of the specialist agent to handoff to.
+        task: A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.
+
+    Returns:
+        A single string containing the combined AI messages from the specialist agent's response.
+
+    Raises:
+        ValueError: If the provided role is not in the list of valid specialist roles.
+    """
+    context = runtime.context
+    if role not in agent_building_map:
+        return f"Invalid role: {role}. Must be one of: {SPECIALIST_ROLES}"
+
+    agent: LangGraphAgent = await agent_building_map[role](context)
+
+    response = await agent.ainvoke(
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": f"Task from the chief investment officer to you: {task}",
+                }
+            ]
+        },
+        context=context,
+    )
+
+    messages: List[BaseMessage] = response["messages"]
+
+    content = combine_ai_messages(messages)
+
+    return content
+
+
+__all__ = ["handoff_to_specialist"]
 ```
 
 src/tools/news_tools.py
 ```
 from langchain.tools import tool
+from src.utils.ticker import is_valid_ticker
 from src.services.tradingeconomics.api_market_news import News
 from src.tools_adaptors.news import MarketNewsAct, EquityNewsAct
 
@@ -1187,6 +1880,8 @@ async def get_latest_market_news():
     """
 
     news = await market_news_action.arun()
+    if news == "ERROR":
+        return "Unknown error to get market news."
 
     # Convert each news item to markdown text
     markdown_news = "\n\n".join(convert_news_to_markdown_text(n) for n in news)
@@ -1209,6 +1904,11 @@ async def get_latest_equity_news(symbol: str):
 
     Returns a markdown-formatted string containing the title, date, and content of each news item.
     """
+    symbol = symbol.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
+
     equity_news = await equity_news_action.arun(symbol)
     return equity_news
 
@@ -1313,6 +2013,7 @@ __all__ = ["list_current_positions", "get_portfolio_performance_analysis"]
 src/tools/research_tools.py
 ```
 from langchain.tools import tool
+from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.research import GoogleMarketResearchAct, GoogleEquityResearchAct
 
 google_market_research_action = GoogleMarketResearchAct()
@@ -1343,16 +2044,16 @@ async def do_google_equity_research(ticker: str):
     """
     Performs equity research to synthesize and present the comprehensive current market narrative,
     key drivers, risks, and opportunities based on real-time data and recent news using Google’s grounded LLM.
-    returns up-to-date market insights relevant to that strategy.
-    Use this tool when you need to:
-    - Understand the current market landscape and sentiment
-    - Identify key macro and micro drivers moving markets
-    - Surface latent risks (geopolitical, regulatory, earnings, etc.)
-    - Spot emerging opportunities across sectors or asset classes
-    - Obtain a concise, evidence-based narrative for portfolio positioning
-    - Make informed investment or allocation decisions grounded in the latest public information
+    Returns up-to-date equity insights relevant to that strategy.
+
+    Args:
+        ticker (str): The stock ticker symbol (e.g., 'AAPL', 'TSLA') for which to generate research.
     """
-    # user_investment_strategy = runtime.context.bot.strategy
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
+
     equity_research = await google_equity_research_action.arun(ticker)
     return equity_research
 
@@ -1363,6 +2064,7 @@ __all__ = ["do_google_market_research", "do_google_equity_research"]
 src/tools/risk_tools.py
 ```
 from langchain.tools import tool
+from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.risk import (
     FundamentalRiskDataAct,
     VolatilityRiskAct,
@@ -1395,6 +2097,10 @@ async def get_fundamental_risk_data(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
     return await fundamental_risk_act.arun(ticker)
 
 
@@ -1417,6 +2123,10 @@ async def get_volatility_risk_indicators(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
     return await volatility_risk_act.arun(ticker)
 
 
@@ -1440,6 +2150,10 @@ async def get_price_risk_indicators(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
+    symbol = ticker.upper().strip()
+    is_valid = await is_valid_ticker(symbol)
+    if not is_valid:
+        return f"{symbol} is an invalid ticker symbol"
     return await price_risk_act.arun(ticker)
 
 
@@ -1456,12 +2170,14 @@ from pydantic import BaseModel, Field
 from langchain.tools import tool
 from src import tools_adaptors
 from src import utils
+from src.utils.ticker import is_valid_ticker
 
 eft_live_price_change_act = tools_adaptors.ETFLivePriceChangeAct()
 stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
 most_active_stockers_act = tools_adaptors.MostActiveStockersAct()
 single_latest_quotes_act = tools_adaptors.SingleLatestQuotesAct()
 multi_latest_quotes_act = tools_adaptors.MultiLatestQuotesAct()
+get_price_trend_act = tools_adaptors.GetPriceTrendAct()
 
 
 @tool(eft_live_price_change_act.name)
@@ -1509,9 +2225,9 @@ async def get_stock_live_historical_price_change(tickers: list[str]):
     Fetch comprehensive percent-change metrics for the provided stock tickers.
 
     This function queries live and historical price data for each ticker and
-    calculates percentage changes over multiple time windows:
+    calculates percentage changes over multiple time windows for momentum analysis:
     - Current intraday percent change (vs. previous close)
-    - 1-day, 1-week, 1-month, 3-month, and 1-year, 3-year percent changes
+    - 1-day, 1-week, 1-month, 3-month, 1-year, and 3-year percent changes.
 
     The returned data enables quick assessment of momentum, trend strength,
     and relative performance for portfolio monitoring, screening, or market
@@ -1540,6 +2256,12 @@ async def get_stock_live_historical_price_change(tickers: list[str]):
     - Generate quick market commentary on price action
     - Monitor portfolio positions for risk or opportunity signals
     """
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+
     results = await stock_live_price_change_act.arun(tickers)
     metrics_list = []
     for ticker, metrics in results.items():
@@ -1581,6 +2303,9 @@ async def get_most_active_stockers():
     - Monitor for potential volatility expansion plays based on volume leadership
     """
     results = await most_active_stockers_act.arun()
+    if results == "ERROR":
+        return "Unknown error to get most active stockers."
+
     last_updated = results["last_updated"]
     most_active_stockers = results["most_actives"]
     markdown_table = utils.dicts_to_markdown_table(most_active_stockers)  # type: ignore
@@ -1616,6 +2341,12 @@ async def get_latest_quotes(tickers: list[str]):
     Returns:
         A markdown-formatted table with latest quote data for each symbol.
     """
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+
     quotes_data = await multi_latest_quotes_act.arun(tickers)
     return quotes_data
 
@@ -1647,8 +2378,35 @@ async def get_latest_quote(ticker: str):
     Returns:
         A markdown-formatted table with latest quote data for each symbol.
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
     quotes_data = await single_latest_quotes_act.arun(ticker)
     return quotes_data
+
+
+@tool(get_price_trend_act.name)
+async def get_price_trend(tickers: list[str]):
+    """
+    This tool provides the price trend for multiple stock tickers.
+
+    Use this tool when you need:
+    - To get the price trend for a single stock ticker.
+
+    Args:
+        tickers: List of stock tickers, e.g. ['AAPL', 'MSFT']
+
+    Returns:
+        A markdown-formatted string with the price trend for the stock tickers.
+    """
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+    price_trend = await get_price_trend_act.arun(tickers)
+    return price_trend
 
 
 __all__ = [
@@ -1657,20 +2415,33 @@ __all__ = [
     "get_most_active_stockers",
     "get_latest_quotes",
     "get_latest_quote",
+    "get_price_trend",
 ]
 ```
 
 src/tools/trading_tools.py
 ```
 # src/tools/trading_tools.py
+from typing import Literal
+from prisma.enums import Role, TradeType
 from pydantic import BaseModel, Field
-from langchain.tools import tool
-from langchain.tools import ToolRuntime
+from langchain.tools import tool, ToolRuntime
 from src.context import Context
-from src.tools_adaptors.trading import BuyAct, SellAct
+from src.utils.ticker import is_valid_ticker
+from src.tools_adaptors.trading import (
+    BuyAct,
+    SellAct,
+    RecommendStockAct,
+    GetAnalystsRecommendationsAct,
+    WriteDownTickersToReviewAct,
+)
+from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
 
 buy_act = BuyAct()
 sell_act = SellAct()
+recommend_stock_act = RecommendStockAct()
+get_analysts_recommendations_act = GetAnalystsRecommendationsAct()
+write_down_tickers_to_review_act = WriteDownTickersToReviewAct()
 
 
 class BuyInput(BaseModel):
@@ -1687,1366 +2458,258 @@ class SellInput(BaseModel):
     volume: float = Field(description="Number of shares to sell")
 
 
-@tool(buy_act.name, args_schema=BuyInput)
-async def buy_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
+@tool(buy_act.name)
+async def buy_stock(
+    ticker: str,
+    volume: float,
+    rationale: str,
+    confidence: float,
+    runtime: ToolRuntime[Context],
+):
     """Execute a buy order for a stock.
 
     Args:
-        runId: The current run ID
-        bot_id: The bot ID
         ticker: Stock symbol to buy
         volume: Number of shares to buy
+        rationale: Rationale for the buy order
+        confidence: Confidence in the buy order (0.0-1.0)
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
+
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await buy_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
+    return await buy_act.arun(
+        runId=runId,
+        bot_id=bot_id,
+        ticker=ticker,
+        volume=volume,
+        rationale=rationale,
+        confidence=confidence,
+    )
 
 
-@tool(sell_act.name, args_schema=SellInput)
-async def sell_stock(ticker: str, volume: float, runtime: ToolRuntime[Context]):
+@tool("write_down_tickers_to_review")
+async def write_down_tickers_to_review(
+    tickers: list[str],
+    runtime: ToolRuntime[Context],
+):
+    """Write down the tickers to review.
+
+    Args:
+        tickers: List of tickers to review
+    """
+
+    tickers = [ticker.upper().strip() for ticker in tickers]
+    for ticker in tickers:
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
+
+    runId = runtime.context.run.id
+    return await write_down_tickers_to_review_act.arun(
+        run_id=runId,
+        tickers=tickers,
+    )
+
+
+@tool(sell_act.name)
+async def sell_stock(
+    ticker: str,
+    volume: float,
+    rationale: str,
+    confidence: float,
+    runtime: ToolRuntime[Context],
+):
     """Execute a sell order for a stock.
 
     Args:
-        runId: The current run ID
-        bot_id: The bot ID
         ticker: Stock symbol to sell
         volume: Number of shares to sell
+        rationale: Rationale for the sell order
+        confidence: Confidence in the sell order (0.0-1.0)
     """
+    ticker = ticker.upper().strip()
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"{ticker} is an invalid ticker symbol"
+
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await sell_act.arun(runId=runId, bot_id=bot_id, ticker=ticker, volume=volume)
-```
-
-src/tools_adaptors/__init__.py
-```
-from src.tools_adaptors.news import MarketNewsAct, EquityNewsAct
-from src.tools_adaptors.research import GoogleMarketResearchAct, GoogleEquityResearchAct
-
-from src.tools_adaptors.base import Action
-from src.tools_adaptors.stocks import (
-    ETFLivePriceChangeAct,
-    StockCurrentPriceAndIntradayChangeAct,
-    StockHistoricalPriceChangesAct,
-    StockLivePriceChangeAct,
-    MostActiveStockersAct,
-    SingleLatestQuotesAct,
-    MultiLatestQuotesAct,
-)
-from src.tools_adaptors.portfolio import (
-    ListPositionsAct,
-    PortfolioPerformanceAnalysisAct,
-)
-
-from src.tools_adaptors.fundamental_data import FundamentalDataAct
-from src.tools_adaptors.risk import FundamentalRiskDataAct, VolatilityRiskAct
+    return await sell_act.arun(
+        runId=runId,
+        bot_id=bot_id,
+        ticker=ticker,
+        volume=volume,
+        rationale=rationale,
+        confidence=confidence,
+    )
 
 
-__all__ = [
-    "Action",
-    "SingleLatestQuotesAct",
-    "MultiLatestQuotesAct",
-    "MarketNewsAct",
-    "EquityNewsAct",
-    "GoogleMarketResearchAct",
-    "ETFLivePriceChangeAct",
-    "StockCurrentPriceAndIntradayChangeAct",
-    "StockHistoricalPriceChangesAct",
-    "StockLivePriceChangeAct",
-    "MostActiveStockersAct",
-    "ListPositionsAct",
-    "PortfolioPerformanceAnalysisAct",
-    "FundamentalDataAct",
-    "FundamentalRiskDataAct",
-    "VolatilityRiskAct",
-    "GoogleEquityResearchAct",
-]
-```
-
-src/tools_adaptors/base.py
-```
-from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
-
-T = TypeVar("T")
-
-
-class Action(ABC, Generic[T]):
-    @abstractmethod
-    async def arun(self, *args, **kwargs) -> T:
-        pass
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        pass
-```
-
-src/tools_adaptors/fundamental_data.py
-```
-from src.tools_adaptors.base import Action
-from src.services.yfinance.api_info import async_get_ticker_info
-from src.tools_adaptors import utils
-from src.utils import constants
-
-
-class FundamentalDataAct(Action):
-    @property
-    def name(self):
-        return "get_comprehensive_fundamental_data"
-
-    async def arun(self, ticker: str) -> str:
-        info = await async_get_ticker_info(ticker)
-        info = utils.preprocess_info_dict(info)
-        categorized_data = utils.get_categorized_metrics(
-            info, categories_map=constants.FUNDAMENTAL_CATEGORIES
-        )
-        md = utils.format_fundamentals_markdown(categorized_data, ticker)
-        return md
-
-
-__all__ = ["FundamentalDataAct"]
-```
-
-src/tools_adaptors/google_equity_research.md
-```
-**Role:**
-Act as a US Equity Research Analyst specializing in tactical, event-driven insights. Your task is to synthesize a comprehensive investment thesis for `{TICKER}` by integrating real-time company-specific news with the broader market narrative.
-
-Focus on generating actionable `BUY/SELL/HOLD` insights for a portfolio manager.
-
-**Context:**
-- **Analysis Date:** `{datetime}`
-- **Target Ticker:** `{TICKER}`
-- **Sources:** Use only reputable sources (Company IR, SEC Filings, Bloomberg, Reuters, WSJ, Industry Publications). Prioritize same-day news and releases.
-- **Mandate:** Do not list facts—explain the “so what?” for `{TICKER}`. Connect macro and sector trends directly to the company's prospects.
-
-**Execution Rules:**
-1.  Use targeted web search for `{TICKER}`-specific news, press releases, and analyst commentary.
-2.  Use broader market searches to contextualize `{TICKER}`'s price action within the sector and macro environment.
-3.  Cite sources and timestamps for each insight.
-4.  All data must be current (≤5 days).
-
----
-
-### **Focus Areas for `{TICKER}`:**
-
-**1. Executive Summary & Investment Thesis**
--   **Dominant Narrative:** What is the prevailing market narrative *for this specific stock*? (e.g., "AI beneficiary," "victim of higher rates," "turnaround story").
--   **Thesis Driver Ranking:** Rank the key drivers for `{TICKER}`: Company-Specific News (earnings, M&A, guidance) > Sector Trends > Macro Environment.
--   **Actionable Takeaway:** Provide a clear, concise recommendation framework (e.g., "BUY on product catalyst," "HOLD until earnings clarity," "SELL due to sector headwinds").
-
-**2. Fundamental & Catalytic Drivers**
--   **Company-Specific Catalysts:**
-    -   Recent earnings report: Key beats/misses, guidance changes, and management commentary.
-    -   Recent press releases: M&A, product launches, regulatory approvals.
-    -   Analyst Actions: Recent upgrades/downgrades and changes to price targets.
--   **Sector & Macro Impact:**
-    -   How is the performance of the `{TICKER}`'s sector and the broader market (SPY/QQQ) influencing its price?
-    -   Explain *why* recent news is causing the stock to move. (e.g., "The stock is down 5% today despite a beat because guidance was weak, signaling demand concerns.")
-
-**3. Technical & Sentiment Positioning**
--   **Technical Health:**
-    -   Key price levels: Support/Resistance, relation to key moving averages (50-day, 200-day).
-    -   Momentum: RSI, MACD. Is the stock overbought or oversold?
-    -   Unusual options activity (if available): Are traders betting on a big move?
--   **Market Sentiment:**
-    -   What is the news sentiment (Bullish/Bearish/Neutral) around `{TICKER}`?
-    -   How does this compare to the sentiment for its sector?
-
-**4. Risk Assessment**
--   **Idiosyncratic Risks:** Company-specific risks (e.g., CEO departure, product delay, lawsuit, liquidity concerns).
--   **Systematic Risks:** How is `{TICKER}` exposed to broader risks? (e.g., "As a growth stock, it is highly sensitive to Fed rate expectations outlined in the CME FedWatch tool.").
-
-**5. Forward Look & Monitoring Plan**
--   **Key Upcoming Events:** Next earnings date, investor day, product launch, Fed meeting, sector-specific reports.
--   **Bull & Bear Scenarios:**
-    -   *Bull Case (Probability: X%):* What event or trend could drive the stock higher?
-    -   *Bear Case (Probability: Y%):* What would cause a significant drop?
--   **Top 3 Metrics to Monitor:** The most crucial indicators for this stock (e.g., "Weekly sales data," "Changes in analyst estimates," "Sector ETF flows").
-```
-
-src/tools_adaptors/google_research.md
-```
-**Role:**  
-Act as a US Financial Market Research Analyst. Your task is to synthesize and present the comprehensive current `{ticker}`, key drivers, risks, and opportunities based on real-time data and recent news.
-
-Focus on actionable insights for portfolio strategy.
-
-**Context:**  
-- Date: `{datetime}`
-- Use only reputable, primary sources (Bloomberg, Reuters, WSJ, Fed, BLS, BEA, CME, CBOE).  
-- All data must be current (≤5 days). Prioritize same-day news and releases.  
-- Do not list facts—explain the “so what?” for portfolio managers. Highlight trade ideas, sector rotation, and hedging implications.
-
-**Execution Rules:**  
-1. Use targeted web search,url context tools.  
-2. Cite sources and timestamps for each insight.  
----
-
-### Focus Areas:
-
-**1. Executive Summary**  
-- What’s the dominant market narrative?  
-- Rank key drivers: Fed, macro data, earnings, geopolitics.. 
-- Provide comprehensive actionable portfolio takeaway (e.g., sector overweight, hedge, rotation).  
-
-**2. Fundamental Drivers**  
-- Fed commentary & CME FedWatch probabilities  
-- Latest macro data (CPI, jobs, PCE) vs expectations  
-- Notable earnings reactions and catalysts and explain *why* these factors caused the market to rise/fall.
-
-**3. Sector & Asset Class Rotation**  
-- Top/bottom 3 S&P sectors (last 5 days) with catalysts  
-- Technical health: key levels, RSI, moving averages  
-- Credit spreads and cross-asset signals
-
-**4. Sentiment & Positioning**  
-- Fear & Greed Index trend  
-- Positioning extremes (CFTC, options, flows)
-
-**5. Forward Look (Next 5–10 Days)**  
-- Key upcoming events (Fed, macro, earnings)  
-- Bull/Bear scenarios with probabilities  
-- Top 3–5 metrics to monitor
-```
-
-src/tools_adaptors/news.py
-```
-from datetime import date, timedelta
-from src.services.tradingeconomics import get_news
-from src.services.alpaca import get_news as get_alpaca_news
-from src.tools_adaptors.base import Action
-from src.utils import convert_html_to_markdown
-
-
-class MarketNewsAct(Action):
-    @property
-    def name(self):
-        return "get_latest_market_news"
-
-    async def arun(self):
-        data = await get_news()
-        return data
-
-
-class EquityNewsAct(Action):
-    @property
-    def name(self):
-        return "get_latest_equity_news"
-
-    async def arun(self, symbol: str):
-        data = await get_alpaca_news(
-            symbols=[symbol],
-            start=(date.today() - timedelta(days=5)).isoformat(),
-            end=date.today().isoformat(),
-            sort="desc",
-            limit=15,
-        )
-
-        news_list = data["news"]
-
-        image_size_map = {"large": 3, "medium": 2, "small": 1, "thumb": 0}
-        top_content = 3
-        formatted_news: list[str] = []
-        for i, new in enumerate(news_list):
-            headline = new["headline"]
-            summary = new["summary"]
-            published_at = new["created_at"]
-            image_url = min(
-                new["images"], key=lambda x: image_size_map.get(x["size"], 1)
-            )["url"]
-            if i <= top_content:
-                content = convert_html_to_markdown(new["content"])
-            else:
-                content = summary
-
-            article = f"### {headline}\n"
-            article += f"Published: {published_at}\n\n"
-            article += f"![{headline}]({image_url})\n\n"
-            article += f"{content}\n\n"
-            formatted_news.append(article)
-
-        heading = f"## Latest {symbol} News"
-        return heading + "\n\n" + "\n\n".join(formatted_news)
-
-
-__all__ = ["MarketNewsAct", "EquityNewsAct"]
-
-if __name__ == "__main__":
-    import asyncio
-
-    # python -m src.tools.actions.news
-    market_news_action = MarketNewsAct()
-    result = asyncio.run(market_news_action.arun())  # type: ignore
-    print(result)
-```
-
-src/tools_adaptors/portfolio.py
-```
-from typing import Sequence, Annotated, TypedDict
-from src.tools_adaptors.base import Action
-from src.services.sandx_ai import list_positions, get_timeline_values
-from src.services.sandx_ai.typing import Position
-from src.tools_adaptors import utils as action_utils
-from src import utils
-
-
-class FormattedPosition(TypedDict):
-    ticker: Annotated[str, "The stock ticker of the position"]
-    allocation: Annotated[
-        str, "The percentage allocation of the position in the portfolio"
-    ]
-    current_price: Annotated[str, "The current price of the stock position per share"]
-    ptc_change_in_price: Annotated[
-        str, "The percentage change in price relative to the open price"
-    ]
-    current_value: Annotated[
-        str, "The total current value of the position in the portfolio"
-    ]
-    volume: Annotated[str, "The total share of the position in the portfolio"]
-    cost: Annotated[str, "The average cost of the position in the portfolio"]
-    pnl: Annotated[str, "Profit and Loss of the position in the portfolio"]
-    pnl_percent: Annotated[
-        str, "Profit and Loss percentage of the position in the portfolio"
-    ]
-
-
-def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
+@tool("get_market_status")
+async def get_market_status():
+    """Get the current market status. It's either open or closed.
+    If the market is closed, you cannot buy or sell stock.
     """
-    Convert a list of Position objects to a markdown table.
+    clock = alpaca_trading_client.get_clock()
+    if not clock.is_open:  # type: ignore
+        return "Market is closed. Cannot buy stock."
 
-    Parameters
-    ----------
-    positions : list[Position]
-        A list of Position objects to be converted into a markdown table.
-
-    Returns
-    -------
-    str
-        A markdown table string representation of the positions.
-    """
-    positions = sorted(positions, key=lambda x: x["allocation"], reverse=True)
-    formatted_positions = []
-    for position in positions:
-        formatted_position = FormattedPosition(
-            ticker=position["ticker"],
-            volume=utils.format_float(position["volume"]),
-            cost=utils.format_float(position["cost"]),
-            current_price=utils.format_float(position["current_price"]),
-            ptc_change_in_price=utils.format_percent_change(
-                position["ptc_change_in_price"]
-            ),
-            current_value=utils.format_currency(position["current_value"]),
-            allocation=utils.format_percent(position["allocation"]),
-            pnl=utils.format_currency(position["pnl"]),
-            pnl_percent=utils.format_percent(position["pnl_percent"]),
-        )
-        formatted_positions.append(formatted_position)
-    position_markdown = utils.dicts_to_markdown_table(formatted_positions)
-    heading = "## User's Current Open Positions"
-
-    datetime = utils.get_current_timestamp()
-
-    note = f"""
-- Datetime New York Time: {datetime}
-- CASH is a special position that represents the cash balance in the account.
-- ptc_change_in_price is the percentage change from the position’s open price to the current price.
-- Allocation percentages are computed against the sum of currentValue across
-    **all** positions plus any cash held in the same account.
-    """
-
-    return heading + "\n\n" + note + "\n\n" + position_markdown
+    return "Market is open. You can buy or sell stock."
 
 
-class ListPositionsAct(Action):
-    @property
-    def name(self):
-        return "list_current_positions"
+def get_recommend_stock_tool(role: Role):
+    @tool("recommend_stock")
+    async def recommend_stock(
+        ticker: str,
+        amount: float,
+        rationale: str,
+        confidence: float,
+        trade_type: Literal["BUY", "SELL", "HOLD"],
+        runtime: ToolRuntime[Context],
+    ):
+        """Record a BUY, SELL, or HOLD recommendation for a stock.
 
-    async def arun(self, bot_id: str) -> str:
-        positions = await list_positions(bot_id)
-        position_markdown = convert_positions_to_markdown_table(positions)
-        return position_markdown
-
-
-class PortfolioPerformanceAnalysisAct(Action):
-    @property
-    def name(self):
-        return "get_portfolio_performance_analysis"
-
-    async def arun(self, bot_id: str):
-        timeline_values = await get_timeline_values(bot_id)
-        analysis = action_utils.analyze_timeline_value(timeline_values)
-        if analysis:
-            return action_utils.create_performance_narrative(analysis)
-
-        return "Insufficient data for analysis."
-
-
-__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
-```
-
-src/tools_adaptors/research.py
-```
-import asyncio
-import os
-from google import genai
-from google.genai import types
-
-from src.tools_adaptors.base import Action
-from src.services.utils import redis_cache
-from src.utils import async_wrap
-from src.utils import get_current_date
-
-
-class GoogleMarketResearchAct(Action):
-    def __init__(self):
-        self.client = genai.Client(
-            vertexai=True,
-            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
-        )
-        tools = [
-            types.Tool(google_search=types.GoogleSearch()),
-        ]
-        self.config = types.GenerateContentConfig(
-            temperature=1,
-            top_p=1,
-            max_output_tokens=65535,
-            tools=tools,
-            thinking_config=types.ThinkingConfig(
-                # include_thoughts=True,
-                thinking_budget=-1,
-            ),
-        )
-
-    @property
-    def name(self):
-        return "google_finance_market_research"
-
-    @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
-    async def arun(self):  # type: ignore
-        return await self.run()  # type: ignore
-
-    @async_wrap
-    def run(self):
-        self.client = genai.Client(
-            vertexai=True,
-            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
-        )
-
-        with open(
-            "./src/tools_adaptors/google_research.md", mode="r", encoding="utf-8"
-        ) as f:
-            prompt_template = f.read()
-
-        datetime_str = get_current_date()
-        prompt = prompt_template.format(datetime=datetime_str)
-
-        response = self.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=self.config,
-        )
-
-        text = ""
-        if response.candidates:
-            for candidate in response.candidates:
-                if not candidate.content or not candidate.content.parts:
-                    continue
-                for part in candidate.content.parts:
-                    if part.text:
-                        text += part.text
-
-        return text
-
-
-class GoogleEquityResearchAct(Action):
-    def __init__(self):
-        self.client = genai.Client(
-            vertexai=True,
-            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
-        )
-        tools = [
-            types.Tool(google_search=types.GoogleSearch()),
-        ]
-        self.config = types.GenerateContentConfig(
-            temperature=1,
-            top_p=1,
-            max_output_tokens=65535,
-            tools=tools,
-            thinking_config=types.ThinkingConfig(
-                # include_thoughts=True,
-                thinking_budget=-1,
-            ),
-        )
-
-    @property
-    def name(self):
-        return "google_equity_research"
-
-    @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 6)
-    async def arun(self, ticker: str):  # type: ignore
-        return await self.run(ticker)  # type: ignore
-
-    @async_wrap
-    def run(self, ticker: str):
-        self.client = genai.Client(
-            vertexai=True,
-            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
-        )
-
-        with open(
-            "./src/tools_adaptors/google_equity_research.md", mode="r", encoding="utf-8"
-        ) as f:
-            prompt_template = f.read()
-
-        datetime_str = get_current_date()
-        prompt = prompt_template.format(TICKER=ticker, datetime=datetime_str)
-
-        response = self.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=self.config,
-        )
-
-        text = ""
-        if response.candidates:
-            for candidate in response.candidates:
-                if not candidate.content or not candidate.content.parts:
-                    continue
-                for part in candidate.content.parts:
-                    if part.text:
-                        text += part.text
-
-        return text
-
-
-if __name__ == "__main__":
-    # python -m src.tools.actions.research
-    google_market_research_action = GoogleMarketResearchAct()
-    result = asyncio.run(google_market_research_action.arun())  # type: ignore
-    print(result)
-```
-
-src/tools_adaptors/risk.py
-```
-from datetime import date, timedelta
-
-from src.services.alpaca import get_historical_price_bars
-from src.services.yfinance.api_info import async_get_ticker_info
-from src.tools_adaptors import utils
-from src.tools_adaptors.base import Action
-from src.utils import constants
-
-
-class FundamentalRiskDataAct(Action):
-    @property
-    def name(self):
-        return "get_comprehensive_fundamental_risk_data"
-
-    async def arun(self, ticker: str) -> str:
-        info = await async_get_ticker_info(ticker)
-        info = utils.preprocess_info_dict(info)
-        categorized_data = utils.get_categorized_metrics(
-            info, categories_map=constants.FUNDAMENTAL_RISK_CATEGORIES
-        )
-        md = utils.format_fundamentals_markdown(categorized_data, ticker)
-        return md
-
-
-class VolatilityRiskAct(Action):
-    @property
-    def name(self):
-        return "get_volatility_risk_indicators"
-
-    async def arun(self, ticker: str) -> str:
-        """Get volatility risk indicators for a ticker"""
-        start = (date.today() - timedelta(days=356 + 7)).isoformat()
-        end = date.today().isoformat()
-        price_bars = await get_historical_price_bars(
-            symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
-        )
-        price_bars = price_bars[ticker]
-        risk = utils.calculate_volatility_risk(price_bars)
-        md = utils.format_volatility_risk_markdown(risk, ticker)
-        return md
-
-
-class PriceRiskAct(Action):
-    @property
-    def name(self):
-        return "get_price_risk_indicators"
-
-    async def arun(self, ticker: str) -> str:
-        """Get price risk indicators for a ticker"""
-        start = (date.today() - timedelta(days=356 + 7)).isoformat()
-        end = date.today().isoformat()
-        price_bars = await get_historical_price_bars(
-            symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
-        )
-        price_bars = price_bars[ticker]
-        risk = utils.calculate_price_risk(price_bars)
-        md = utils.format_price_risk_markdown(risk, ticker)
-        return md
-
-
-__all__ = ["FundamentalRiskDataAct", "VolatilityRiskAct", "PriceRiskAct"]
-```
-
-src/tools_adaptors/stocks.py
-```
-import asyncio
-from datetime import time, datetime, timedelta, timezone
-from typing import TypedDict, List
-from src.services.alpaca import (
-    get_snapshots,
-    get_historical_price_bars,
-    get_most_active_stocks,
-    get_latest_quotes,
-)
-from src.services.alpaca.typing import PriceBar
-from src.tools_adaptors.base import Action
-from src import utils
-from src.utils.constants import ETF_TICKERS
-
-
-class StockRawSnapshotAct(Action):
-    @property
-    def name(self):
-        return "Get Stock Snapshot"
-
-    async def arun(self, tickers: list[str]) -> dict:
-        """
-        Fetch raw market snapshots for multiple tickers.
-
-        Returns the latest trade, latest quote, minute bar, daily bar, and previous daily bar data
-        for each ticker symbol.
+        Calling tool is mandatory to log your trading suggestions when you recommend a stock.
+        capturing the ticker symbol, desired action (buy, sell, or hold),
+        the number of shares involved, the reasoning behind the recommendation with the confidence level.
+        These recorded recommendations can later be reviewed or aggregated to guide final investment decisions.
 
         Args:
-            tickers: A list of ticker symbols.
-        Returns:
-            A dictionary mapping each ticker to its complete raw snapshot data.
+            ticker: Stock symbol to recommend to BUY, SELL, or HOLD
+            amount: Number of shares to recommend to BUY, SELL, or HOLD
+            rationale: Rationale for the recommendation
+            confidence: Confidence in the recommendation (0.0-1.0)
+            trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
         """
-        data = await get_snapshots(tickers)
-        return data
+        ticker = ticker.upper().strip()
+        is_valid = await is_valid_ticker(ticker)
+        if not is_valid:
+            return f"{ticker} is an invalid ticker symbol"
 
+        bot_id = runtime.context.bot.id
+        run_id = runtime.context.run.id
 
-class CurrentPriceAndIntradayChange(TypedDict):
-    current_price: str
-    current_intraday_percent: str
-
-
-class StockCurrentPriceAndIntradayChangeAct(Action):
-    @property
-    def name(self):
-        return "Stock Current Price and Intraday Change"
-
-    async def arun(
-        self, tickers: list[str]
-    ) -> dict[str, CurrentPriceAndIntradayChange]:
-        """
-        Fetch the current price and intraday percent change for a list of tickers.
-
-        The intraday change is calculated against the previous day's close:
-        - Before 9:30 AM ET, the reference is the daily bar close.
-        - At or after 9:30 AM ET, the reference is the previous daily bar close.
-
-        Args:
-            tickers: A list of ticker symbols.
-        Returns:
-            A dictionary mapping each ticker to its current price and intraday percent change.
-        """
-
-        ticker_price_changes = {}
-
-        snapshots = await get_snapshots(tickers)
-
-        for ticker in tickers:
-            # Get current time in New York timezone
-            current_time = utils.get_new_york_datetime().time()
-            # Use dailyBar if before 9:30 AM, otherwise use prevDailyBar
-            if current_time < time(9, 30):
-                previous_close_price = snapshots[ticker]["dailyBar"]["c"]
-            else:
-                previous_close_price = snapshots[ticker]["prevDailyBar"]["c"]
-
-            intraday_percent = (
-                snapshots[ticker]["latestQuote"]["bp"] - previous_close_price
-            ) / previous_close_price
-
-            ticker_price_changes[ticker] = CurrentPriceAndIntradayChange(
-                current_price=utils.format_currency(
-                    snapshots[ticker]["latestQuote"]["bp"]
-                ),
-                current_intraday_percent=utils.format_percent(intraday_percent),
-            )
-
-        return ticker_price_changes
-
-
-class HistoricalPriceChangePeriods(TypedDict):
-    one_day: str | None
-    one_week: str | None
-    one_month: str | None
-    three_months: str | None
-    six_months: str | None
-    one_year: str | None
-    three_years: str | None
-
-
-class StockHistoricalPriceChangesAct(Action):
-    @property
-    def name(self):
-        return "Stock Historical Price Changes"
-
-    # disable: pylint:disable=too-many-locals
-
-    async def arun(self, tickers: list[str]) -> dict[str, HistoricalPriceChangePeriods]:
-        """
-        Compute percentage changes over standard periods using Alpaca daily bars.
-
-        Periods: one_day, one_week, one_month, three_months, six_months, one_year, three_years.
-
-        - Uses UTC timestamps (ISO 8601 with trailing 'Z') as required by Alpaca.
-        - Selects the most recent close as the "current" reference.
-        - For each period, finds the close on or before the target date.
-        - Returns None when not enough history exists for a period.
-
-        Args:
-            tickers: List of ticker symbols.
-        Returns:
-            Mapping of ticker to period percent changes, e.g. {"AAPL": {"1w": 0.02, ...}}.
-        """
-
-        def _to_iso_z(dt: datetime) -> str:
-            return (
-                dt.astimezone(timezone.utc)
-                .replace(microsecond=0)
-                .isoformat()
-                .replace("+00:00", "Z")
-            )
-
-        def _parse_ts(ts: str) -> datetime:
-            try:
-                return datetime.fromisoformat(ts.replace("Z", "+00:00"))
-            except ValueError:
-                return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(
-                    tzinfo=timezone.utc
-                )
-
-        def _find_close_on_or_before(
-            bars: List[PriceBar], target_dt: datetime
-        ) -> float | None:
-            for bar_ in bars:
-                bar_dt = _parse_ts(bar_["timestamp"])
-                if bar_dt <= target_dt:
-                    return bar_["close_price"]
-            return None
-
-        period_deltas: dict[str, timedelta] = {
-            "one_day": timedelta(days=1),
-            "one_week": timedelta(days=7),
-            "one_month": timedelta(days=30),
-            "three_months": timedelta(days=90),
-            "six_months": timedelta(days=180),
-            "one_year": timedelta(days=365),
-            "three_years": timedelta(days=365 * 3),
-        }
-
-        end_dt = datetime.now(timezone.utc)
-        # Buffer for weekends and holidays
-        start_dt = end_dt - period_deltas["three_years"] - timedelta(days=14)
-
-        bars_by_symbol = await get_historical_price_bars(
-            symbols=tickers,
-            timeframe="1Day",
-            start=_to_iso_z(start_dt),
-            end=_to_iso_z(end_dt),
-            sort="desc",  # IMPORTANT: sort by descending timestamp
+        return await recommend_stock_act.arun(
+            run_id=run_id,
+            bot_id=bot_id,
+            ticker=ticker,
+            amount=amount,
+            rationale=rationale,
+            confidence=confidence,
+            trade_type=TradeType(trade_type),
+            role=role,
         )
 
-        results = {}
-        for ticker in tickers:
-            if not bars_by_symbol.get(ticker):
-                continue
-            bars = bars_by_symbol[ticker]
-            latest_close = float(bars[0]["close_price"])
-            latest_dt = _parse_ts(bars[0]["timestamp"])
-
-            period_changes: dict[str, str | None] = {
-                "one_day": None,
-                "one_week": None,
-                "one_month": None,
-                "three_months": None,
-                "six_months": None,
-                "one_year": None,
-                "three_years": None,
-            }
-
-            for key, delta in period_deltas.items():
-                target_dt = latest_dt - delta
-                prior_close = _find_close_on_or_before(bars, target_dt)
-                if prior_close is not None and prior_close != 0:
-                    period_changes[key] = utils.format_percent_change(
-                        (latest_close - prior_close) / prior_close
-                    )
-                else:
-                    period_changes[key] = None
-
-            results[ticker] = period_changes
-
-        return results
-
-
-class StockPriceSnapshotWithHistory(TypedDict):
-    current_price: str
-    current_intraday_percent: str
-    one_day: str | None
-    one_week: str | None
-    one_month: str | None
-    three_months: str | None
-    six_months: str | None
-    one_year: str | None
-    three_years: str | None
-
-
-class ETFPriceSnapshotWithHistory(TypedDict):
-    ticker: str
-    name: str
-    description: str
-    current_price: str
-    current_intraday_percent: str
-    one_day: str | None
-    one_week: str | None
-    one_month: str | None
-    three_months: str | None
-    six_months: str | None
-    one_year: str | None
-    three_years: str | None
-
-
-class StockLivePriceChangeAct(Action):
-    @property
-    def name(self):
-        return "get_stock_live_price_and_change"
-
-    async def arun(
-        self, tickers: list[str]
-    ) -> dict[str, StockPriceSnapshotWithHistory]:
-        """
-        Fetch a complete price snapshot for multiple tickers.
-
-        Returns current price, intraday change, and historical percent changes
-        for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
-        """
-
-        current_task = asyncio.create_task(
-            StockCurrentPriceAndIntradayChangeAct().arun(tickers)
-        )
-        historical_task = asyncio.create_task(
-            StockHistoricalPriceChangesAct().arun(tickers)
-        )
-
-        current, historical = await asyncio.gather(current_task, historical_task)
-
-        results = {}
-        for ticker in tickers:
-            history: HistoricalPriceChangePeriods = historical[ticker]
-            currency: CurrentPriceAndIntradayChange = current[ticker]
-            results[ticker] = StockPriceSnapshotWithHistory(
-                current_price=currency["current_price"],
-                current_intraday_percent=currency["current_intraday_percent"],
-                one_day=history["one_day"],
-                one_week=history["one_week"],
-                one_month=history["one_month"],
-                three_months=history["three_months"],
-                six_months=history["six_months"],
-                one_year=history["one_year"],
-                three_years=history["three_years"],
-            )
-
-        return results
-
-
-class ETFLivePriceChangeAct(Action):
-    @property
-    def name(self):
-        return "get_major_etf_live_price_and_historical_change"
-
-    async def arun(self) -> dict[str, ETFPriceSnapshotWithHistory]:
-        """
-        Fetch a complete price snapshot for multiple major ETF tickers.
-
-        Returns current price, intraday change, and historical percent changes
-        for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
-        """
-        tickers = [t["ticker"] for t in ETF_TICKERS]
-        ticker_info_dict = {t["ticker"]: t for t in ETF_TICKERS}
-
-        current_task = asyncio.create_task(
-            StockCurrentPriceAndIntradayChangeAct().arun(tickers)
-        )
-        historical_task = asyncio.create_task(
-            StockHistoricalPriceChangesAct().arun(tickers)
-        )
-
-        current, historical = await asyncio.gather(current_task, historical_task)
-
-        results = {}
-        for ticker in tickers:
-            history: HistoricalPriceChangePeriods = historical[ticker]
-            currency: CurrentPriceAndIntradayChange = current[ticker]
-            results[ticker] = ETFPriceSnapshotWithHistory(
-                ticker=ticker,
-                name=ticker_info_dict[ticker]["name"],
-                description=ticker_info_dict[ticker]["description"],
-                current_price=currency["current_price"],
-                current_intraday_percent=currency["current_intraday_percent"],
-                one_day=history["one_day"],
-                one_week=history["one_week"],
-                one_month=history["one_month"],
-                three_months=history["three_months"],
-                six_months=history["six_months"],
-                one_year=history["one_year"],
-                three_years=history["three_years"],
-            )
-
-        return results
-
-
-class ActiveStockFullPriceMetrics(TypedDict):
-    symbol: str
-    trade_count: int
-    volume: int
-    current_price: str
-    current_intraday_percent: str
-    one_day: str | None
-    one_week: str | None
-    one_month: str | None
-    three_months: str | None
-    six_months: str | None
-    one_year: str | None
-    three_years: str | None
-
-
-class MostActiveStockFullPriceMetrics(TypedDict):
-    last_updated: str
-    most_actives: list[ActiveStockFullPriceMetrics]
-
-
-class MostActiveStockersAct(Action):
-    @property
-    def name(self):
-        return "get_most_active_stockers_with_historical_price_changes"
-
-    async def arun(self):
-        """
-        Get the most active stockers.
-        """
-        data = await get_most_active_stocks()
-        tickers = [item["symbol"] for item in data["most_actives"]]
-        most_active_stocks: list[ActiveStockFullPriceMetrics] = []
-
-        results = await StockLivePriceChangeAct().arun(tickers)
-
-        for item in data["most_actives"]:
-            symbol = item["symbol"]
-            price_metrics = results.get(symbol)
-            if price_metrics:
-                full_metrics = ActiveStockFullPriceMetrics(
-                    symbol=symbol,
-                    trade_count=item["trade_count"],
-                    volume=item["volume"],
-                    **price_metrics,
-                )
-                most_active_stocks.append(full_metrics)
-
-        return MostActiveStockFullPriceMetrics(
-            last_updated=data["last_updated"],
-            most_actives=most_active_stocks,
-        )
-
-
-# src/tools_adaptors/stocks.py - Add this class
-class MultiLatestQuotesAct(Action):
-    @property
-    def name(self):
-        return "get_multi_symbols_latest_quotes"
-
-    async def arun(self, symbols: list[str]) -> str:
-        """
-        Fetch latest quotes for multiple symbols.
-
-        Returns:
-            dict: Mapping of symbol to quote data including:
-                - ask_price: Current ask price
-                - ask_size: Ask size
-                - bid_price: Current bid price
-                - bid_size: Bid size
-                - timestamp: Quote timestamp
-        """
-
-        quotes = await get_latest_quotes(symbols)
-        formatted_quotes = []
-        for symbol in quotes:
-            quote = quotes[symbol]
-            formatted_quote = {
-                "symbol": symbol,
-                "bid_price": utils.format_currency(quote["bid_price"]),
-                "bid_size": utils.human_format(quote["bid_size"]),
-                "ask_price": utils.format_currency(quote["ask_price"]),
-                "ask_size": utils.human_format(quote["ask_size"]),
-                "spread": utils.format_currency(
-                    quote["ask_price"] - quote["bid_price"]
-                ),
-                "spread_percent": utils.format_percent(
-                    (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
-                ),
-                "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
-                "timestamp": utils.format_datetime(quote["timestamp"]),
-                # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
-            }
-            formatted_quotes.append(formatted_quote)
-
-        if not formatted_quotes:
-            return "No quote data available for the requested symbols."
-
-        markdown_table = utils.dicts_to_markdown_table(formatted_quotes)
-        heading = "## Latest Market Quotes"
-        note = f"""
-**Note:**
-- Data fetched at {utils.get_current_timestamp()} New York time
-- Bid/Ask prices are real-time consolidated quotes
-- Spread = Ask Price - Bid Price
-- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
-"""
-
-        return heading + "\n\n" + note + "\n\n" + markdown_table
-
-
-class SingleLatestQuotesAct(Action):
-    @property
-    def name(self):
-        return "get_single_symbol_latest_quotes"
-
-    async def arun(self, symbol: str) -> str:
-        """
-        Fetch latest quotes for a single symbol.
-
-        Returns:
-            dict: Mapping of symbol to quote data including:
-                - ask_price: Current ask price
-                - ask_size: Ask size
-                - bid_price: Current bid price
-                - bid_size: Bid size
-                - timestamp: Quote timestamp
-        """
-
-        quotes = await get_latest_quotes([symbol])
-        quote = quotes.get(symbol)
-
-        if not quote:
-            return "No quote data available for the requested symbol."
-
-        formatted_quote = {
-            "symbol": symbol,
-            "bid_price": utils.format_currency(quote["bid_price"]),
-            "bid_size": utils.human_format(quote["bid_size"]),
-            "ask_price": utils.format_currency(quote["ask_price"]),
-            "ask_size": utils.human_format(quote["ask_size"]),
-            "spread": utils.format_currency(quote["ask_price"] - quote["bid_price"]),
-            "spread_percent": utils.format_percent(
-                (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
-            ),
-            "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
-            "timestamp": utils.format_datetime(quote["timestamp"]),
-            # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
-        }
-
-        markdown_table = utils.dict_to_markdown_table(formatted_quote)
-        heading = f"## Latest {symbol} Market Quotes"
-        note = f"""
-**Note:**
-- Data fetched at {utils.get_current_timestamp()} New York time
-- Bid/Ask prices are real-time consolidated quotes
-- Spread = Ask Price - Bid Price
-- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
-"""
-
-        return heading + "\n\n" + note + "\n\n" + markdown_table
-
-
-# only Act
-__all__ = [
-    "StockRawSnapshotAct",
-    "StockCurrentPriceAndIntradayChangeAct",
-    "StockHistoricalPriceChangesAct",
-    "StockLivePriceChangeAct",
-    "ETFLivePriceChangeAct",
-    "MostActiveStockersAct",
-    "SingleLatestQuotesAct",
-    "MultiLatestQuotesAct",
-]
-
-if __name__ == "__main__":
-    # python -m src.tools.actions.stocks
-    async def main():
-        changes = await StockLivePriceChangeAct().arun(["AAPL"])
-        print(changes)
-
-        etf_changes = await ETFLivePriceChangeAct().arun()
-        print(etf_changes)
-
-        most_active_stocks = await MostActiveStockersAct().arun()
-        print(most_active_stocks)
-
-    asyncio.run(main())
-```
-
-src/tools_adaptors/trading.py
-```
-import traceback
-from loguru import logger
-from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
-from src import utils, db
-from src.tools_adaptors.base import Action
-from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
-from src.services.alpaca import get_latest_quotes
-from prisma.enums import TradeType
-
-
-class BuyAct(Action):
-    @property
-    def name(self):
-        return "buy_stock"
-
-    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
-        try:
-            clock = alpaca_trading_client.get_clock()
-            if not clock.is_open:  # type: ignore
-                return "Market is closed. Cannot buy stock."
-            quotes = await get_latest_quotes([ticker])
-            price = quotes["quotes"].get(ticker, {}).get("ask_price")
-            if not price:
-                return f"Cannot get price for {ticker}"
-            price = float(price)
-            total_cost = price * volume
-
-            await db.connect()
-
-            ticker = ticker.upper().strip()
-
-            valid_ticker = await db.prisma.ticker.find_unique(
-                where={"ticker": ticker.replace(".", "-")}
-            )
-
-            if valid_ticker is None:
-                return f"Invalid ticker {ticker}"
-
-            async with db.prisma.tx() as transaction:
-                portfolio = await transaction.portfolio.find_unique(
-                    where={"botId": bot_id}
-                )
-                if portfolio is None:
-                    raise ValueError("Portfolio not found")
-                if portfolio.cash < total_cost:
-                    return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
-                portfolio.cash -= total_cost
-                await transaction.portfolio.update(
-                    where={"botId": bot_id}, data={"cash": portfolio.cash}
-                )
-                existing = await transaction.position.find_unique(
-                    where={
-                        "portfolioId_ticker": {
-                            "portfolioId": portfolio.id,
-                            "ticker": ticker,
-                        }
-                    }
-                )
-
-                if existing is None:
-                    await transaction.position.create(
-                        data=PositionCreateInput(
-                            ticker=ticker,
-                            volume=volume,
-                            portfolioId=portfolio.id,
-                            cost=price,
-                        )
-                    )
-                else:
-                    await transaction.position.update(
-                        where={
-                            "portfolioId_ticker": {
-                                "portfolioId": portfolio.id,
-                                "ticker": ticker,
-                            }
-                        },
-                        data=PositionUpdateInput(
-                            volume=existing.volume + volume,
-                            cost=(existing.cost * existing.volume + price * volume)
-                            / (existing.volume + volume),
-                        ),
-                    )
-
-                    await transaction.trade.create(
-                        data=TradeCreateInput(
-                            type=TradeType.BUY,
-                            price=price,
-                            ticker=ticker,
-                            amount=volume,
-                            runId=runId,
-                            botId=bot_id,
-                        )
-                    )
-
-                    return (
-                        f"Successfully bought {volume} shares of {ticker} at {price} per share. "
-                        f"Current volume is {existing.volume + volume} "
-                        f"with average cost {utils.format_float(existing.cost)}"
-                    )
-
-        except Exception as e:
-            logger.error(f"Error buying stock: {e} Traceback: {traceback.format_exc()}")
-            return f"Failed to buy {volume} shares of {ticker}"
-        finally:
-            await db.disconnect()
-
-
-class SellAct(Action):
-    @property
-    def name(self):
-        return "sell_stock"
-
-    async def arun(self, runId, bot_id: str, ticker: str, volume: float):
-        try:
-            clock = alpaca_trading_client.get_clock()
-            if not clock.is_open:  # type: ignore
-                return "Market is closed. Cannot sell stock."
-            quotes = await get_latest_quotes([ticker])
-            price = quotes["quotes"].get(ticker, {}).get("bid_price")
-            if not price:
-                return f"Cannot get price for {ticker}"
-            price = float(price)
-            total_proceeds = price * volume
-
-            await db.connect()
-
-            ticker = ticker.upper().strip()
-
-            valid_ticker = await db.prisma.ticker.find_unique(
-                where={"ticker": ticker.replace(".", "-")}
-            )
-
-            if valid_ticker is None:
-                return f"Invalid ticker {ticker}"
-
-            async with db.prisma.tx() as transaction:
-                portfolio = await transaction.portfolio.find_unique(
-                    where={"botId": bot_id}
-                )
-                if portfolio is None:
-                    raise ValueError("Portfolio not found")
-
-                existing = await transaction.position.find_unique(
-                    where={
-                        "portfolioId_ticker": {
-                            "portfolioId": portfolio.id,
-                            "ticker": ticker,
-                        }
-                    }
-                )
-
-                if existing is None:
-                    return f"No position found for {ticker}"
-
-                if existing.volume < volume:
-                    return (
-                        f"Not enough shares to sell {volume} shares of {ticker}. "
-                        f"Current volume is {existing.volume}."
-                    )
-
-                portfolio.cash += total_proceeds
-                await transaction.portfolio.update(
-                    where={"botId": bot_id}, data={"cash": portfolio.cash}
-                )
-
-                new_volume = existing.volume - volume
-
-                if new_volume == 0:
-                    await transaction.position.delete(
-                        where={
-                            "portfolioId_ticker": {
-                                "portfolioId": portfolio.id,
-                                "ticker": ticker,
-                            }
-                        }
-                    )
-                else:
-                    await transaction.position.update(
-                        where={
-                            "portfolioId_ticker": {
-                                "portfolioId": portfolio.id,
-                                "ticker": ticker,
-                            }
-                        },
-                        data=PositionUpdateInput(
-                            volume=new_volume,
-                            cost=existing.cost,
-                        ),
-                    )
-
-                await transaction.trade.create(
-                    data=TradeCreateInput(
-                        type=TradeType.SELL,
-                        price=price,
-                        ticker=ticker,
-                        amount=volume,
-                        runId=runId,
-                        botId=bot_id,
-                        realizedPL=price * volume - existing.cost * volume,
-                        realizedPLPercent=(price - existing.cost) / existing.cost,
-                    )
-                )
-
-                if new_volume == 0:
-                    return (
-                        f"Successfully sold {volume} shares of {ticker} at {price} per share. "
-                        f"Position closed."
-                    )
-
-                return (
-                    f"Successfully sold {volume} shares of {ticker} at {price} per share. "
-                    f"Current volume is {new_volume} "
-                    f"with average cost {utils.format_float(existing.cost)}"
-                )
-
-        except Exception as e:
-            logger.error(
-                f"Error selling stock: {e} Traceback: {traceback.format_exc()}"
-            )
-            return f"Failed to sell {volume} shares of {ticker}"
-        finally:
-            await db.disconnect()
+    return recommend_stock
+
+
+@tool("get_analysts_recommendations")
+async def get_analysts_recommendations(
+    runtime: ToolRuntime[Context],
+) -> str:
+    """Retrieve consolidated analyst recommendations for final investment decisions.
+
+    Returns:
+        List of recent recommendations with keys: ticker, action (BUY/SELL/HOLD),
+        price_target, rationale.
+    """
+    run_id = runtime.context.run.id
+    return await get_analysts_recommendations_act.arun(
+        run_id=run_id,
+    )
 ```
 
 src/typings/__init__.py
 ```
+from typing import Final, Literal
+
+ERROR: Final = "ERROR"
+ErrorLiteral = Literal["ERROR"]
+```
+
+src/typings/agent_roles.py
+```
 from typing import Literal
 
-ModelName = Literal["deepseek"]
+SubAgentRole = Literal[
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+
+AgentRole = Literal[
+    "CHIEF_INVESTMENT_OFFICER",
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+```
+
+src/typings/context.py
+```
+from dataclasses import dataclass
+from prisma.models import Bot, Run
+
+
+@dataclass
+class Context:
+    run: Run
+    bot: Bot
+    llm_model: str
+```
+
+src/typings/langgraph_agents.py
+```
+from langchain.agents.middleware.types import (
+    AgentState,
+    _InputAgentState,
+    _OutputAgentState,
+)
+from langgraph.graph.state import CompiledStateGraph
+from typing import TypeVar
+from src.context import Context
+
+Unknown = TypeVar("Unknown")
+
+
+LangGraphAgent = CompiledStateGraph[
+    AgentState[Unknown], Context, _InputAgentState, _OutputAgentState[Unknown]
+]
 ```
 
 src/utils/__init__.py
 ```
-import asyncio
 import os
-from typing import Any
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
-from functools import partial, wraps
+import time
 import pytz
+import boto3
+import smtplib
+import asyncio
+import traceback
+
+
 from tqdm import tqdm
-from html_to_markdown import convert, ConversionOptions
+from loguru import logger
+from datetime import datetime
+from email.mime.text import MIMEText
+from functools import partial, wraps
+from email.mime.multipart import MIMEMultipart
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Any, TypeVar, Coroutine
+from markdownify import markdownify as md
+
+
+from src.typings import ErrorLiteral, ERROR
+
+
+T = TypeVar("T")
 
 
 def multi_threading(function, parameters, max_workers=5, desc=""):
@@ -3176,15 +2839,17 @@ def format_datetime(datetime_string: str = "2025-11-15T00:59:00.095784453Z") -> 
     return dt_ny.strftime("%b %d, %Y %H:%M:%S") + " EST"
 
 
-def async_wrap(func):
-    @wraps(func)
-    async def run(*args, loop=None, executor=None, **kwargs):
-        if loop is None:
-            loop = asyncio.get_event_loop()
-        pfunc = partial(func, *args, **kwargs)
-        return await loop.run_in_executor(executor, pfunc)
+def async_wrap():
+    def decorator(func: Callable[..., T]) -> Callable[..., Coroutine[Any, Any, T]]:
+        async def wrapper(*args, loop=None, executor=None, **kwargs):
+            if loop is None:
+                loop = asyncio.get_event_loop()
+            pfunc = partial(func, *args, **kwargs)
+            return await loop.run_in_executor(executor, pfunc)
 
-    return run
+        return wrapper
+
+    return decorator
 
 
 def get_new_york_datetime() -> datetime:
@@ -3192,22 +2857,186 @@ def get_new_york_datetime() -> datetime:
 
 
 def convert_html_to_markdown(html: str) -> str:
-    return convert(html, options=ConversionOptions(strip_tags={"a"}))
-```
+    return md(html, strip=["a"])
 
-src/utils/config.py
-```
-model_mapping = {
-    "deepseek": "deepseek-chat",
-    "gpt-5.1-thinking-plus": "gpt-5.1-thinking-plus",
-    "deepseek-reasoner": "deepseek-reasoner",
-    "kimi-k2-thinking": "kimi-k2-thinking",
-}
+
+def async_retry(
+    base_delay: float = 0.5,
+    max_retries: int = 5,
+    exceptions: tuple[type[BaseException], ...] = (Exception,),
+    max_delay_seconds: float = 5.0,
+    silence_error: bool = os.getenv("SILENCE_ERROR") == "1",
+):
+    def decorator(func: Callable[..., Coroutine[Any, Any, T]]):
+        async def wrapper(*args, **kwargs) -> T | ErrorLiteral:
+            retries = 0
+            while True:
+                try:
+                    return await func(*args, **kwargs)
+                except exceptions as e:
+                    error_message = (
+                        f"Error running {func.__name__} after {max_retries} retries: {e}"
+                        f"\nArgs: {args}\nKwargs: {kwargs}\n"
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    logger.error(error_message)
+                    if retries < max_retries:
+                        retries += 1
+                        delay = min(
+                            max_delay_seconds, base_delay * (2 ** (retries - 1))
+                        )
+                        await asyncio.sleep(delay)
+                    else:
+                        if recipient := os.getenv("GMAIL"):
+                            send_gmail_email(
+                                subject=f"Error running {func.__name__}",
+                                recipient=recipient,
+                                html_body=error_message,
+                            )
+
+                        if not silence_error:
+                            raise
+                        else:
+                            return ERROR
+
+        return wrapper
+
+    return decorator
+
+
+def async_timeout(
+    seconds: float,
+):
+    def decorator(
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> T:
+            return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
+
+        return wrapper
+
+    return decorator
+
+
+def retry(
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+    silence_error: bool = os.getenv("SILENCE_ERROR") == "1",
+):
+    def decorator(func: Callable[..., T]):
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> T | ErrorLiteral:
+            attempt = 0
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    error_message = (
+                        f"Error running {func.__name__} after {max_retries} retries: {e}"
+                        f"\nArgs: {args}\nKwargs: {kwargs}\n"
+                        f"Traceback: {traceback.format_exc()}"
+                    )
+                    logger.error(error_message)
+                    attempt += 1
+                    if attempt >= max_retries:
+                        if not silence_error:
+                            raise
+                        return ERROR
+                    sleep_time = base_delay * (2 ** (attempt - 1))
+                    time.sleep(sleep_time)
+
+        return wrapper
+
+    return decorator
+
+
+@retry(max_retries=3, silence_error=True)
+def send_gmail_email(subject: str, recipient: str, html_body: str):
+    msg = MIMEMultipart()
+    sender = os.getenv("GMAIL")
+    gmail_password = os.getenv("GMAIL_APP_PASSWORD")
+    if not sender:
+        logger.warning("GMAIL environment variable to send email is not set")
+        return
+
+    if not gmail_password:
+        logger.warning(
+            "GMAIL_APP_PASSWORD environment variable to send email is not set"
+        )
+        return
+
+    msg["From"] = sender
+    msg["To"] = recipient
+    msg["Subject"] = subject
+
+    # Attach HTML content
+    msg.attach(MIMEText(html_body, "html"))
+
+    # Create SMTP session
+    server = smtplib.SMTP("smtp.gmail.com", 587)
+    server.starttls()  # Enable TLS
+
+    # Login to Gmail
+    server.login(sender, gmail_password)
+
+    # Send email
+    server.send_message(msg)
+
+    # Close the connection
+    server.quit()
+    logger.info(f"Email Sent successfully to {recipient}")
+    return f"Email Sent successfully to {recipient}"
+
+
+@retry(max_retries=3, silence_error=True)
+def send_ses_email(
+    subject: str,
+    recipient: str,
+    sender: str = "notifications@sandx.ai",
+    html_body: str = "",
+):
+    client = boto3.client("ses", region_name=os.getenv("AWS_REGION", "us-east-1"))
+
+    response = client.send_email(
+        Destination={
+            "ToAddresses": [
+                recipient,
+            ],
+        },
+        Message={
+            "Body": {
+                "Html": {
+                    "Charset": "UTF-8",
+                    "Data": html_body,
+                }
+            },
+            "Subject": {
+                "Charset": "UTF-8",
+                "Data": subject,
+            },
+        },
+        Source=sender,
+    )
+
+    logger.info(f"Email sent! Message ID: {response['MessageId']}")
+
+    return f"Email Sent successfully to {recipient}"
+
+
+if __name__ == "__main__":
+    #  python -m src.utils.__init__
+    send_ses_email(
+        subject="Test Email",
+        recipient="sandx.ai.contact@gmail.com",
+        html_body="<h1>Hello, World!</h1>",
+    )
 ```
 
 src/utils/constants.py
 ```
-from typing import TypedDict
+from typing import TypedDict, List
+from src.typings.agent_roles import SubAgentRole, AgentRole
 
 
 class ETFTickerInfo(TypedDict):
@@ -3786,6 +3615,34 @@ FUNDAMENTAL_RISK_CATEGORIES = {
         "priceHint",
     ],
 }
+
+SPECIALIST_ROLES: List[SubAgentRole] = [
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+
+ALL_ROLES: List[AgentRole] = [
+    "CHIEF_INVESTMENT_OFFICER",
+    "MARKET_ANALYST",
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TRADING_EXECUTOR",
+]
+```
+
+src/utils/message.py
+```
+from langchain_core.messages import AIMessage, BaseMessage
+
+
+def combine_ai_messages(messages: list[BaseMessage]) -> str:
+    return "\n".join(
+        [str(msg.content) for msg in messages if isinstance(msg, AIMessage)]
+    )
 ```
 
 src/utils/ticker.py
@@ -3794,14 +3651,1722 @@ from src import db
 
 
 async def is_valid_ticker(ticker: str):
-    await db.connect()
     ticker = ticker.replace("-", ".")
     ticker_record = await db.prisma.ticker.find_unique(where={"ticker": ticker})
-    await db.disconnect()
+
     return ticker_record is not None
 
 
 __all__ = ["is_valid_ticker"]
+```
+
+src/tools_adaptors/__init__.py
+```
+from src.tools_adaptors.news import MarketNewsAct, EquityNewsAct
+from src.tools_adaptors.research import GoogleMarketResearchAct, GoogleEquityResearchAct
+
+from src.tools_adaptors.base import Action
+from src.tools_adaptors.stocks import (
+    ETFLivePriceChangeAct,
+    StockCurrentPriceAndIntradayChangeAct,
+    StockHistoricalPriceChangesAct,
+    StockLivePriceChangeAct,
+    MostActiveStockersAct,
+    SingleLatestQuotesAct,
+    MultiLatestQuotesAct,
+    GetPriceTrendAct,
+)
+from src.tools_adaptors.portfolio import (
+    ListPositionsAct,
+    PortfolioPerformanceAnalysisAct,
+)
+
+from src.tools_adaptors.fundamental_data import FundamentalDataAct
+from src.tools_adaptors.risk import FundamentalRiskDataAct, VolatilityRiskAct
+from src.tools_adaptors.common import (
+    GetUserInvestmentStrategyAct,
+    SendInvestmentReportEmailAct,
+    WriteInvestmentReportEmailAct,
+    GetHistoricalReviewedTickersAct,
+)
+
+__all__ = [
+    "Action",
+    "GetPriceTrendAct",
+    "SingleLatestQuotesAct",
+    "MultiLatestQuotesAct",
+    "MarketNewsAct",
+    "EquityNewsAct",
+    "GoogleMarketResearchAct",
+    "ETFLivePriceChangeAct",
+    "StockCurrentPriceAndIntradayChangeAct",
+    "StockHistoricalPriceChangesAct",
+    "StockLivePriceChangeAct",
+    "MostActiveStockersAct",
+    "ListPositionsAct",
+    "PortfolioPerformanceAnalysisAct",
+    "FundamentalDataAct",
+    "FundamentalRiskDataAct",
+    "VolatilityRiskAct",
+    "GoogleEquityResearchAct",
+    "GetUserInvestmentStrategyAct",
+    "SendInvestmentReportEmailAct",
+    "WriteInvestmentReportEmailAct",
+    "GetHistoricalReviewedTickersAct",
+]
+```
+
+src/tools_adaptors/base.py
+```
+from abc import ABC, abstractmethod
+from typing import TypeVar, Generic
+from src.utils import async_timeout
+
+T = TypeVar("T")
+
+
+class Action(ABC, Generic[T]):
+    @abstractmethod
+    @async_timeout(30)
+    async def arun(self, *args, **kwargs) -> T:
+        pass
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+```
+
+src/tools_adaptors/common.py
+```
+import os
+from datetime import datetime
+from langchain.agents import create_agent
+from langchain_core.messages import HumanMessage
+from src import db
+from prisma.enums import RunStatus
+from src import utils
+from src.models import get_model
+from src.utils import async_retry, send_ses_email
+from src.tools_adaptors.base import Action
+
+
+BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
+
+
+class GetUserInvestmentStrategyAct(Action):
+    @property
+    def name(self) -> str:
+        return "get_user_investment_strategy"
+
+    @async_retry()
+    async def arun(self, botId: str) -> str:
+        bot = await db.prisma.bot.find_unique(where={"id": botId})
+        if not bot:
+            raise ValueError(f"Bot with ID {botId} not found.")
+
+        return bot.strategy
+
+
+class WriteInvestmentReportEmailAct(Action):
+    @property
+    def name(self) -> str:
+        return "write_investment_report_email"
+
+    @async_retry()
+    async def arun(
+        self, llm_model: str, botId: str, run_id: str, conversation: str
+    ) -> str:
+        system_prompt = (
+            "You are the Synthesis & Communications Officer (SCO) for an AI investment team. "
+            "You are NOT an analyst, strategist, or decision-maker. "
+            "You are a neutral, meticulous scribe and editor whose sole purpose is to accurately capture, structure, "
+            "and communicate the team's discussion into a professional investment report. "
+            "You have no opinions, no biases, and no agenda beyond faithful representation and clarity. "
+        )
+
+        instruction = f"""
+        Directly produce a single, self-contained HTML investment report summarizing the conversation below.
+
+
+        Requirements:
+        1. The investment summary must consolidate insights from every analyst involved in the run,
+        presenting each analyst’s investment recommendation together with the detailed rationale
+        behind it. It must conclude with the final trading decision (buy, sell, or hold) for
+        the tickers, again including the rationale that led to that decision.
+        
+        2.A professionally formatted, self-contained, and stylish HTML string representing the consolidated investment report.
+        It must include fully-styled inline CSS (e.g., font-family, color, padding, borders) to ensure
+        consistent rendering across all major email clients. Plain text or Markdown are not acceptable.
+        Ensure the content contains:
+        - Aggregated insights from all analysts to comprehensively evaluate the tickers.
+        - Each analyst’s recommendation and its rationale.
+        - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
+        - Line charts and bar charts rendered purely with HTML and CSS (no external images or scripts).
+        
+        3. Must Include A BUTTON with the link  {BASE_URL}/bots/{botId}/conversation?runId={run_id}
+        to allow users to view the full conversation.
+
+        Conversation:
+        -------------
+        {conversation}
+        """
+
+        langchain_model = get_model(llm_model)
+        agent = create_agent(
+            model=langchain_model,
+            system_prompt=system_prompt,
+        )
+        result = agent.invoke({"messages": [HumanMessage(content=instruction)]})
+
+        report = result["messages"][-1].content
+
+        await db.prisma.run.update(where={"id": run_id}, data={"summary": report})
+        return report
+
+
+class SendInvestmentReportEmailAct(Action):
+    @property
+    def name(self) -> str:
+        return "send_investment_report_email"
+
+    @async_retry()
+    async def arun(self, user_id, run_id: str, bot_name: str) -> str:
+        run = await db.prisma.run.find_unique(where={"id": run_id})
+
+        if not run:
+            return "Run not found"
+
+        investment_report = run.summary
+        if not investment_report:
+            return "Investment report not found. please write it first."
+
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        recipient = await db.prisma.user.find_unique(where={"clerkId": user_id})
+
+        if not recipient:
+            return "User not found"
+
+        email = recipient.email
+        subject = f"SandX.AI Execution Summary — {bot_name} | {date_str} | {run_id}"
+
+        investment_report = investment_report.strip()
+        if investment_report.startswith("```html"):
+            investment_report = investment_report["```html".__len__() :]
+        if investment_report.startswith("```"):
+            investment_report = investment_report[3:]
+        if investment_report.endswith("```"):
+            investment_report = investment_report[:-3]
+
+        investment_report = investment_report.strip()
+
+        send_ses_email(
+            subject=subject,
+            recipient=email,
+            html_body=investment_report,
+        )
+        return "Sent investment report email successfully!"
+
+
+class GetHistoricalReviewedTickersAct(Action):
+    @property
+    def name(self) -> str:
+        return "get_historical_reviewed_tickers"
+
+    @async_retry()
+    async def arun(self, botId: str) -> str:
+        bot = await db.prisma.bot.find_unique(where={"id": botId})
+        if not bot:
+            raise ValueError(f"Bot with ID {botId} not found.")
+
+        runs = await db.prisma.run.find_many(
+            where={"botId": botId, "status": RunStatus.SUCCESS},
+            order={"createdAt": "desc"},
+            take=7,
+        )
+        if not runs:
+            return "No previous tickers reviewed found."
+
+        run_tickers = []
+        for run in runs:
+            if run.tickers:
+                tmp_dict = {
+                    "tickers": run.tickers,
+                    "reviewed_at": run.createdAt.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                run_tickers.append(tmp_dict)
+        tickers_markdown = utils.dicts_to_markdown_table(run_tickers)
+        return tickers_markdown
+```
+
+src/tools_adaptors/fundamental_data.py
+```
+from src.tools_adaptors.base import Action
+from src.services.yfinance.api_info import async_get_ticker_info
+from src.tools_adaptors import utils
+from src.utils import constants, async_retry
+
+
+class FundamentalDataAct(Action):
+    @property
+    def name(self):
+        return "get_comprehensive_fundamental_data"
+
+    @async_retry()
+    async def arun(self, ticker: str) -> str:
+        info = await async_get_ticker_info(ticker)
+        info = utils.preprocess_info_dict(info)
+        categorized_data = utils.get_categorized_metrics(
+            info, categories_map=constants.FUNDAMENTAL_CATEGORIES
+        )
+        md = utils.format_fundamentals_markdown(categorized_data, ticker)
+        return md
+
+
+__all__ = ["FundamentalDataAct"]
+```
+
+src/tools_adaptors/google_equity_research.md
+```
+**Role:**
+Act as a US Equity Research Analyst specializing in tactical, event-driven insights. Your task is to synthesize a comprehensive investment thesis for `{TICKER}` by integrating real-time company-specific news with the broader market narrative.
+
+**Context:**
+- **Analysis Date:** `{datetime}`
+- **Target Ticker:** `{TICKER}`
+- **Sources:** Use only reputable sources (Company IR, SEC Filings, Bloomberg, Reuters, WSJ, Industry Publications). Prioritize same-day news and releases.
+- **Mandate:** Do not list facts—explain the “so what?” for `{TICKER}`. Connect macro and sector trends directly to the company's prospects.
+
+**Execution Rules:**
+1.  Use targeted web search for `{TICKER}`-specific news, press releases, and analyst commentary.
+2.  Use broader market searches to contextualize `{TICKER}`'s price action within the sector and macro environment.
+3.  Cite sources and timestamps for each insight.
+4.  All data must be current (≤5 days).
+
+---
+
+### **Focus Areas for `{TICKER}`:**
+
+**1. Executive Summary & Investment Thesis**
+-   **Dominant Narrative:** What is the prevailing market narrative *for this specific stock*? (e.g., "AI beneficiary," "victim of higher rates," "turnaround story").
+-   **Thesis Driver Ranking:** Rank the key drivers for `{TICKER}`: Company-Specific News (earnings, M&A, guidance) > Sector Trends > Macro Environment.
+-   **Actionable Takeaway:** Provide a clear, concise recommendation framework (e.g., "BUY on product catalyst," "HOLD until earnings clarity," "SELL due to sector headwinds").
+
+**2. Fundamental & Catalytic Drivers**
+-   **Company-Specific Catalysts:**
+    -   Recent earnings report: Key beats/misses, guidance changes, and management commentary.
+    -   Recent press releases: M&A, product launches, regulatory approvals.
+    -   Analyst Actions: Recent upgrades/downgrades and changes to price targets.
+-   **Sector & Macro Impact:**
+    -   How is the performance of the `{TICKER}`'s sector and the broader market (SPY/QQQ) influencing its price?
+    -   Explain *why* recent news is causing the stock to move. (e.g., "The stock is down 5% today despite a beat because guidance was weak, signaling demand concerns.")
+
+**3. Technical & Sentiment Positioning**
+-   **Technical Health:**
+    -   Key price levels: Support/Resistance, relation to key moving averages (50-day, 200-day).
+    -   Momentum: RSI, MACD. Is the stock overbought or oversold?
+    -   Unusual options activity (if available): Are traders betting on a big move?
+-   **Market Sentiment:**
+    -   What is the news sentiment (Bullish/Bearish/Neutral) around `{TICKER}`?
+    -   How does this compare to the sentiment for its sector?
+
+**4. Risk Assessment**
+-   **Idiosyncratic Risks:** Company-specific risks (e.g., CEO departure, product delay, lawsuit, liquidity concerns).
+-   **Systematic Risks:** How is `{TICKER}` exposed to broader risks? (e.g., "As a growth stock, it is highly sensitive to Fed rate expectations outlined in the CME FedWatch tool.").
+
+**5. Forward Look & Monitoring Plan**
+-   **Key Upcoming Events:** Next earnings date, investor day, product launch, Fed meeting, sector-specific reports.
+-   **Bull & Bear Scenarios:**
+    -   *Bull Case (Probability: X%):* What event or trend could drive the stock higher?
+    -   *Bear Case (Probability: Y%):* What would cause a significant drop?
+-   **Top 3 Metrics to Monitor:** The most crucial indicators for this stock (e.g., "Weekly sales data," "Changes in analyst estimates," "Sector ETF flows").
+```
+
+src/tools_adaptors/google_research.md
+```
+**Role:**  
+Act as a US Financial Market Research Analyst. Your task is to synthesize and present the comprehensive current market state, key drivers, risks, and opportunities based on real-time data and recent news.
+
+Focus on actionable insights for portfolio strategy.
+
+**Context:**  
+- Date: `{datetime}`
+- Use only reputable, primary sources (Bloomberg, Reuters, WSJ, Fed, BLS, BEA, CME, CBOE).  
+- All data must be current (≤5 days). Prioritize same-day news and releases.  
+- Do not list facts—explain the “so what?” for portfolio managers. Highlight trade ideas, sector rotation, and hedging implications.
+
+**Execution Rules:**  
+1. Use targeted web search,url context tools.  
+2. Cite sources and timestamps for each insight.  
+---
+
+### Focus Areas:
+
+**1. Executive Summary**  
+- What’s the dominant market narrative?  
+- Rank key drivers: Fed, macro data, earnings, geopolitics.. 
+- Provide comprehensive actionable portfolio takeaway (e.g., sector overweight, hedge, rotation).  
+
+**2. Fundamental Drivers**  
+- Fed commentary & CME FedWatch probabilities  
+- Latest macro data (CPI, jobs, PCE) vs expectations  
+- Notable earnings reactions and catalysts and explain *why* these factors caused the market to rise/fall.
+
+**3. Sector & Asset Class Rotation**  
+- Top/bottom 3 S&P sectors (last 5 days) with catalysts  
+- Technical health: key levels, RSI, moving averages  
+- Credit spreads and cross-asset signals
+
+**4. Sentiment & Positioning**  
+- Fear & Greed Index trend  
+- Positioning extremes (CFTC, options, flows)
+
+**5. Forward Look (Next 5–10 Days)**  
+- Key upcoming events (Fed, macro, earnings)  
+- Bull/Bear scenarios with probabilities  
+- Top 3–5 metrics to monitor
+```
+
+src/tools_adaptors/news.py
+```
+from datetime import date, timedelta
+from src.services.tradingeconomics import get_news
+from src.services.alpaca import get_news as get_alpaca_news
+from src.tools_adaptors.base import Action
+from src.utils import convert_html_to_markdown, async_retry
+
+
+class MarketNewsAct(Action):
+    @property
+    def name(self):
+        return "get_latest_market_news"
+
+    @async_retry()
+    async def arun(self):
+        data = await get_news()
+        return data
+
+
+class EquityNewsAct(Action):
+    @property
+    def name(self):
+        return "get_latest_equity_news"
+
+    @async_retry()
+    async def arun(self, symbol: str):
+        data = await get_alpaca_news(
+            symbols=[symbol],
+            start=(date.today() - timedelta(days=5)).isoformat(),
+            end=date.today().isoformat(),
+            sort="desc",
+            limit=15,
+        )
+
+        news_list = data["news"]
+
+        image_size_map = {"large": 3, "medium": 2, "small": 1, "thumb": 0}
+        top_content = 3
+        formatted_news: list[str] = []
+        for i, new in enumerate(news_list):
+            headline = new["headline"]
+            summary = new["summary"]
+            published_at = new["created_at"]
+            image_url = (
+                min(new["images"], key=lambda x: image_size_map.get(x["size"], 1))[
+                    "url"
+                ]
+                if new.get("images")
+                else ""
+            )
+            if i <= top_content:
+                content = convert_html_to_markdown(new["content"])
+            else:
+                content = summary
+
+            article = f"### {headline}\n"
+            article += f"Published: {published_at}\n\n"
+            article += f"![{headline}]({image_url})\n\n"
+            article += f"{content}\n\n"
+            formatted_news.append(article)
+
+        heading = f"## Latest {symbol} News"
+        return heading + "\n\n" + "\n\n".join(formatted_news)
+
+
+__all__ = ["MarketNewsAct", "EquityNewsAct"]
+
+if __name__ == "__main__":
+    import asyncio
+
+    # python -m src.tools_adaptors.news
+    equity_news_action = EquityNewsAct()
+    result = asyncio.run(equity_news_action.arun("AAPL"))  # type: ignore
+    print(result)
+```
+
+src/tools_adaptors/portfolio.py
+```
+from typing import Sequence, Annotated, TypedDict
+from src.tools_adaptors.base import Action
+from src.services.sandx_ai import list_positions, get_timeline_values
+from src.services.sandx_ai.typing import Position
+from src.tools_adaptors import utils as action_utils
+from src import utils
+from src.utils import async_retry
+
+
+class FormattedPosition(TypedDict):
+    ticker: Annotated[str, "The stock ticker of the position"]
+    allocation: Annotated[
+        str, "The percentage allocation of the position in the portfolio"
+    ]
+    current_price: Annotated[str, "The current price of the stock position per share"]
+    ptc_change_in_price: Annotated[
+        str, "The percentage change in price relative to the open price"
+    ]
+    current_value: Annotated[
+        str, "The total current value of the position in the portfolio"
+    ]
+    volume: Annotated[str, "The total share of the position in the portfolio"]
+    cost: Annotated[str, "The average cost of the position in the portfolio"]
+    pnl: Annotated[str, "Profit and Loss of the position in the portfolio"]
+    pnl_percent: Annotated[
+        str, "Profit and Loss percentage of the position in the portfolio"
+    ]
+
+
+def convert_positions_to_markdown_table(positions: Sequence[Position]) -> str:
+    """
+    Convert a list of Position objects to a markdown table.
+
+    Parameters
+    ----------
+    positions : list[Position]
+        A list of Position objects to be converted into a markdown table.
+
+    Returns
+    -------
+    str
+        A markdown table string representation of the positions.
+    """
+    positions = sorted(positions, key=lambda x: x["allocation"], reverse=True)
+    formatted_positions = []
+    for position in positions:
+        formatted_position = FormattedPosition(
+            ticker=position["ticker"],
+            volume=utils.format_float(position["volume"]),
+            cost=utils.format_float(position["cost"]),
+            current_price=utils.format_float(position["current_price"]),
+            ptc_change_in_price=utils.format_percent_change(
+                position["ptc_change_in_price"]
+            ),
+            current_value=utils.format_currency(position["current_value"]),
+            allocation=utils.format_percent(position["allocation"]),
+            pnl=utils.format_currency(position["pnl"]),
+            pnl_percent=utils.format_percent(position["pnl_percent"]),
+        )
+        formatted_positions.append(formatted_position)
+    position_markdown = utils.dicts_to_markdown_table(formatted_positions)
+    heading = "## User's Current Open Positions"
+
+    datetime = utils.get_current_timestamp()
+
+    note = f"""
+- Datetime New York Time: {datetime}
+- CASH is a special position that represents the cash balance in the account.
+- ptc_change_in_price is the percentage change from the position’s open price to the current price.
+- Allocation percentages are computed against the sum of currentValue across
+    **all** positions plus any cash held in the same account.
+    """
+
+    return heading + "\n\n" + note + "\n\n" + position_markdown
+
+
+class ListPositionsAct(Action):
+    @property
+    def name(self):
+        return "list_current_positions"
+
+    @async_retry()
+    async def arun(self, bot_id: str) -> str:
+        positions = await list_positions(bot_id)
+        position_markdown = convert_positions_to_markdown_table(positions)
+        return position_markdown
+
+
+class PortfolioPerformanceAnalysisAct(Action):
+    @property
+    def name(self):
+        return "get_portfolio_performance_analysis"
+
+    @async_retry()
+    async def arun(self, bot_id: str):
+        timeline_values = await get_timeline_values(bot_id)
+        analysis = action_utils.analyze_timeline_value(timeline_values)
+        if analysis:
+            return action_utils.create_performance_narrative(analysis)
+
+        return "Insufficient data for analysis."
+
+
+__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
+```
+
+src/tools_adaptors/research.py
+```
+import asyncio
+import os
+from google import genai
+from google.genai import types
+
+from src.tools_adaptors.base import Action
+from src.services.utils import redis_cache
+from src.utils import async_wrap, async_retry
+from src.utils import get_current_date
+
+
+class GoogleMarketResearchAct(Action):
+    def __init__(self):
+        self.client = genai.Client(
+            vertexai=True,
+            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
+        )
+        tools = [
+            types.Tool(google_search=types.GoogleSearch()),
+        ]
+        self.config = types.GenerateContentConfig(
+            temperature=1,
+            top_p=1,
+            max_output_tokens=65535,
+            tools=tools,
+            thinking_config=types.ThinkingConfig(
+                # include_thoughts=True,
+                thinking_budget=-1,
+            ),
+        )
+
+    @property
+    def name(self):
+        return "google_finance_market_research"
+
+    @async_retry()  # pyright: ignore [reportArgumentType]
+    @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
+    async def arun(self):
+        return await self.run()
+
+    @async_wrap()
+    def run(self):
+        self.client = genai.Client(
+            vertexai=True,
+            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
+        )
+
+        with open(
+            "./src/tools_adaptors/google_research.md", mode="r", encoding="utf-8"
+        ) as f:
+            prompt_template = f.read()
+
+        datetime_str = get_current_date()
+        prompt = prompt_template.format(datetime=datetime_str)
+
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=self.config,
+        )
+
+        text = ""
+        if response.candidates:
+            for candidate in response.candidates:
+                if not candidate.content or not candidate.content.parts:
+                    continue
+                for part in candidate.content.parts:
+                    if part.text:
+                        text += part.text
+
+        return text
+
+
+class GoogleEquityResearchAct(Action):
+    def __init__(self):
+        self.client = genai.Client(
+            vertexai=True,
+            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
+        )
+        tools = [
+            types.Tool(google_search=types.GoogleSearch()),
+        ]
+        self.config = types.GenerateContentConfig(
+            temperature=1,
+            top_p=1,
+            max_output_tokens=65535,
+            tools=tools,
+            thinking_config=types.ThinkingConfig(
+                # include_thoughts=True,
+                thinking_budget=-1,
+            ),
+        )
+
+    @property
+    def name(self):
+        return "google_equity_research"
+
+    @async_retry()  # pyright: ignore [reportArgumentType]
+    @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 24)
+    async def arun(self, ticker: str):
+        return await self.run(ticker)
+
+    @async_wrap()
+    def run(self, ticker: str):
+        self.client = genai.Client(
+            vertexai=True,
+            api_key=os.environ.get("GOOGLE_CLOUD_API_KEY"),
+        )
+
+        with open(
+            "./src/tools_adaptors/google_equity_research.md", mode="r", encoding="utf-8"
+        ) as f:
+            prompt_template = f.read()
+
+        datetime_str = get_current_date()
+        prompt = prompt_template.format(TICKER=ticker, datetime=datetime_str)
+
+        response = self.client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=self.config,
+        )
+
+        text = ""
+        if response.candidates:
+            for candidate in response.candidates:
+                if not candidate.content or not candidate.content.parts:
+                    continue
+                for part in candidate.content.parts:
+                    if part.text:
+                        text += part.text
+
+        return text
+
+
+if __name__ == "__main__":
+    # python -m src.tools.actions.research
+    google_market_research_action = GoogleMarketResearchAct()
+    result = asyncio.run(google_market_research_action.arun())  # type: ignore
+    print(result)
+```
+
+src/tools_adaptors/risk.py
+```
+from datetime import date, timedelta
+
+from src.services.alpaca import get_historical_price_bars
+from src.services.yfinance.api_info import async_get_ticker_info
+from src.tools_adaptors import utils
+from src.tools_adaptors.base import Action
+from src.utils import constants, async_retry
+
+
+class FundamentalRiskDataAct(Action):
+    @property
+    def name(self):
+        return "get_comprehensive_fundamental_risk_data"
+
+    @async_retry()
+    async def arun(self, ticker: str) -> str:
+        info = await async_get_ticker_info(ticker)
+        info = utils.preprocess_info_dict(info)
+        categorized_data = utils.get_categorized_metrics(
+            info, categories_map=constants.FUNDAMENTAL_RISK_CATEGORIES
+        )
+        md = utils.format_fundamentals_markdown(categorized_data, ticker)
+        return md
+
+
+class VolatilityRiskAct(Action):
+    @property
+    def name(self):
+        return "get_volatility_risk_indicators"
+
+    @async_retry()
+    async def arun(self, ticker: str) -> str:
+        """Get volatility risk indicators for a ticker"""
+        start = (date.today() - timedelta(days=180 + 7)).isoformat()
+        end = date.today().isoformat()
+        price_bars = await get_historical_price_bars(
+            symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
+        )
+        price_bars = price_bars[ticker]
+        risk = utils.calculate_volatility_risk(price_bars)
+        md = utils.format_volatility_risk_markdown(risk, ticker)
+        return md
+
+
+class PriceRiskAct(Action):
+    @property
+    def name(self):
+        return "get_price_risk_indicators"
+
+    @async_retry()
+    async def arun(self, ticker: str) -> str:
+        """Get price risk indicators for a ticker"""
+        start = (date.today() - timedelta(days=180 + 7)).isoformat()
+        end = date.today().isoformat()
+        price_bars = await get_historical_price_bars(
+            symbols=[ticker], timeframe="1Day", start=start, end=end, sort="asc"
+        )
+        price_bars = price_bars[ticker]
+        risk = utils.calculate_price_risk(price_bars)
+        md = utils.format_price_risk_markdown(risk, ticker)
+        return md
+
+
+__all__ = ["FundamentalRiskDataAct", "VolatilityRiskAct", "PriceRiskAct"]
+```
+
+src/tools_adaptors/stocks.py
+```
+import asyncio
+from datetime import time, datetime, timedelta, timezone, date
+from typing import TypedDict, List
+from src.services.alpaca import (
+    get_snapshots,
+    get_historical_price_bars,
+    get_most_active_stocks,
+    get_latest_quotes,
+)
+from src.services.alpaca.typing import PriceBar
+from src.tools_adaptors.base import Action
+from src import utils
+from src.utils.constants import ETF_TICKERS
+from src.utils import async_retry
+
+
+class StockRawSnapshotAct(Action):
+    @property
+    def name(self):
+        return "Get Stock Snapshot"
+
+    @async_retry()
+    async def arun(self, tickers: list[str]) -> dict:
+        """
+        Fetch raw market snapshots for multiple tickers.
+
+        Returns the latest trade, latest quote, minute bar, daily bar, and previous daily bar data
+        for each ticker symbol.
+
+        Args:
+            tickers: A list of ticker symbols.
+        Returns:
+            A dictionary mapping each ticker to its complete raw snapshot data.
+        """
+        data = await get_snapshots(tickers)
+        return data
+
+
+class CurrentPriceAndIntradayChange(TypedDict):
+    current_price: str
+    current_intraday_percent: str
+
+
+class StockCurrentPriceAndIntradayChangeAct(Action):
+    @property
+    def name(self):
+        return "Stock Current Price and Intraday Change"
+
+    @async_retry()
+    async def arun(
+        self, tickers: list[str]
+    ) -> dict[str, CurrentPriceAndIntradayChange]:
+        """
+        Fetch the current price and intraday percent change for a list of tickers.
+
+        The intraday change is calculated against the previous day's close:
+        - Before 9:30 AM ET, the reference is the daily bar close.
+        - At or after 9:30 AM ET, the reference is the previous daily bar close.
+
+        Args:
+            tickers: A list of ticker symbols.
+        Returns:
+            A dictionary mapping each ticker to its current price and intraday percent change.
+        """
+
+        ticker_price_changes = {}
+
+        snapshots = await get_snapshots(tickers)
+
+        for ticker in tickers:
+            # Get current time in New York timezone
+            current_time = utils.get_new_york_datetime().time()
+            # Use dailyBar if before 9:30 AM, otherwise use prevDailyBar
+            if current_time < time(9, 30):
+                previous_close_price = snapshots[ticker]["dailyBar"]["c"]
+            else:
+                previous_close_price = snapshots[ticker]["prevDailyBar"]["c"]
+
+            intraday_percent = (
+                snapshots[ticker]["latestQuote"]["bp"] - previous_close_price
+            ) / previous_close_price
+
+            ticker_price_changes[ticker] = CurrentPriceAndIntradayChange(
+                current_price=utils.format_currency(
+                    snapshots[ticker]["latestQuote"]["bp"]
+                ),
+                current_intraday_percent=utils.format_percent(intraday_percent),
+            )
+
+        return ticker_price_changes
+
+
+class HistoricalPriceChangePeriods(TypedDict):
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class StockHistoricalPriceChangesAct(Action):
+    @property
+    def name(self):
+        return "Stock Historical Price Changes"
+
+    # disable: pylint:disable=too-many-locals
+    @async_retry()
+    async def arun(self, tickers: list[str]) -> dict[str, HistoricalPriceChangePeriods]:
+        """
+        Compute percentage changes over standard periods using Alpaca daily bars.
+
+        Periods: one_day, one_week, one_month, three_months, six_months, one_year, three_years.
+
+        - Uses UTC timestamps (ISO 8601 with trailing 'Z') as required by Alpaca.
+        - Selects the most recent close as the "current" reference.
+        - For each period, finds the close on or before the target date.
+        - Returns None when not enough history exists for a period.
+
+        Args:
+            tickers: List of ticker symbols.
+        Returns:
+            Mapping of ticker to period percent changes, e.g. {"AAPL": {"1w": 0.02, ...}}.
+        """
+
+        def _parse_ts(ts: str) -> datetime:
+            try:
+                return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=timezone.utc
+                )
+
+        def _find_close_on_or_before(
+            bars: List[PriceBar], target_dt: datetime
+        ) -> float | None:
+            for bar_ in bars:
+                bar_dt = _parse_ts(bar_["timestamp"])
+                if bar_dt <= target_dt:
+                    return bar_["close_price"]
+            return None
+
+        period_deltas: dict[str, timedelta] = {
+            "one_day": timedelta(days=1),
+            "one_week": timedelta(days=7),
+            "one_month": timedelta(days=30),
+            "three_months": timedelta(days=90),
+            "six_months": timedelta(days=180),
+            # "one_year": timedelta(days=365),
+            # "three_years": timedelta(days=365 * 3),
+        }
+
+        start = (date.today() - timedelta(days=180 + 7)).isoformat()
+        end = date.today().isoformat()
+
+        bars_by_symbol = await get_historical_price_bars(
+            symbols=tickers,
+            timeframe="1Day",
+            start=start,
+            end=end,
+            sort="desc",  # IMPORTANT: sort by descending timestamp
+        )
+
+        results = {}
+        for ticker in tickers:
+            if not bars_by_symbol.get(ticker):
+                continue
+            bars = bars_by_symbol[ticker]
+            latest_close = float(bars[0]["close_price"])
+            latest_dt = _parse_ts(bars[0]["timestamp"])
+
+            period_changes: dict[str, str | None] = {
+                "one_day": None,
+                "one_week": None,
+                "one_month": None,
+                "three_months": None,
+                "six_months": None,
+                "one_year": None,
+                "three_years": None,
+            }
+
+            for key, delta in period_deltas.items():
+                target_dt = latest_dt - delta
+                prior_close = _find_close_on_or_before(bars, target_dt)
+                if prior_close is not None and prior_close != 0:
+                    period_changes[key] = utils.format_percent_change(
+                        (latest_close - prior_close) / prior_close
+                    )
+                else:
+                    period_changes[key] = None
+
+            results[ticker] = period_changes
+
+        return results
+
+
+class StockPriceSnapshotWithHistory(TypedDict):
+    current_price: str
+    current_intraday_percent: str
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class ETFPriceSnapshotWithHistory(TypedDict):
+    ticker: str
+    name: str
+    description: str
+    current_price: str
+    current_intraday_percent: str
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class StockLivePriceChangeAct(Action):
+    @property
+    def name(self):
+        return "get_stock_live_price_and_change"
+
+    # To need to retry because the sub-actions has retry decorator
+    # @async_retry()
+    async def arun(
+        self, tickers: list[str]
+    ) -> dict[str, StockPriceSnapshotWithHistory]:
+        """
+        Fetch a complete price snapshot for multiple tickers.
+
+        Returns current price, intraday change, and historical percent changes
+        for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
+        """
+
+        current_task = asyncio.create_task(
+            StockCurrentPriceAndIntradayChangeAct().arun(tickers)
+        )
+        historical_task = asyncio.create_task(
+            StockHistoricalPriceChangesAct().arun(tickers)
+        )
+
+        current, historical = await asyncio.gather(current_task, historical_task)
+
+        results = {}
+        if historical == "ERROR":
+            return results
+
+        if current == "ERROR":
+            return results
+
+        for ticker in tickers:
+            history: HistoricalPriceChangePeriods = historical[ticker]
+            currency: CurrentPriceAndIntradayChange = current[ticker]
+            results[ticker] = StockPriceSnapshotWithHistory(
+                current_price=currency["current_price"],
+                current_intraday_percent=currency["current_intraday_percent"],
+                one_day=history["one_day"],
+                one_week=history["one_week"],
+                one_month=history["one_month"],
+                three_months=history["three_months"],
+                six_months=history["six_months"],
+                one_year=history["one_year"],
+                three_years=history["three_years"],
+            )
+
+        return results
+
+
+class ETFLivePriceChangeAct(Action):
+    @property
+    def name(self):
+        return "get_major_etf_live_price_and_historical_change"
+
+    # No need to retry because the sub-actions has retry decorator
+    # @async_retry()
+    async def arun(self) -> dict[str, ETFPriceSnapshotWithHistory]:
+        """
+        Fetch a complete price snapshot for multiple major ETF tickers.
+
+        Returns current price, intraday change, and historical percent changes
+        for standard periods (1D, 1W, 1M, 3M, 6M, 1Y, 3Y) in a single call.
+        """
+        tickers = [t["ticker"] for t in ETF_TICKERS]
+        ticker_info_dict = {t["ticker"]: t for t in ETF_TICKERS}
+
+        current_task = asyncio.create_task(
+            StockCurrentPriceAndIntradayChangeAct().arun(tickers)
+        )
+        historical_task = asyncio.create_task(
+            StockHistoricalPriceChangesAct().arun(tickers)
+        )
+
+        current, historical = await asyncio.gather(current_task, historical_task)
+
+        results = {}
+        if current == "ERROR":
+            return results
+        if historical == "ERROR":
+            return results
+
+        for ticker in tickers:
+            history: HistoricalPriceChangePeriods = historical[ticker]
+            currency: CurrentPriceAndIntradayChange = current[ticker]
+            results[ticker] = ETFPriceSnapshotWithHistory(
+                ticker=ticker,
+                name=ticker_info_dict[ticker]["name"],
+                description=ticker_info_dict[ticker]["description"],
+                current_price=currency["current_price"],
+                current_intraday_percent=currency["current_intraday_percent"],
+                one_day=history["one_day"],
+                one_week=history["one_week"],
+                one_month=history["one_month"],
+                three_months=history["three_months"],
+                six_months=history["six_months"],
+                one_year=history["one_year"],
+                three_years=history["three_years"],
+            )
+
+        return results
+
+
+class ActiveStockFullPriceMetrics(TypedDict):
+    symbol: str
+    trade_count: int
+    volume: int
+    current_price: str
+    current_intraday_percent: str
+    one_day: str | None
+    one_week: str | None
+    one_month: str | None
+    three_months: str | None
+    six_months: str | None
+    one_year: str | None
+    three_years: str | None
+
+
+class MostActiveStockFullPriceMetrics(TypedDict):
+    last_updated: str
+    most_actives: list[ActiveStockFullPriceMetrics]
+
+
+class MostActiveStockersAct(Action):
+    @property
+    def name(self):
+        return "get_most_active_stockers_with_historical_price_changes"
+
+    @async_retry()
+    async def arun(self):
+        """
+        Get the most active stockers.
+        """
+        data = await get_most_active_stocks()
+        tickers = [item["symbol"] for item in data["most_actives"]]
+        most_active_stocks: list[ActiveStockFullPriceMetrics] = []
+
+        results = await StockLivePriceChangeAct().arun(tickers)
+
+        for item in data["most_actives"]:
+            symbol = item["symbol"]
+            price_metrics = results.get(symbol)
+            if price_metrics:
+                full_metrics = ActiveStockFullPriceMetrics(
+                    symbol=symbol,
+                    trade_count=item["trade_count"],
+                    volume=item["volume"],
+                    **price_metrics,
+                )
+                most_active_stocks.append(full_metrics)
+
+        return MostActiveStockFullPriceMetrics(
+            last_updated=data["last_updated"],
+            most_actives=most_active_stocks,
+        )
+
+
+# src/tools_adaptors/stocks.py - Add this class
+class MultiLatestQuotesAct(Action):
+    @property
+    def name(self):
+        return "get_multi_symbols_latest_quotes"
+
+    @async_retry()
+    async def arun(self, symbols: list[str]) -> str:
+        """
+        Fetch latest quotes for multiple symbols.
+
+        Returns:
+            dict: Mapping of symbol to quote data including:
+                - ask_price: Current ask price
+                - ask_size: Ask size
+                - bid_price: Current bid price
+                - bid_size: Bid size
+                - timestamp: Quote timestamp
+        """
+
+        quotesResponse = await get_latest_quotes(symbols)
+        formatted_quotes = []
+        quotes = quotesResponse["quotes"]
+        for symbol in quotes:
+            quote = quotes[symbol]
+            formatted_quote = {
+                "symbol": symbol,
+                "bid_price": utils.format_currency(quote["bid_price"]),
+                "bid_size": utils.human_format(quote["bid_size"]),
+                "ask_price": utils.format_currency(quote["ask_price"]),
+                "ask_size": utils.human_format(quote["ask_size"]),
+                "spread": utils.format_currency(
+                    quote["ask_price"] - quote["bid_price"]
+                ),
+                "spread_percent": utils.format_percent(
+                    (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
+                ),
+                "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
+                "timestamp": utils.format_datetime(quote["timestamp"]),
+                # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
+            }
+            formatted_quotes.append(formatted_quote)
+
+        if not formatted_quotes:
+            return "No quote data available for the requested symbols."
+
+        markdown_table = utils.dicts_to_markdown_table(formatted_quotes)
+        heading = "## Latest Market Quotes"
+        note = f"""
+**Note:**
+- Data fetched at {utils.get_current_timestamp()} New York time
+- Bid/Ask prices are real-time consolidated quotes
+- Spread = Ask Price - Bid Price
+- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
+"""
+
+        return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
+class SingleLatestQuotesAct(Action):
+    @property
+    def name(self):
+        return "get_single_symbol_latest_quotes"
+
+    @async_retry()
+    async def arun(self, symbol: str) -> str:
+        """
+        Fetch latest quotes for a single symbol.
+
+        Returns:
+            dict: Mapping of symbol to quote data including:
+                - ask_price: Current ask price
+                - ask_size: Ask size
+                - bid_price: Current bid price
+                - bid_size: Bid size
+                - timestamp: Quote timestamp
+        """
+
+        quotes = await get_latest_quotes([symbol])
+        quote = quotes.get(symbol)
+
+        if not quote:
+            return "No quote data available for the requested symbol."
+
+        formatted_quote = {
+            "symbol": symbol,
+            "bid_price": utils.format_currency(quote["bid_price"]),
+            "bid_size": utils.human_format(quote["bid_size"]),
+            "ask_price": utils.format_currency(quote["ask_price"]),
+            "ask_size": utils.human_format(quote["ask_size"]),
+            "spread": utils.format_currency(quote["ask_price"] - quote["bid_price"]),
+            "spread_percent": utils.format_percent(
+                (quote["ask_price"] - quote["bid_price"]) / quote["bid_price"]
+            ),
+            "exchange": f"{quote['bid_exchange']}/{quote['ask_exchange']}",
+            "timestamp": utils.format_datetime(quote["timestamp"]),
+            # "conditions": ", ".join(quote["conditions"]) if quote["conditions"] else "Normal"
+        }
+
+        markdown_table = utils.dict_to_markdown_table(formatted_quote)
+        heading = f"## Latest {symbol} Market Quotes"
+        note = f"""
+**Note:**
+- Data fetched at {utils.get_current_timestamp()} New York time
+- Bid/Ask prices are real-time consolidated quotes
+- Spread = Ask Price - Bid Price
+- Conditions: 'R' = Regular Market, 'O' = Opening Quote, 'C' = Closing Quote
+"""
+
+        return heading + "\n\n" + note + "\n\n" + markdown_table
+
+
+class GetPriceTrendAct(Action):
+    @property
+    def name(self):
+        return "get_price_trend"
+
+    @async_retry()
+    async def arun(self, symbols: List[str]) -> str:
+        """
+        Get the price trend of a stock.
+
+        Returns:
+            str: The price trend of the stock.
+        """
+
+        start = (date.today() - timedelta(days=31)).isoformat()
+        end = date.today().isoformat()
+
+        bars_by_symbol = await get_historical_price_bars(
+            symbols=symbols,
+            timeframe="1Day",
+            start=start,
+            end=end,
+            sort="desc",  # IMPORTANT: sort by descending timestamp
+        )
+
+        markdown_tables = []
+        for ticker in symbols:
+            bars = bars_by_symbol[ticker]
+            bars_ = []
+            for index, bar in enumerate(bars):
+                if index == len(bars) - 1:
+                    break
+                next_price = bars[index + 1]["close_price"]
+                bars_.append(
+                    {
+                        "date": bar["timestamp"],
+                        "price": bar["close_price"],
+                        "change_percent": utils.format_percent(
+                            (bar["close_price"] - next_price) / next_price
+                        ),
+                    }
+                )
+
+            markdown_table = utils.dicts_to_markdown_table(bars_)
+            markdown_table = "**" + ticker + "**\n" + markdown_table
+            markdown_tables.append(markdown_table)
+        markdown_tables_str = "\n".join(markdown_tables)
+
+        stock_price_changes = (
+            (
+                "Note: change_percent = (current_price - previous_day_price) / previous_day_price "
+                "Measuring the change percent of the stock price relative to the previous day's price"
+            )
+            + "\n"
+            + markdown_tables_str
+        )
+        return stock_price_changes
+
+
+# only Act
+__all__ = [
+    "StockRawSnapshotAct",
+    "StockCurrentPriceAndIntradayChangeAct",
+    "StockHistoricalPriceChangesAct",
+    "StockLivePriceChangeAct",
+    "ETFLivePriceChangeAct",
+    "MostActiveStockersAct",
+    "SingleLatestQuotesAct",
+    "MultiLatestQuotesAct",
+]
+
+
+if __name__ == "__main__":
+    # python -m src.tools.actions.stocks
+    async def main():
+        changes = await StockLivePriceChangeAct().arun(["AAPL"])
+        print(changes)
+
+        etf_changes = await ETFLivePriceChangeAct().arun()
+        print(etf_changes)
+
+        most_active_stocks = await MostActiveStockersAct().arun()
+        print(most_active_stocks)
+
+    asyncio.run(main())
+```
+
+src/tools_adaptors/trading.py
+```
+from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
+from src.services.alpaca import get_latest_quotes
+from prisma.enums import TradeType
+from prisma.enums import Role
+from prisma.types import RecommendCreateInput
+from src import utils, db
+from src.utils import async_retry
+from src.tools_adaptors.base import Action
+from src.tools_adaptors.utils import format_recommendations_markdown
+from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+
+
+class BuyAct(Action):
+    @property
+    def name(self):
+        return "buy_stock"
+
+    @async_retry()
+    async def arun(
+        self,
+        runId,
+        bot_id: str,
+        ticker: str,
+        volume: float,
+        rationale: str,
+        confidence: float,
+    ):
+        clock = alpaca_trading_client.get_clock()
+        if not clock.is_open:  # type: ignore
+            return "Market is closed. Cannot buy stock."
+        quotes = await get_latest_quotes([ticker])
+        price = quotes["quotes"].get(ticker, {}).get("ask_price")
+        if not price:
+            return f"Cannot get price for {ticker}"
+        price = float(price)
+        total_cost = price * volume
+
+        ticker = ticker.upper().strip()
+
+        valid_ticker = await db.prisma.ticker.find_unique(
+            where={"ticker": ticker.replace(".", "-")}
+        )
+
+        if valid_ticker is None:
+            return f"Invalid ticker {ticker}"
+
+        async with db.prisma.tx() as transaction:
+            portfolio = await transaction.portfolio.find_unique(where={"botId": bot_id})
+            if portfolio is None:
+                raise ValueError("Portfolio not found")
+            if portfolio.cash < total_cost:
+                return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
+            portfolio.cash -= total_cost
+            await transaction.portfolio.update(
+                where={"botId": bot_id}, data={"cash": portfolio.cash}
+            )
+            existing = await transaction.position.find_unique(
+                where={
+                    "portfolioId_ticker": {
+                        "portfolioId": portfolio.id,
+                        "ticker": ticker,
+                    }
+                }
+            )
+
+            if existing is None:
+                await transaction.position.create(
+                    data=PositionCreateInput(
+                        ticker=ticker,
+                        volume=volume,
+                        portfolioId=portfolio.id,
+                        cost=price,
+                    )
+                )
+                return (
+                    f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                    f"Current volume is {volume} "
+                    f"with average cost {utils.format_float(price)}"
+                )
+            else:
+                await transaction.position.update(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    },
+                    data=PositionUpdateInput(
+                        volume=existing.volume + volume,
+                        cost=(existing.cost * existing.volume + price * volume)
+                        / (existing.volume + volume),
+                    ),
+                )
+
+                await transaction.trade.create(
+                    data=TradeCreateInput(
+                        rationale=rationale,
+                        confidence=confidence,
+                        type=TradeType.BUY,
+                        price=price,
+                        ticker=ticker,
+                        amount=volume,
+                        runId=runId,
+                        botId=bot_id,
+                    )
+                )
+
+                return (
+                    f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                    f"Current volume is {existing.volume + volume} "
+                    f"with average cost {utils.format_float(existing.cost)}"
+                )
+
+
+class SellAct(Action):
+    @property
+    def name(self):
+        return "sell_stock"
+
+    @utils.async_retry()
+    async def arun(
+        self,
+        runId,
+        bot_id: str,
+        ticker: str,
+        volume: float,
+        rationale: str,
+        confidence: float,
+    ):
+        clock = alpaca_trading_client.get_clock()
+        if not clock.is_open:  # type: ignore
+            return "Market is closed. Cannot sell stock."
+        quotes = await get_latest_quotes([ticker])
+        price = quotes["quotes"].get(ticker, {}).get("bid_price")
+        if not price:
+            return f"Cannot get price for {ticker}"
+
+        # price = float(price)
+        total_proceeds = price * volume
+
+        ticker = ticker.upper().strip()
+
+        valid_ticker = await db.prisma.ticker.find_unique(
+            where={"ticker": ticker.replace(".", "-")}
+        )
+
+        if valid_ticker is None:
+            return f"Invalid ticker {ticker}"
+
+        async with db.prisma.tx() as transaction:
+            portfolio = await transaction.portfolio.find_unique(where={"botId": bot_id})
+            if portfolio is None:
+                raise ValueError("Portfolio not found")
+
+            existing = await transaction.position.find_unique(
+                where={
+                    "portfolioId_ticker": {
+                        "portfolioId": portfolio.id,
+                        "ticker": ticker,
+                    }
+                }
+            )
+
+            if existing is None:
+                return f"No position found for {ticker}"
+
+            if existing.volume < volume:
+                return (
+                    f"Not enough shares to sell {volume} shares of {ticker}. "
+                    f"Current volume is {existing.volume}."
+                )
+
+            portfolio.cash += total_proceeds
+            await transaction.portfolio.update(
+                where={"botId": bot_id}, data={"cash": portfolio.cash}
+            )
+
+            new_volume = existing.volume - volume
+
+            if new_volume == 0:
+                await transaction.position.delete(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    }
+                )
+            else:
+                await transaction.position.update(
+                    where={
+                        "portfolioId_ticker": {
+                            "portfolioId": portfolio.id,
+                            "ticker": ticker,
+                        }
+                    },
+                    data=PositionUpdateInput(
+                        volume=new_volume,
+                    ),
+                )
+
+            await transaction.trade.create(
+                data=TradeCreateInput(
+                    rationale=rationale,
+                    confidence=confidence,
+                    type=TradeType.SELL,
+                    price=price,
+                    ticker=ticker,
+                    amount=volume,
+                    runId=runId,
+                    botId=bot_id,
+                    realizedPL=price * volume - existing.cost * volume,
+                    realizedPLPercent=(price - existing.cost) / existing.cost,
+                )
+            )
+
+            if new_volume == 0:
+                return (
+                    f"Successfully sold {volume} shares of {ticker} at {price} per share. "
+                    f"Position closed."
+                )
+
+            return (
+                f"Successfully sold {volume} shares of {ticker} at {price} per share. "
+                f"Current volume is {new_volume} "
+                f"with average cost {utils.format_float(existing.cost)}"
+            )
+
+
+class RecommendStockAct(Action):
+    @property
+    def name(self):
+        return "recommend_stock"
+
+    @utils.async_retry()
+    async def arun(
+        self,
+        ticker: str,
+        amount: float,
+        rationale: str,
+        confidence: float,
+        trade_type: TradeType,
+        role: Role,
+        run_id: str,
+        bot_id: str,
+    ) -> str:
+        """
+        Recommend a stock to buy or sell.
+
+        Args:
+            ticker: Stock ticker, e.g. 'AAPL'
+            amount: Amount of stock to buy or sell
+            rationale: Rationale for the recommendation
+            confidence: Confidence in the recommendation (0.0-1.0)
+
+        Returns:
+            A markdown-formatted table with the recommendation.
+        """
+
+        if not (0.0 <= confidence <= 1.0):
+            return "Confidence must be between 0.0 and 1.0"
+
+        await db.prisma.recommend.create(
+            data=RecommendCreateInput(
+                ticker=ticker,
+                type=trade_type,
+                amount=amount,
+                rationale=rationale,
+                confidence=confidence,
+                role=role,
+                runId=run_id,
+                botId=bot_id,
+            )
+        )
+
+        return (
+            f"{role.value} recommended {trade_type.value} {amount} shares of {ticker}\n"
+            f"Confidence: {confidence:.1%}\n"
+            f"Rationale: {rationale}"
+        )
+
+
+class GetAnalystsRecommendationsAct(Action):
+    @property
+    def name(self):
+        return "get_analysts_recommendations"
+
+    @utils.async_retry()
+    async def arun(
+        self,
+        run_id: str,
+    ) -> str:
+        """
+        Get analysts recommendations.
+
+        Args:
+            run_id: Run ID
+            bot_id: Bot ID
+
+        Returns:
+            A markdown-formatted table with the recommendations.
+        """
+
+        recommendations = await db.prisma.recommend.find_many(
+            where={
+                "runId": run_id,
+            },
+            order={
+                "role": "asc",
+            },
+        )
+
+        return format_recommendations_markdown(recommendations)
+
+
+class WriteDownTickersToReviewAct(Action):
+    @property
+    def name(self):
+        return "write_down_tickers_to_review"
+
+    @async_retry()
+    async def arun(self, run_id: str, tickers: list[str]) -> str:
+        runId = run_id
+
+        run = await db.prisma.run.find_unique(
+            where={
+                "id": runId,
+            }
+        )
+        if not run:
+            return f"Run with id {runId} not found"
+
+        if not run.tickers:
+            await db.prisma.run.update(
+                where={
+                    "id": runId,
+                },
+                data={
+                    "tickers": ",".join(tickers),
+                },
+            )
+            return f"Tickers {tickers} written down to review"
+        else:
+            existing_tickers = set([t.strip().upper() for t in run.tickers.split(",")])
+            new_tickers = set([t.strip().upper() for t in tickers])
+
+            if existing_tickers != new_tickers:
+                return (
+                    "The tickers to review are not the same as the ones that user specified."
+                    "Please check the tickers and try again. "
+                    "The tickers that user specified are: "
+                    f"{', '.join(new_tickers)}"
+                    "The tickers that you are going to write down are: "
+                    f"{', '.join(new_tickers)}"
+                )
+            else:
+                return f"Tickers {tickers} written down to review"
 ```
 
 src/agents/equity_research_analyst/agent.py
@@ -3811,62 +5376,87 @@ from prisma.enums import Role
 from src import tools
 from src import middleware
 from src.models import get_model
-from src.typings import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_equity_research_analyst_agent(model_name: ModelName, run_id: str):
-    context = await build_context(run_id)
+async def build_equity_research_analyst_agent(context: Context):
     system_prompt = await build_agent_system_prompt(
         context, Role.EQUITY_RESEARCH_ANALYST
     )
-    langchain_model = get_model(model_name)
+    langchain_model = get_model(context.llm_model)
     agent = create_agent(
         model=langchain_model,
-        tools=[tools.do_google_equity_research, tools.get_latest_equity_news],
+        tools=[
+            tools.do_google_equity_research,
+            tools.get_latest_equity_news,
+            tools.get_price_trend,
+            tools.get_recommend_stock_tool(Role.EQUITY_RESEARCH_ANALYST),
+        ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            # middleware.summarization_middleware,  # type: ignore
+            # middleware.todo_list_middleware,
+            middleware.LoggingMiddleware(Role.EQUITY_RESEARCH_ANALYST.value),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
     )
 
-    return context, agent
+    return agent
 ```
 
-src/agents/fundamental_analyst/agent.py
+src/agents/chief_investment_officer/agent.py
 ```
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
-from src import middleware
+from src.tools.handoff_tools import handoff_to_specialist
+from src.middleware import (
+    LoggingMiddleware,
+    todo_list_middleware,
+    # summarization_middleware,
+)
 from src.models import get_model
-from src.typings import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_fundamental_analyst_agent(model_name: ModelName, run_id: str):
-    context = await build_context(run_id)
-    system_prompt = await build_agent_system_prompt(context, Role.FUNDAMENTAL_ANALYST)
-    langchain_model = get_model(model_name)
+async def build_chief_investment_officer_agent(context: Context):
+    system_prompt = await build_agent_system_prompt(
+        context, Role.CHIEF_INVESTMENT_OFFICER
+    )
+    langchain_model = get_model(context.llm_model)
+
     agent = create_agent(
         model=langchain_model,
         tools=[
-            tools.get_fundamental_data,
-            tools.get_stock_live_historical_price_change,
+            # Portfolio management tools
+            # tools.list_current_positions,
+            tools.get_portfolio_performance_analysis,
+            tools.get_user_investment_strategy,
+            # tools.buy_stock,
+            # tools.sell_stock,
+            # tools.get_latest_quotes,
+            # tools.get_latest_quote,
+            tools.get_analysts_recommendations,
+            tools.get_recommend_stock_tool(Role.CHIEF_INVESTMENT_OFFICER),
+            tools.send_summary_email_tool,
+            tools.write_summary_report,
+            tools.write_down_tickers_to_review,
+            tools.get_market_status,
+            tools.get_historical_reviewed_tickers,
+            handoff_to_specialist,
         ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            todo_list_middleware,  # type: ignore
+            # summarization_middleware,
+            LoggingMiddleware("CHIEF_INVESTMENT_OFFICER"),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
     )
 
-    return context, agent
+    return agent
 ```
 
 src/agents/market_analyst/agent.py
@@ -3876,15 +5466,13 @@ from prisma.enums import Role
 from src import tools
 from src import middleware
 from src.models import get_model
-from src.typings import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_market_analyst_agent(model_name: ModelName, run_id: str):
-    context = await build_context(run_id)
+async def build_market_analyst_agent(context: Context):
     system_prompt = await build_agent_system_prompt(context, Role.MARKET_ANALYST)
-    langchain_model = get_model(model_name)
+    langchain_model = get_model(context.llm_model)
     agent = create_agent(
         model=langchain_model,
         tools=[
@@ -3896,62 +5484,88 @@ async def build_market_analyst_agent(model_name: ModelName, run_id: str):
             tools.get_most_active_stockers,
             tools.get_portfolio_performance_analysis,
             tools.get_user_investment_strategy,
+            tools.get_recommend_stock_tool(Role.MARKET_ANALYST),
         ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            # middleware.summarization_middleware,  # type: ignore
+            # middleware.todo_list_middleware,
+            middleware.LoggingMiddleware(Role.MARKET_ANALYST.value),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
     )
 
-    return context, agent
+    return agent
 ```
 
-src/agents/portfolio_manager/agent.py
+src/agents/trading_executive/agent.py
 ```
-# src/agents/portfolio_manager/agent.py
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
 from src import middleware
 from src.models import get_model
-from src.typings import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_portfolio_manager_agent(model_name: ModelName, run_id: str):
-    context = await build_context(run_id)
-    system_prompt = await build_agent_system_prompt(context, Role.PORTFOLIO_MANAGER)
-    langchain_model = get_model(model_name)
+async def build_trading_executor_agent(context: Context):
+    system_prompt = await build_agent_system_prompt(context, Role.TRADING_EXECUTOR)
+    langchain_model = get_model(context.llm_model)
 
-    # Add trading tools
     agent = create_agent(
         model=langchain_model,
         tools=[
-            # Analysis tools
-            # tools.get_fundamental_data,
-            # tools.get_latest_market_news,
-            # tools.get_stock_live_historical_price_change,
-            tools.get_portfolio_performance_analysis,
             tools.list_current_positions,
-            tools.get_user_investment_strategy,
-            # Trading tools (NEW)
+            # tools.get_user_investment_strategy,
             tools.buy_stock,
             tools.sell_stock,
-            tools.get_latest_quotes,
-            tools.get_latest_quote,
-            # tools.get_market_hours,   # Need to add this
+            # tools.get_latest_quotes,
+            # tools.get_latest_quote,
+            tools.get_market_status,
         ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            middleware.LoggingMiddleware("TRADING_EXECUTOR"),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
     )
-    return context, agent
+
+    return agent
+```
+
+src/agents/fundamental_analyst/agent.py
+```
+from langchain.agents import create_agent
+from prisma.enums import Role
+from src import tools
+from src import middleware
+from src.models import get_model
+from src.context import Context
+from src.prompt import build_agent_system_prompt
+
+
+async def build_fundamental_analyst_agent(context: Context):
+    system_prompt = await build_agent_system_prompt(context, Role.FUNDAMENTAL_ANALYST)
+    langchain_model = get_model(context.llm_model)
+    agent = create_agent(
+        model=langchain_model,
+        tools=[
+            tools.get_fundamental_data,
+            tools.get_stock_live_historical_price_change,
+            tools.get_price_trend,
+            tools.get_recommend_stock_tool(Role.FUNDAMENTAL_ANALYST),
+        ],
+        middleware=[
+            # middleware.summarization_middleware,  # type: ignore
+            # middleware.todo_list_middleware,
+            middleware.LoggingMiddleware(Role.FUNDAMENTAL_ANALYST.value),
+        ],
+        system_prompt=system_prompt,
+        context_schema=Context,
+    )
+
+    return agent
 ```
 
 src/agents/risk_analyst/agent.py
@@ -3961,32 +5575,33 @@ from prisma.enums import Role
 from src import tools
 from src import middleware
 from src.models import get_model
-from src.typings import ModelName
-from src.context import build_context, Context
+from src.context import Context
 from src.prompt import build_agent_system_prompt
 
 
-async def build_risk_analyst_agent(model_name: ModelName, run_id: str):
-    context = await build_context(run_id)
+async def build_risk_analyst_agent(context: Context):
     system_prompt = await build_agent_system_prompt(context, Role.RISK_ANALYST)
-    langchain_model = get_model(model_name)
+    langchain_model = get_model(context.llm_model)
     agent = create_agent(
         model=langchain_model,
         tools=[
+            tools.get_price_trend,
             tools.get_fundamental_risk_data,
             tools.get_price_risk_indicators,
             tools.get_volatility_risk_indicators,
             tools.get_stock_live_historical_price_change,
+            tools.get_recommend_stock_tool(Role.RISK_ANALYST),
         ],
         middleware=[
-            middleware.summarization_middleware,  # type: ignore
-            middleware.todo_list_middleware,
+            # middleware.summarization_middleware,  # type: ignore
+            # middleware.todo_list_middleware,
+            middleware.LoggingMiddleware(Role.RISK_ANALYST.value),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
     )
 
-    return context, agent
+    return agent
 ```
 
 src/services/alpaca/__init__.py
@@ -4454,7 +6069,7 @@ async def _run() -> None:
 
     try:
         data = await get_latest_quotes(
-            symbols=["AAPL"],
+            symbols=["NVDA"],
         )
         print("Latest quotes response (truncated):")
         print(json.dumps(data, indent=2)[:2000])
@@ -4850,19 +6465,17 @@ from src.services.sandx_ai.api_portfolio_timeline_value import get_timeline_valu
 
 
 async def get_cash_balance(bot_id: str):
-    try:
-        await db.connect()
-        portfolio = await db.prisma.portfolio.find_unique(where={"botId": bot_id})
-        if portfolio is None:
-            raise ValueError("Portfolio not found")
-        return portfolio.cash
-    except Exception as e:
-        raise ValueError("Failed to get cash balance") from e
-    finally:
-        await db.disconnect()
+    portfolio = await db.prisma.portfolio.find_unique(where={"botId": bot_id})
+    if portfolio is None:
+        raise ValueError("Portfolio not found")
+    return portfolio.cash
 
 
-__all__ = ["list_positions", "get_timeline_values"]
+__all__ = [
+    "list_positions",
+    "get_timeline_values",
+    "get_cash_balance",
+]
 ```
 
 src/services/sandx_ai/api_client.py
@@ -5126,6 +6739,26 @@ from src.services.sandx_ai.api_portfolio_timeline_value import TimelineValue
 __all__ = ["Position", "TimelineValue"]
 ```
 
+src/services/yfinance/api_info.py
+```
+import yfinance as yf
+from src.utils import async_wrap
+from src.services.utils import redis_cache
+
+
+@async_wrap()
+def get_ticker_info(ticker: str) -> dict:
+    yf_ticker = yf.Ticker(ticker=ticker)
+    info = yf_ticker.info
+    return info
+
+
+@redis_cache(function_name="get_ticker_info", ttl=60 * 60 * 24)
+async def async_get_ticker_info(ticker: str) -> dict:
+    info = await get_ticker_info(ticker)  # type: ignore
+    return info
+```
+
 src/services/tradingeconomics/__init__.py
 ```
 from src.services.tradingeconomics.api_market_news import get_news
@@ -5380,26 +7013,6 @@ if __name__ == "__main__":
     asyncio.run(_run())
 ```
 
-src/services/yfinance/api_info.py
-```
-import yfinance as yf
-from src.utils import async_wrap
-from src.services.utils import redis_cache
-
-
-@async_wrap
-def get_ticker_info(ticker: str) -> dict:
-    yf_ticker = yf.Ticker(ticker=ticker)
-    info = yf_ticker.info
-    return info
-
-
-@redis_cache(function_name="get_ticker_info", ttl=60 * 60 * 24)
-async def async_get_ticker_info(ticker: str) -> dict:
-    info = await get_ticker_info(ticker)  # type: ignore
-    return info
-```
-
 src/tools_adaptors/utils/__init__.py
 ```
 from src.tools_adaptors.utils.portfolio_timeline_value import (
@@ -5418,6 +7031,7 @@ from src.tools_adaptors.utils.risk_analysis import (
     calculate_price_risk,
     format_price_risk_markdown,
 )
+from src.tools_adaptors.utils.recommendations import format_recommendations_markdown
 
 
 __all__ = [
@@ -5431,6 +7045,7 @@ __all__ = [
     "format_volatility_risk_markdown",
     "calculate_price_risk",
     "format_price_risk_markdown",
+    "format_recommendations_markdown",
 ]
 ```
 
@@ -5915,6 +7530,49 @@ PERFORMANCE SUMMARY:
     narrative += f"\n\nData Coverage: {summary['date_range']} ({summary['total_days_analyzed']} days of data)"
 
     return narrative
+```
+
+src/tools_adaptors/utils/recommendations.py
+```
+from prisma.models import Recommend
+
+
+def format_recommendations_markdown(recommendations: list[Recommend]) -> str:
+    """Format recommendations as a markdown table.
+
+    Args:
+        recommendations: List of recommendations
+
+    Returns:
+        A markdown-formatted table with the recommendations.
+    """
+    if not recommendations:
+        return "No recommendations found."
+
+    headers = ["Ticker", "Type", "Amount", "Confidence", "Analyst", "Rationale"]
+    rows = [
+        "| "
+        + " | ".join(
+            [
+                rec.ticker,
+                rec.type.value if hasattr(rec.type, "value") else str(rec.type),
+                str(rec.amount),
+                f"{rec.confidence:.2%}",
+                rec.role,
+                rec.rationale.replace("\n", " ").replace("|", "\\|"),
+            ]
+        )
+        + " |"
+        for rec in recommendations
+    ]
+
+    header_row = "| " + " | ".join(headers) + " |"
+    separator = "|" + "|".join("-" * (len(h) + 2) for h in headers) + "|"
+
+    return "\n".join([header_row, separator] + rows)
+
+
+__all__ = ["format_recommendations_markdown"]
 ```
 
 src/tools_adaptors/utils/risk_analysis.py
