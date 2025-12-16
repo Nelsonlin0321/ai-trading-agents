@@ -11,6 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             IMAGE_NAME: ai-trading-agents
+            TAG: ${{ github.ref_name == 'main' && 'latest' || github.ref_name == 'dev' && 'dev' }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -22,8 +23,8 @@ jobs:
             - name: Push To ECR
               run: |
                   aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
-                  docker tag ${IMAGE_NAME}:latest ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/sandx.ai/${IMAGE_NAME}:latest
-                  docker push ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/sandx.ai/${IMAGE_NAME}:latest
+                  docker tag ${IMAGE_NAME}:latest ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/sandx.ai/${IMAGE_NAME}:${TAG}
+                  docker push ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/sandx.ai/${IMAGE_NAME}:${TAG}
               env:
                   AWS_DEFAULT_REGION: us-east-1
                   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
