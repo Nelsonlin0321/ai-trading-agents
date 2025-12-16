@@ -62,7 +62,7 @@ Set via `.env` or AWS Secrets Manager (`sandx.ai`). Required:
 ## Running
 The main entry consumes a `runId` created in the DB.
 ```bash
-python main.py <runId>
+python main.py fb58e18e-b45f-4e64-a55a-4a9a88ff4ae4
 ```
 This:
 - Restores unfinished CIO messages for the run
@@ -88,6 +88,9 @@ docker run --rm \
   ai-trading-agents:latest 628cc0fe-7c4b-4f50-91a4-10a6f12a815f
 ```
 
+```shell
+docker run --rm -it --env-file .docker.env --entrypoint /bin/bash ai-trading-agents:latest
+```
 
 ## Testing
 - Alpaca client quick test:
