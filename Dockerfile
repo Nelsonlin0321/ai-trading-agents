@@ -29,4 +29,4 @@ USER appuser
 RUN chmod +x src/main.py
 
 # Set the entrypoint to python and default command to show usage
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "/app/src/main.py"]
