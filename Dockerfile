@@ -26,7 +26,7 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Make the main.py file executable
-RUN chmod +x src/main.py
+RUN chmod +x main.py
 
 # Set the entrypoint to python and default command to show usage
-ENTRYPOINT ["python", "/app/src/main.py"]
+ENTRYPOINT ["python", "/app/main.py"]
