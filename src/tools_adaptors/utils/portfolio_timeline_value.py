@@ -301,31 +301,33 @@ PERFORMANCE SUMMARY:
             available_periods_added = True
             period = periods[period_key]
             arrow = "📈" if period["total_return_percent"] >= 0 else "📉"
-            narrative += f"\n{period_names[period_key]} Performance {arrow}:"
-            narrative += f"\n  Return: {period['total_return_percent']:+.2f}% ({period['total_return']:+,.2f})"
-            narrative += f"\n  Volatility: {period['volatility']:.2f}%"
+            narrative += f"\n\n {period_names[period_key]} Performance {arrow}:"
+            narrative += f"\n\n  Return: {period['total_return_percent']:+.2f}% ({period['total_return']:+,.2f})"
+            narrative += f"\n\n  Volatility: {period['volatility']:.2f}%"
 
             # Only show best/worst day if we have multiple days
             if period["days"] > 1:
-                narrative += f"\n  Best Day: {period['best_day_percent']:+.2f}%"
-                narrative += f"\n  Worst Day: {period['worst_day_percent']:+.2f}%"
-                narrative += f"\n  Max Drawdown: {period['max_drawdown_percent']:.2f}%"
+                narrative += f"\n\n  Best Day: {period['best_day_percent']:+.2f}%"
+                narrative += f"\n\n  Worst Day: {period['worst_day_percent']:+.2f}%"
+                narrative += (
+                    f"\n\n  Max Drawdown: {period['max_drawdown_percent']:.2f}%"
+                )
 
-            narrative += f"\n  Period: {period['start_date']} to {period['end_date']} ({period['days']} days)"
+            narrative += f"\n\n  Period: {period['start_date']} to {period['end_date']} ({period['days']} days)"
 
     if not available_periods_added:
-        narrative += "\nNo sufficient data available for period analysis."
+        narrative += "\n\n No sufficient data available for period analysis."
 
     # Add key insights only if we have multiple periods
     valid_periods = [p for p in periods.values() if p["days"] > 1]
     if len(valid_periods) >= 2:
-        narrative += "\n\nKEY INSIGHTS:"
+        narrative += "\n\n KEY INSIGHTS:"
 
         best_period = max(valid_periods, key=lambda x: x["total_return_percent"])
         worst_period = min(valid_periods, key=lambda x: x["total_return_percent"])
 
-        narrative += f"\n- Strongest period: {best_period['period']} ({best_period['total_return_percent']:+.2f}%)"
-        narrative += f"\n- Weakest period: {worst_period['period']} ({worst_period['total_return_percent']:+.2f}%)"
+        narrative += f"\n\n - Strongest period: {best_period['period']} ({best_period['total_return_percent']:+.2f}%)"
+        narrative += f"\n\n - Weakest period: {worst_period['period']} ({worst_period['total_return_percent']:+.2f}%)"
 
         # Risk assessment
         if "full_period" in periods:
@@ -338,6 +340,6 @@ PERFORMANCE SUMMARY:
                 risk_level = "High"
             narrative += f"\n- Risk Level: {risk_level} (Volatility: {volatility:.2f}%)"
 
-    narrative += f"\n\nData Coverage: {summary['date_range']} ({summary['total_days_analyzed']} days of data)"
+    narrative += f"\n\n Data Coverage: {summary['date_range']} ({summary['total_days_analyzed']} days of data)"
 
     return narrative
