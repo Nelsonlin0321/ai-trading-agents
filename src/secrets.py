@@ -1,7 +1,9 @@
 import os
 import json
 import boto3
+from loguru import logger
 
+logger.info("Loading Secrets")
 ENV = os.environ.get("ENV", "dev")
 
 
