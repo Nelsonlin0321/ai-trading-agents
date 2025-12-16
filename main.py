@@ -89,5 +89,7 @@ async def main(run_id: str):
 
 
 if __name__ == "__main__":
+    logger.info("Starting AI Trading Agents...")
     runId = sys.argv[1]
     asyncio.run(main(runId))
+    logger.info(f"Run {runId} finished")
