@@ -76,6 +76,7 @@ async def main(run_id: str):
     try:
         await db.connect()
         await run_agent(run_id)
+        logger.info(f"Run {run_id} completed successfully")
     except Exception as e:
         run = await db.prisma.run.find_unique(where={"id": run_id})
         if run:
@@ -93,4 +94,3 @@ if __name__ == "__main__":
     logger.info("Starting AI Trading Agents...")
     runId = sys.argv[1]
     asyncio.run(main(runId))
-    logger.info(f"Run {runId} finished")
