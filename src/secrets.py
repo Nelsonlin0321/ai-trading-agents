@@ -28,3 +28,6 @@ def load() -> dict:
         os.environ["DATABASE_URL"] = secrets["DEV_DATABASE_URL"]
 
     return secrets
+
+
+load()

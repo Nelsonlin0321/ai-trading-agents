@@ -5,16 +5,10 @@ import asyncio
 from loguru import logger
 from prisma.enums import RunStatus
 from langchain_core.messages import HumanMessage
-
-from src import secrets
+from src import secrets  # import secret first before db
 from src import db
-from src.context import build_context, restore_messages
-from src.agents.chief_investment_officer.agent import (
-    build_chief_investment_officer_agent,
-)
 
-
-SECRETS = secrets.load()
+secrets.load()
 
 ENV = os.environ.get("ENV", "dev")
 
@@ -25,6 +19,11 @@ Now, please review the user's strategy and portfolio performance, and provide yo
 
 
 async def run_agent(run_id: str):
+    from src.context import build_context, restore_messages
+    from src.agents.chief_investment_officer.agent import (
+        build_chief_investment_officer_agent,
+    )
+
     run = await db.prisma.run.find_unique(where={"id": run_id})
 
     if not run:
