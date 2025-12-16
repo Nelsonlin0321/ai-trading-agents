@@ -1,35 +1,40 @@
 import os
 import json
+import traceback
 import boto3
 from loguru import logger
 
-logger.info("Loading Secrets")
 ENV = os.environ.get("ENV", "dev")
 
 
 def load() -> dict:
-    secret_name = "sandx.ai"
-    region_name = "us-east-1"
-    session = boto3.session.Session()  # type: ignore
-    client = session.client(
-        service_name="secretsmanager",
-        region_name=region_name,
-    )
+    try:
+        logger.info("Loading Secrets")
+        secret_name = "sandx.ai"
+        region_name = "us-east-1"
+        session = boto3.session.Session()  # type: ignore
+        client = session.client(
+            service_name="secretsmanager",
+            region_name=region_name,
+        )
 
-    get_secret_value_response = client.get_secret_value(SecretId=secret_name)
+        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
 
-    secret_string = get_secret_value_response["SecretString"]
-    secrets = json.loads(secret_string)
+        secret_string = get_secret_value_response["SecretString"]
+        secrets = json.loads(secret_string)
 
-    for key, value in secrets.items():
-        os.environ[key] = value
+        for key, value in secrets.items():
+            os.environ[key] = value
 
-    if ENV == "prod":
-        os.environ["DATABASE_URL"] = secrets["PROD_DATABASE_URL"]
-    else:
-        os.environ["DATABASE_URL"] = secrets["DEV_DATABASE_URL"]
+        if ENV == "prod":
+            os.environ["DATABASE_URL"] = secrets["PROD_DATABASE_URL"]
+        else:
+            os.environ["DATABASE_URL"] = secrets["DEV_DATABASE_URL"]
 
-    return secrets
+        return secrets
+    except Exception as e:
+        logger.error(f"Failed to load secrets: {e}. {traceback.format_exc()}")
+        exit(1)
 
 
 load()
