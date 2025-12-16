@@ -71,8 +71,6 @@ async def run_agent(run_id: str):
 
 
 async def main(run_id: str):
-    from src import db
-
     try:
         await db.connect()
         await run_agent(run_id)
