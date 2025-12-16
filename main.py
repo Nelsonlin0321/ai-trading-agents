@@ -30,6 +30,8 @@ async def run_agent(run_id: str):
         logger.error(f"Run {run_id} not found")
         exit(2)
 
+    logger.info(f"Processing run {run_id} with status {run.status}")
+
     if run.status == "SUCCESS":
         logger.error(f"Run {run_id} is finished")
         exit(2)
@@ -85,7 +87,6 @@ async def main(run_id: str):
         )
     finally:
         await db.disconnect()
-        exit(1)
 
 
 if __name__ == "__main__":

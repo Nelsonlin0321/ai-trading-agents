@@ -12,7 +12,11 @@ def load() -> dict:
         logger.info("Loading Secrets")
         secret_name = "sandx.ai"
         region_name = "us-east-1"
-        session = boto3.session.Session()  # type: ignore
+        session = boto3.session.Session(  # type: ignore
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=region_name,
+        )
         client = session.client(
             service_name="secretsmanager",
             region_name=region_name,
