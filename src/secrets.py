@@ -22,9 +22,9 @@ def load() -> dict:
     for key, value in secrets.items():
         os.environ[key] = value
 
-    if ENV == "dev":
-        os.environ["DATABASE_URL"] = secrets["DEV_DATABASE_URL"]
-    else:
+    if ENV == "prod":
         os.environ["DATABASE_URL"] = secrets["PROD_DATABASE_URL"]
+    else:
+        os.environ["DATABASE_URL"] = secrets["DEV_DATABASE_URL"]
 
     return secrets
