@@ -85,7 +85,7 @@ docker run --rm \
 ```shell
 docker run --rm \
   --env-file .docker.env \
-  ai-trading-agents:latest 628cc0fe-7c4b-4f50-91a4-10a6f12a815f
+  ai-trading-agents:latest aeb9c6eb-7a16-442c-a2ed-93f92788fccd
 ```
 
 ```shell
