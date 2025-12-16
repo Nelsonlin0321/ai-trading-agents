@@ -1,13 +1,14 @@
 from typing import Sequence, Annotated, TypedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
+from services.utils import redis_cache
 from src.tools_adaptors.base import Action
-from src.services.sandx_ai import get_timeline_values
 from src.tools_adaptors import utils as action_utils
 from src import utils
 from src.utils import async_retry
 from src.db import prisma
-from src.services.alpaca import get_snapshots
+from src.services.alpaca import get_snapshots, get_latest_quotes
+from src.typings import TimelineValue
 
 
 class Position(TypedDict):
@@ -219,11 +220,97 @@ class ListPositionsAct(Action):
     def name(self):
         return "list_current_positions"
 
+    @redis_cache(ttl=60 * 5, function_name="list_current_positions")
     @async_retry()
     async def arun(self, bot_id: str) -> str:
         positions = await get_latest_positions(bot_id)
         position_markdown = convert_positions_to_markdown_table(positions)
         return position_markdown
+
+
+class LatestPortfolioValueResult(TypedDict):
+    positionsValue: float
+    latestPortfolioValue: float
+    cash: float
+    symbols: list[str]
+    timestamp: datetime
+
+
+async def calculate_latest_portfolio_value(bot_id: str) -> LatestPortfolioValueResult:
+    portfolio = await prisma.portfolio.find_unique(
+        where={"botId": bot_id},
+        include={"positions": True},
+    )
+
+    if not portfolio:
+        raise ValueError("Portfolio not found for botId")
+
+    positions = portfolio.positions or []
+    symbols = [p.ticker.strip().upper() for p in positions if p.ticker]
+    symbols = [s for s in symbols if len(s) > 0]
+
+    positions_value = 0.0
+    timestamp = datetime.now()
+
+    if symbols:
+        quotes_response = await get_latest_quotes(symbols)
+        quotes = quotes_response["quotes"]
+
+        max_ts = timestamp.timestamp()
+
+        for pos in positions:
+            t = (pos.ticker or "").strip().upper()
+            if not t:
+                continue
+
+            q = quotes.get(t)
+            if not q:
+                raise ValueError(f"Quote not found for ticker {t}")
+
+            q_ts_str = q["timestamp"]
+            q_ts = datetime.fromisoformat(q_ts_str.replace("Z", "+00:00"))
+
+            if q_ts.timestamp() > max_ts:
+                max_ts = q_ts.timestamp()
+                timestamp = q_ts
+
+            positions_value += q["bid_price"] * pos.volume
+
+    latest_portfolio_value = positions_value + portfolio.cash
+
+    return {
+        "positionsValue": positions_value,
+        "latestPortfolioValue": latest_portfolio_value,
+        "cash": portfolio.cash,
+        "symbols": symbols,
+        "timestamp": timestamp,
+    }
+
+
+async def get_timeline_values(bot_id: str) -> list[TimelineValue]:
+    from_date = datetime.now() - timedelta(days=365 + 7)
+
+    snapshots = await prisma.dailyportfoliosnapshot.find_many(
+        where={
+            "botId": bot_id,
+            "date": {"gte": from_date},
+        },
+        order={"date": "asc"},
+    )
+
+    points: list[TimelineValue] = [
+        {"date": s.date.isoformat(), "value": s.portfolioValue} for s in snapshots
+    ]
+
+    latest_value = await calculate_latest_portfolio_value(bot_id)
+    points.append(
+        {
+            "date": latest_value["timestamp"].isoformat(),
+            "value": latest_value["latestPortfolioValue"],
+        }
+    )
+
+    return points
 
 
 class PortfolioPerformanceAnalysisAct(Action):
@@ -232,6 +319,7 @@ class PortfolioPerformanceAnalysisAct(Action):
         return "get_portfolio_performance_analysis"
 
     @async_retry()
+    @redis_cache(ttl=60 * 5, function_name="get_portfolio_performance_analysis")
     async def arun(self, bot_id: str):
         timeline_values = await get_timeline_values(bot_id)
         analysis = action_utils.analyze_timeline_value(timeline_values)
@@ -245,16 +333,28 @@ __all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
 
 
 if __name__ == "__main__":
-    #  python -m src.tools_adaptors.portfolio]
+    #  python -m src.tools_adaptors.portfolio
     import asyncio
 
-    async def arun(bot_id: str):
+    async def test_performance_analysis():
         from src import db
 
         await db.connect()
-        positions = await get_latest_positions(bot_id)
-        position_markdown = convert_positions_to_markdown_table(positions)
-        print(position_markdown)
+        analysis = await PortfolioPerformanceAnalysisAct().arun(
+            "d4ef2264-31fa-438a-92b0-5c3b00db8325"
+        )
+        print(analysis)
         await db.disconnect()
 
-    asyncio.run(arun("d4ef2264-31fa-438a-92b0-5c3b00db8325"))
+    async def test_list_positions():
+        from src import db
+
+        await db.connect()
+        positions = await ListPositionsAct().arun(
+            "d4ef2264-31fa-438a-92b0-5c3b00db8325"
+        )
+        print(positions)
+        await db.disconnect()
+
+    asyncio.run(test_performance_analysis())
+    asyncio.run(test_list_positions())

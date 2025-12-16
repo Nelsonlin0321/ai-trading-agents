@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import timedelta, date, datetime
 from typing import Dict, List, Optional, TypedDict
 import numpy as np
-from src.services.sandx_ai.typing import TimelineValue
+from src.typings import TimelineValue
 
 
 class FormattedTimelineValue(TypedDict):
