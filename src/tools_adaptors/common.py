@@ -38,30 +38,28 @@ class WriteInvestmentReportEmailAct(Action):
     ) -> str:
         system_prompt = (
             "You are the Synthesis & Communications Officer (SCO) for an AI investment team. "
-            "You are NOT an analyst, strategist, or decision-maker. "
             "You are a neutral, meticulous scribe and editor whose sole purpose is to accurately capture, structure, "
             "and communicate the team's discussion into a professional investment report. "
             "You have no opinions, no biases, and no agenda beyond faithful representation and clarity. "
         )
 
         instruction = f"""
-        Directly produce a single, self-contained HTML investment report summarizing the conversation below.
-
+        Directly produce a comprehensive, self-contained HTML investment report summarizing the conversation below.
 
         Requirements:
-        1. The investment summary must consolidate insights from every analyst involved in the run,
+        1. Start with market analyst's insights to provide a comprehensive updated overview of the market status and trends.
+        2. The consolidated investment summary includes insights from every analyst involved in the run,
         presenting each analyst’s investment recommendation together with the detailed rationale
         behind it. It must conclude with the final trading decision (buy, sell, or hold) for
-        the tickers, again including the rationale that led to that decision.
+        the tickers based on the trading executor including the rationale that led to that decision.
         
         2.A professionally formatted, self-contained, and stylish HTML string representing the consolidated investment report.
-        It must include fully-styled inline CSS (e.g., font-family, color, padding, borders) to ensure
+        It must include fully-styled inline CSS (e.g., font-family, color, padding, borders) and pure HTML with CSS to ensure
         consistent rendering across all major email clients. Plain text or Markdown are not acceptable.
         Ensure the content contains:
         - Aggregated insights from all analysts to comprehensively evaluate the tickers.
         - Each analyst’s recommendation and its rationale.
         - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
-        - Line charts and bar charts rendered purely with HTML and CSS (no external images or scripts).
         
         3. Must Include A BUTTON with the link  {BASE_URL}/bots/{botId}/conversation?runId={run_id}
         to allow users to view the full conversation.
