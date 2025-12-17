@@ -8,6 +8,7 @@ from src.utils import async_retry
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+from datetime import datetime, timedelta, timezone
 
 
 class BuyAct(Action):
@@ -355,3 +356,41 @@ class WriteDownTickersToReviewAct(Action):
                 )
             else:
                 return f"Tickers {tickers} written down to review"
+
+
+class TradeHistoryAct(Action):
+    @property
+    def name(self):
+        return "get_trade_history_in_30_days"
+
+    @async_retry()
+    async def arun(self, run_id: str) -> str:
+        run = await db.prisma.run.find_unique(where={"id": run_id})
+        if not run:
+            return f"Run with id {run_id} not found"
+
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+
+        trades = await db.prisma.trade.find_many(
+            where={
+                "botId": run.botId,
+                "createdAt": {"gte": cutoff_date},
+            },
+            order={"createdAt": "desc"},
+        )
+
+        if not trades:
+            return "No trades found in the last 30 days."
+
+        lines = [
+            "| Date | Ticker | Type | Amount | Price | Rationale |",
+            "|---|---|---|---|---|---|",
+        ]
+
+        for trade in trades:
+            date_str = trade.createdAt.strftime("%Y-%m-%d %H:%M")
+            lines.append(
+                f"| {date_str} | {trade.ticker} | {trade.type.value} | {trade.amount} | {trade.price} | {trade.rationale} |"
+            )
+
+        return "\n".join(lines)
