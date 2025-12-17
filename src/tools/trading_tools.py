@@ -14,6 +14,7 @@ from src.tools_adaptors.trading import (
 )
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
 
+MAX_TICKERS_ALLOWED = 3
 buy_act = BuyAct()
 sell_act = SellAct()
 recommend_stock_act = RecommendStockAct()
@@ -78,6 +79,8 @@ async def write_down_tickers_to_review(
     Args:
         tickers: List of tickers to review
     """
+    if len(tickers) > MAX_TICKERS_ALLOWED:
+        return f"Only {MAX_TICKERS_ALLOWED} tickers are allowed at a time.Please choose at most {MAX_TICKERS_ALLOWED} tickers."
 
     tickers = [ticker.upper().strip() for ticker in tickers]
     for ticker in tickers:
