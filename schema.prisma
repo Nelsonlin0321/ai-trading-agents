@@ -55,6 +55,7 @@ model Bot {
     @@index([userId])
     @@index([active])
     @@index([public])
+    @@index([userId, active])
 }
 
 enum BotStatus {

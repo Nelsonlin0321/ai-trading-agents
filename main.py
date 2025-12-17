@@ -3,6 +3,7 @@ import sys
 import traceback
 import asyncio
 from loguru import logger
+from datetime import datetime, timezone
 from prisma.enums import RunStatus
 from langchain_core.messages import HumanMessage
 from src import secrets  # import secret first before db
@@ -69,7 +70,10 @@ async def run_agent(run_id: str):
             message = event["messages"][-1]
             message.pretty_print()
 
-    await db.prisma.run.update(where={"id": run_id}, data={"status": RunStatus.SUCCESS})
+    await db.prisma.run.update(
+        where={"id": run_id},
+        data={"status": RunStatus.SUCCESS, "completedAt": datetime.now(timezone.utc)},
+    )
 
 
 async def main(run_id: str):
