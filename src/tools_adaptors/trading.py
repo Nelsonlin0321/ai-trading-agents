@@ -418,7 +418,23 @@ class TradeHistoryAct(Action):
                     unrealized_pnl_percent_str = utils.format_percent(pnl_percent)
 
             lines.append(
-                f"| {date_str} | {trade.ticker} | {trade.type.value} | {amount} | {trade.price} | {realized_pnl_str} | {realized_pnl_percent_str} | {unrealized_pnl_str} | {unrealized_pnl_percent_str} | {trade.rationale} |"
+                f"| {date_str} | {trade.ticker} | {trade.type} | {amount} | {trade.price} | {realized_pnl_str} | {realized_pnl_percent_str} | {unrealized_pnl_str} | {unrealized_pnl_percent_str} | {trade.rationale} |"
             )
 
         return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    #  python -m src.tools_adaptors.trading
+    import asyncio
+    from src import db
+
+    async def test_TradeHistoryAct():
+        await db.connect()
+        act = TradeHistoryAct()
+        run_id = "aeb9c6eb-7a16-442c-a2ed-93f92788fccd"
+        result = await act.arun(run_id)
+        print(result)
+        await db.disconnect()
+
+    asyncio.run(test_TradeHistoryAct())
