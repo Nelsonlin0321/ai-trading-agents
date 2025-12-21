@@ -382,15 +382,43 @@ class TradeHistoryAct(Action):
         if not trades:
             return "No trades found in the last 30 days."
 
+        tickers = list(set([t.ticker for t in trades]))
+        quotes_response = await get_latest_quotes(tickers)
+        quotes = quotes_response.get("quotes", {})
+
         lines = [
-            "| Date | Ticker | Type | Amount | Price | Rationale |",
-            "|---|---|---|---|---|---|",
+            "| Date | Ticker | Type | Amount | Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | Rationale |",
+            "|---|---|---|---|---|---|---|---|---|---|",
         ]
 
         for trade in trades:
             date_str = trade.createdAt.strftime("%Y-%m-%d %H:%M")
+
+            amount = trade.amount
+            realized_pnl_str = "N/A"
+            realized_pnl_percent_str = "N/A"
+            unrealized_pnl_str = "N/A"
+            unrealized_pnl_percent_str = "N/A"
+
+            if trade.type == TradeType.SELL:
+                amount = -1 * amount
+                if trade.realizedPL is not None:
+                    realized_pnl_str = utils.format_float(trade.realizedPL)
+                if trade.realizedPLPercent is not None:
+                    realized_pnl_percent_str = utils.format_percent(
+                        trade.realizedPLPercent
+                    )
+            elif trade.type == TradeType.BUY:
+                quote = quotes.get(trade.ticker)
+                if quote and quote.get("bid_price"):
+                    bid_price = float(quote["bid_price"])
+                    pnl = (bid_price - trade.price) * trade.amount
+                    pnl_percent = (bid_price - trade.price) / trade.price
+                    unrealized_pnl_str = utils.format_float(pnl)
+                    unrealized_pnl_percent_str = utils.format_percent(pnl_percent)
+
             lines.append(
-                f"| {date_str} | {trade.ticker} | {trade.type.value} | {trade.amount} | {trade.price} | {trade.rationale} |"
+                f"| {date_str} | {trade.ticker} | {trade.type.value} | {amount} | {trade.price} | {realized_pnl_str} | {realized_pnl_percent_str} | {unrealized_pnl_str} | {unrealized_pnl_percent_str} | {trade.rationale} |"
             )
 
         return "\n".join(lines)
