@@ -387,6 +387,20 @@ class TradeHistoryAct(Action):
         quotes = quotes_response.get("quotes", {})
 
         lines = [
+            "Notes:",
+            "- `Date`: trade timestamp (UTC, YYYY-MM-DD HH:MM)",
+            "- `Ticker`: instrument symbol",
+            "- `Type`: `BUY` or `SELL`",
+            "- `Amount`: shares; negative for `SELL`, positive for `BUY`",
+            "- `Trade Price`: executed price at trade time",
+            "- `Current Price`: latest bid price used in PnL calculations",
+            "- `Realized PnL` (SELL): (sell - cost) × amount; `%` = (sell - cost) / cost",
+            "- `Unrealized PnL` (BUY): (bid - trade price) × amount; `%` = (bid - trade price) / trade price",
+            "- `PnL if Held` (SELL): (bid - sell price) × amount; `%` = (bid - sell price) / sell price",
+            "- `PnL if Held` interpretation: > 0 holding would outperform selling; < 0 selling was favorable; ≈ 0 neutral impact",
+            "- `PnL if Held` purpose: quick post-trade indicator to evaluate sell timing and potential profit/loss if held; not for a re-entry recommendation",
+            "- `Rationale`: brief explanation of the decision",
+            "",
             "| Date | Ticker | Type | Amount | Trade Price | Current Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | PnL if Held | PnL % if Held | Rationale |",
             "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
         ]
