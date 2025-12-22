@@ -387,8 +387,8 @@ class TradeHistoryAct(Action):
         quotes = quotes_response.get("quotes", {})
 
         lines = [
-            "| Date | Ticker | Type | Amount | Trade Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | PnL if Held | PnL % if Held | Rationale |",
-            "|---|---|---|---|---|---|---|---|---|---|---|---|",
+            "| Date | Ticker | Type | Amount | Trade Price | Current Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | PnL if Held | PnL % if Held | Rationale |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
         ]
 
         for trade in trades:
@@ -401,6 +401,12 @@ class TradeHistoryAct(Action):
             unrealized_pnl_percent_str = "N/A"
             pnl_if_held_str = "N/A"
             pnl_percent_if_held_str = "N/A"
+            current_price_str = "N/A"
+            quote = quotes.get(trade.ticker)
+            bid_price: float | None = None
+            if quote and quote.get("bid_price"):
+                bid_price = float(quote["bid_price"])
+                current_price_str = utils.format_float(bid_price)
 
             if trade.type == TradeType.SELL:
                 amount = -1 * amount
@@ -410,22 +416,14 @@ class TradeHistoryAct(Action):
                     realized_pnl_percent_str = utils.format_percent(
                         trade.realizedPLPercent
                     )
-
-                # Calculate PnL if Held
-                quote = quotes.get(trade.ticker)
-                if quote and quote.get("bid_price"):
-                    current_price = float(quote["bid_price"])
-                    # PnL if Held = (Current Price - Sell Price) * Amount
-                    # Note: using trade.amount which is positive
-                    pnl_if_held = (current_price - trade.price) * trade.amount
-                    pnl_percent_if_held = (current_price - trade.price) / trade.price
+                if bid_price is not None:
+                    pnl_if_held = (bid_price - trade.price) * trade.amount
+                    pnl_percent_if_held = (bid_price - trade.price) / trade.price
                     pnl_if_held_str = utils.format_float(pnl_if_held)
                     pnl_percent_if_held_str = utils.format_percent(pnl_percent_if_held)
 
             elif trade.type == TradeType.BUY:
-                quote = quotes.get(trade.ticker)
-                if quote and quote.get("bid_price"):
-                    bid_price = float(quote["bid_price"])
+                if bid_price is not None:
                     pnl = (bid_price - trade.price) * trade.amount
                     pnl_percent = (bid_price - trade.price) / trade.price
                     unrealized_pnl_str = utils.format_float(pnl)
@@ -440,6 +438,7 @@ class TradeHistoryAct(Action):
                         trade.type,
                         str(amount),
                         str(trade.price),
+                        current_price_str,
                         realized_pnl_str,
                         realized_pnl_percent_str,
                         unrealized_pnl_str,
