@@ -387,8 +387,8 @@ class TradeHistoryAct(Action):
         quotes = quotes_response.get("quotes", {})
 
         lines = [
-            "| Date | Ticker | Type | Amount | Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | Rationale |",
-            "|---|---|---|---|---|---|---|---|---|---|",
+            "| Date | Ticker | Type | Amount | Trade Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | PnL if Held | PnL % if Held | Rationale |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|",
         ]
 
         for trade in trades:
@@ -399,6 +399,8 @@ class TradeHistoryAct(Action):
             realized_pnl_percent_str = "N/A"
             unrealized_pnl_str = "N/A"
             unrealized_pnl_percent_str = "N/A"
+            pnl_if_held_str = "N/A"
+            pnl_percent_if_held_str = "N/A"
 
             if trade.type == TradeType.SELL:
                 amount = -1 * amount
@@ -408,6 +410,18 @@ class TradeHistoryAct(Action):
                     realized_pnl_percent_str = utils.format_percent(
                         trade.realizedPLPercent
                     )
+
+                # Calculate PnL if Held
+                quote = quotes.get(trade.ticker)
+                if quote and quote.get("bid_price"):
+                    current_price = float(quote["bid_price"])
+                    # PnL if Held = (Current Price - Sell Price) * Amount
+                    # Note: using trade.amount which is positive
+                    pnl_if_held = (current_price - trade.price) * trade.amount
+                    pnl_percent_if_held = (current_price - trade.price) / trade.price
+                    pnl_if_held_str = utils.format_float(pnl_if_held)
+                    pnl_percent_if_held_str = utils.format_percent(pnl_percent_if_held)
+
             elif trade.type == TradeType.BUY:
                 quote = quotes.get(trade.ticker)
                 if quote and quote.get("bid_price"):
@@ -418,7 +432,24 @@ class TradeHistoryAct(Action):
                     unrealized_pnl_percent_str = utils.format_percent(pnl_percent)
 
             lines.append(
-                f"| {date_str} | {trade.ticker} | {trade.type} | {amount} | {trade.price} | {realized_pnl_str} | {realized_pnl_percent_str} | {unrealized_pnl_str} | {unrealized_pnl_percent_str} | {trade.rationale} |"
+                "| "
+                + " | ".join(
+                    [
+                        date_str,
+                        trade.ticker,
+                        trade.type,
+                        str(amount),
+                        str(trade.price),
+                        realized_pnl_str,
+                        realized_pnl_percent_str,
+                        unrealized_pnl_str,
+                        unrealized_pnl_percent_str,
+                        pnl_if_held_str,
+                        pnl_percent_if_held_str,
+                        trade.rationale,
+                    ]
+                )
+                + " |"
             )
 
         return "\n".join(lines)
