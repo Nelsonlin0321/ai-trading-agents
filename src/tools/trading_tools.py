@@ -144,7 +144,7 @@ def get_recommend_stock_tool(role: Role):
     @tool("recommend_stock")
     async def recommend_stock(
         ticker: str,
-        amount: float,
+        allocation: float,
         rationale: str,
         confidence: float,
         trade_type: Literal["BUY", "SELL", "HOLD"],
@@ -154,12 +154,15 @@ def get_recommend_stock_tool(role: Role):
 
         Calling tool is mandatory to log your trading suggestions when you recommend a stock.
         capturing the ticker symbol, desired action (buy, sell, or hold),
-        the number of shares involved, the reasoning behind the recommendation with the confidence level.
+        allocation percentage (0.0-1.0),
+
+        the number of shares involved (amount = the total portfolio value * allocation, nearest integer), the reasoning behind the recommendation with the confidence level.
+
         These recorded recommendations can later be reviewed or aggregated to guide final investment decisions.
 
         Args:
             ticker: Stock symbol to recommend to BUY, SELL, or HOLD
-            amount: Number of shares to recommend to BUY, SELL, or HOLD
+            allocation: Allocation of the total value of the portfolio to recommend to BUY, SELL, or HOLD: Allocation percentage (0.0-1.0) = amount / total portfolio value
             rationale: Rationale for the recommendation
             confidence: Confidence in the recommendation (0.0-1.0)
             trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
@@ -176,7 +179,7 @@ def get_recommend_stock_tool(role: Role):
             run_id=run_id,
             bot_id=bot_id,
             ticker=ticker,
-            amount=amount,
+            allocation=allocation,
             rationale=rationale,
             confidence=confidence,
             trade_type=TradeType(trade_type),
