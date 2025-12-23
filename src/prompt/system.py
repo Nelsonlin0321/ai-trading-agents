@@ -22,7 +22,7 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
 
     watchlist_prompt: str = (
         (
-            "Here's the watchlist of user, you can trade only on these stocks or stock in the current positions:"
+            "Here's the watchlist of user, you should focus on these stocks or stock in the current positions:"
             ", ".join([w.ticker for w in watchlist])
         )
         if tickers
