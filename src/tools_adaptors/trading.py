@@ -3,6 +3,7 @@ from src.services.alpaca import get_latest_quotes
 from prisma.enums import TradeType
 from prisma.enums import Role
 from prisma.types import RecommendCreateInput
+from prisma.models import Recommend
 from datetime import datetime, timedelta, timezone
 from src import utils, db
 from src.utils import async_retry
@@ -330,9 +331,17 @@ class GetAnalystsRecommendationsAct(Action):
                 "runId": run_id,
             },
             order={
-                "role": "asc",
+                "createdAt": "desc",
             },
         )
+
+        grouped_recs: dict[str, Recommend] = {}
+        for rec in recommendations:
+            key = f"{rec.role.value}-{rec.ticker}"
+            if key not in grouped_recs:
+                grouped_recs[key] = rec
+
+        recommendations = sorted(list(grouped_recs.values()), key=lambda x: str(x.role))
 
         return format_recommendations_markdown(recommendations)
 
