@@ -1,9 +1,9 @@
 alpaca-py>=0.43.2
 boto3>=1.42.9
 google-genai>=1.50.1
-langchain>=1.0.7
+langchain>=1.2.0
 langchain-deepseek>=1.0.1
-langchain-openai>=1.0.3
+langchain-openai>=1.1.6
 loguru>=0.7.3
 numpy>=2.3.5
 prisma>=0.15.0
