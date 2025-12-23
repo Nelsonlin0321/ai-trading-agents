@@ -81,7 +81,9 @@ def deduplicate_timeline_by_date(timeline_values: List[TimelineValue]):
         convert_to_date(
             max(
                 group,
-                key=lambda x: datetime.fromisoformat(x["date"].replace("Z", "+00:00")),
+                key=lambda x: datetime.fromisoformat(
+                    x["date"].replace("Z", "+00:00")
+                ).replace(tzinfo=None),
             )
         )
         for group in grouped.values()

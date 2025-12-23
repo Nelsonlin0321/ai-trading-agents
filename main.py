@@ -92,6 +92,7 @@ async def main(run_id: str):
         )
     finally:
         await db.disconnect()
+        exit(1)
 
 
 if __name__ == "__main__":
