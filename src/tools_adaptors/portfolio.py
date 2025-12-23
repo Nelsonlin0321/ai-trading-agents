@@ -333,7 +333,8 @@ __all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
 
 
 if __name__ == "__main__":
-    #  python -m src.tools_adaptors.portfolio
+    # source .venv/bin/activate
+    # python -m src.tools_adaptors.portfolio
     import asyncio
 
     async def test_performance_analysis():
@@ -341,7 +342,7 @@ if __name__ == "__main__":
 
         await db.connect()
         analysis = await PortfolioPerformanceAnalysisAct().arun(
-            "d4ef2264-31fa-438a-92b0-5c3b00db8325"
+            "82f13c88-c572-46eb-b6fe-70e9c0264f75"
         )
         print(analysis)
         await db.disconnect()
@@ -351,7 +352,7 @@ if __name__ == "__main__":
 
         await db.connect()
         positions = await ListPositionsAct().arun(
-            "d4ef2264-31fa-438a-92b0-5c3b00db8325"
+            "82f13c88-c572-46eb-b6fe-70e9c0264f75"
         )
         print(positions)
         await db.disconnect()
