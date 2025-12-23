@@ -56,6 +56,20 @@ class BuyAct(Action):
             await transaction.portfolio.update(
                 where={"botId": bot_id}, data={"cash": portfolio.cash}
             )
+
+            await transaction.trade.create(
+                data=TradeCreateInput(
+                    rationale=rationale,
+                    confidence=confidence,
+                    type=TradeType.BUY,
+                    price=price,
+                    ticker=ticker,
+                    amount=volume,
+                    runId=runId,
+                    botId=bot_id,
+                )
+            )
+
             existing = await transaction.position.find_unique(
                 where={
                     "portfolioId_ticker": {
@@ -74,44 +88,32 @@ class BuyAct(Action):
                         cost=price,
                     )
                 )
+
                 return (
                     f"Successfully bought {volume} shares of {ticker} at {price} per share. "
                     f"Current volume is {volume} "
                     f"with average cost {utils.format_float(price)}"
                 )
-            else:
-                await transaction.position.update(
-                    where={
-                        "portfolioId_ticker": {
-                            "portfolioId": portfolio.id,
-                            "ticker": ticker,
-                        }
-                    },
-                    data=PositionUpdateInput(
-                        volume=existing.volume + volume,
-                        cost=(existing.cost * existing.volume + price * volume)
-                        / (existing.volume + volume),
-                    ),
-                )
 
-                await transaction.trade.create(
-                    data=TradeCreateInput(
-                        rationale=rationale,
-                        confidence=confidence,
-                        type=TradeType.BUY,
-                        price=price,
-                        ticker=ticker,
-                        amount=volume,
-                        runId=runId,
-                        botId=bot_id,
-                    )
-                )
+            await transaction.position.update(
+                where={
+                    "portfolioId_ticker": {
+                        "portfolioId": portfolio.id,
+                        "ticker": ticker,
+                    }
+                },
+                data=PositionUpdateInput(
+                    volume=existing.volume + volume,
+                    cost=(existing.cost * existing.volume + price * volume)
+                    / (existing.volume + volume),
+                ),
+            )
 
-                return (
-                    f"Successfully bought {volume} shares of {ticker} at {price} per share. "
-                    f"Current volume is {existing.volume + volume} "
-                    f"with average cost {utils.format_float(existing.cost)}"
-                )
+            return (
+                f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                f"Current volume is {existing.volume + volume} "
+                f"with average cost {utils.format_float(existing.cost)}"
+            )
 
 
 class SellAct(Action):
