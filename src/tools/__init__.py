@@ -11,6 +11,7 @@ from src.tools.stock_tools import (
 from src.tools.portfolio_tools import (
     list_current_positions,
     get_portfolio_performance_analysis,
+    get_portfolio_total_value,
 )
 from src.tools.research_tools import (
     do_google_market_research,
@@ -70,5 +71,6 @@ __all__ = [
     "get_price_risk_indicators",
     "write_down_tickers_to_review",
     "get_historical_reviewed_tickers",
+    "get_portfolio_total_value",
     # "handoff_to_specialist", # Avoid circular import
 ]

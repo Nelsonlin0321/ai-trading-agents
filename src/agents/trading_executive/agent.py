@@ -20,6 +20,7 @@ async def build_trading_executor_agent(context: Context):
             tools.sell_stock,
             # tools.get_latest_quotes,
             # tools.get_latest_quote,
+            tools.get_portfolio_total_value,
             tools.get_market_status,
         ],
         middleware=[

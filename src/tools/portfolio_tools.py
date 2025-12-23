@@ -3,10 +3,12 @@ from src.context import Context
 from src.tools_adaptors.portfolio import (
     ListPositionsAct,
     PortfolioPerformanceAnalysisAct,
+    PortfolioTotalValueAct,
 )
 
 list_positions_act = ListPositionsAct()
 portfolio_performance_analysis_act = PortfolioPerformanceAnalysisAct()
+portfolio_total_value_act = PortfolioTotalValueAct()
 
 
 @tool(list_positions_act.name)
@@ -80,4 +82,28 @@ async def get_portfolio_performance_analysis(runtime: ToolRuntime[Context]):
     return performance_analysis
 
 
-__all__ = ["list_current_positions", "get_portfolio_performance_analysis"]
+@tool(portfolio_total_value_act.name)
+async def get_portfolio_total_value(runtime: ToolRuntime[Context]):
+    """
+    Retrieve the current total value of the trading portfolio.
+
+    This tool fetches the latest total value of the trading portfolio,
+    which is the sum of the current market value of all positions plus any cash held in the same account.
+
+
+    Notes
+    -----
+    - The total value is computed by summing the currentValue field of each position in the portfolio.
+    - CASH is a special position that represents the cash balance in the account.
+    """
+
+    bot_id = runtime.context.bot.id
+    total_value = await portfolio_total_value_act.arun(bot_id=bot_id)
+    return total_value
+
+
+__all__ = [
+    "list_current_positions",
+    "get_portfolio_performance_analysis",
+    "get_portfolio_total_value",
+]
