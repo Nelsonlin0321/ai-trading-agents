@@ -277,13 +277,16 @@ class RecommendStockAct(Action):
         amount = allocation * portfolio_total_value / price
 
         if amount < 1:
-            return f"Allocation is too small, the minimum amount is 1 but {amount:.2f} based on the {allocation:.1%} (allocation) * {portfolio_total_value:.2f} (total portfolio value) / {price:.2f} (price)"
-
+            return (
+                f"Allocation is too small, the minimum amount is 1 but {amount:.2f}"
+                " based on the {allocation:.1%} (allocation) * {portfolio_total_value:.2f} (total portfolio value) / {price:.2f} (price)"
+            )
+        amount = int(amount)
         await db.prisma.recommend.create(
             data=RecommendCreateInput(
                 ticker=ticker,
                 type=trade_type,
-                amount=int(amount),
+                amount=amount,
                 allocation=allocation,
                 rationale=rationale,
                 confidence=confidence,
