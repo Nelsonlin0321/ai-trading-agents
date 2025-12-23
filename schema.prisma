@@ -268,6 +268,7 @@ model Recommend {
     type       TradeType
     ticker     String
     amount     Float
+    allocation Float?
     rationale  String
     confidence Float
     role       Role

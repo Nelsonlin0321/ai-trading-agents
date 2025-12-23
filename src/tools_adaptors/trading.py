@@ -3,12 +3,13 @@ from src.services.alpaca import get_latest_quotes
 from prisma.enums import TradeType
 from prisma.enums import Role
 from prisma.types import RecommendCreateInput
+from datetime import datetime, timedelta, timezone
 from src import utils, db
 from src.utils import async_retry
+from src.tools_adaptors.portfolio import calculate_latest_portfolio_value
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
-from datetime import datetime, timedelta, timezone
 
 
 class BuyAct(Action):
@@ -55,6 +56,20 @@ class BuyAct(Action):
             await transaction.portfolio.update(
                 where={"botId": bot_id}, data={"cash": portfolio.cash}
             )
+
+            await transaction.trade.create(
+                data=TradeCreateInput(
+                    rationale=rationale,
+                    confidence=confidence,
+                    type=TradeType.BUY,
+                    price=price,
+                    ticker=ticker,
+                    amount=volume,
+                    runId=runId,
+                    botId=bot_id,
+                )
+            )
+
             existing = await transaction.position.find_unique(
                 where={
                     "portfolioId_ticker": {
@@ -73,44 +88,32 @@ class BuyAct(Action):
                         cost=price,
                     )
                 )
+
                 return (
                     f"Successfully bought {volume} shares of {ticker} at {price} per share. "
                     f"Current volume is {volume} "
                     f"with average cost {utils.format_float(price)}"
                 )
-            else:
-                await transaction.position.update(
-                    where={
-                        "portfolioId_ticker": {
-                            "portfolioId": portfolio.id,
-                            "ticker": ticker,
-                        }
-                    },
-                    data=PositionUpdateInput(
-                        volume=existing.volume + volume,
-                        cost=(existing.cost * existing.volume + price * volume)
-                        / (existing.volume + volume),
-                    ),
-                )
 
-                await transaction.trade.create(
-                    data=TradeCreateInput(
-                        rationale=rationale,
-                        confidence=confidence,
-                        type=TradeType.BUY,
-                        price=price,
-                        ticker=ticker,
-                        amount=volume,
-                        runId=runId,
-                        botId=bot_id,
-                    )
-                )
+            await transaction.position.update(
+                where={
+                    "portfolioId_ticker": {
+                        "portfolioId": portfolio.id,
+                        "ticker": ticker,
+                    }
+                },
+                data=PositionUpdateInput(
+                    volume=existing.volume + volume,
+                    cost=(existing.cost * existing.volume + price * volume)
+                    / (existing.volume + volume),
+                ),
+            )
 
-                return (
-                    f"Successfully bought {volume} shares of {ticker} at {price} per share. "
-                    f"Current volume is {existing.volume + volume} "
-                    f"with average cost {utils.format_float(existing.cost)}"
-                )
+            return (
+                f"Successfully bought {volume} shares of {ticker} at {price} per share. "
+                f"Current volume is {existing.volume + volume} "
+                f"with average cost {utils.format_float(existing.cost)}"
+            )
 
 
 class SellAct(Action):
@@ -237,7 +240,7 @@ class RecommendStockAct(Action):
     async def arun(
         self,
         ticker: str,
-        amount: float,
+        allocation: float,
         rationale: str,
         confidence: float,
         trade_type: TradeType,
@@ -250,7 +253,7 @@ class RecommendStockAct(Action):
 
         Args:
             ticker: Stock ticker, e.g. 'AAPL'
-            amount: Amount of stock to buy or sell
+            allocation: Allocation of the portfolio to the stock (0.0-1.0)
             rationale: Rationale for the recommendation
             confidence: Confidence in the recommendation (0.0-1.0)
 
@@ -261,11 +264,27 @@ class RecommendStockAct(Action):
         if not (0.0 <= confidence <= 1.0):
             return "Confidence must be between 0.0 and 1.0"
 
+        if not (0.0 <= allocation <= 1.0):
+            return "Allocation must be between 0.0 and 1.0"
+
+        portfolio_values = await calculate_latest_portfolio_value(bot_id)
+        latest_quotes_response = await get_latest_quotes(symbols=[ticker])
+        latest_quotes = latest_quotes_response["quotes"][ticker]
+
+        price = latest_quotes["ask_price"]
+
+        portfolio_total_value = portfolio_values["latestPortfolioValue"]
+        amount = allocation * portfolio_total_value / price
+
+        if amount < 1:
+            return f"Allocation is too small, the minimum amount is 1 but {amount:.2f} based on the {allocation:.1%} (allocation) * {portfolio_total_value:.2f} (total portfolio value) / {price:.2f} (price)"
+
         await db.prisma.recommend.create(
             data=RecommendCreateInput(
                 ticker=ticker,
                 type=trade_type,
                 amount=amount,
+                allocation=allocation,
                 rationale=rationale,
                 confidence=confidence,
                 role=role,
@@ -275,7 +294,8 @@ class RecommendStockAct(Action):
         )
 
         return (
-            f"{role.value} recommended {trade_type.value} {amount} shares of {ticker}\n"
+            f"{role.value} recommended {trade_type.value} {amount} shares of {ticker} "
+            f"with allocation {allocation:.1%} of {portfolio_total_value:.2f} (total portfolio value)\n"
             f"Confidence: {confidence:.1%}\n"
             f"Rationale: {rationale}"
         )

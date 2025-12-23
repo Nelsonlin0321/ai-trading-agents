@@ -15,6 +15,8 @@ from src.tools_adaptors.stocks import (
 from src.tools_adaptors.portfolio import (
     ListPositionsAct,
     PortfolioPerformanceAnalysisAct,
+    PortfolioTotalValueAct,
+    calculate_latest_portfolio_value,
 )
 
 from src.tools_adaptors.fundamental_data import FundamentalDataAct
@@ -28,6 +30,8 @@ from src.tools_adaptors.common import (
 
 __all__ = [
     "Action",
+    "calculate_latest_portfolio_value",
+    "PortfolioTotalValueAct",
     "GetPriceTrendAct",
     "SingleLatestQuotesAct",
     "MultiLatestQuotesAct",

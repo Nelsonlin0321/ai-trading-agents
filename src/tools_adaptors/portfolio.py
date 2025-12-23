@@ -236,6 +236,7 @@ class LatestPortfolioValueResult(TypedDict):
     timestamp: datetime
 
 
+@redis_cache(ttl=60 * 60, function_name="calculate_latest_portfolio_value")
 async def calculate_latest_portfolio_value(bot_id: str) -> LatestPortfolioValueResult:
     portfolio = await prisma.portfolio.find_unique(
         where={"botId": bot_id},
@@ -319,7 +320,7 @@ class PortfolioPerformanceAnalysisAct(Action):
         return "get_portfolio_performance_analysis"
 
     @async_retry()
-    @redis_cache(ttl=60 * 5, function_name="get_portfolio_performance_analysis")
+    @redis_cache(ttl=60 * 60, function_name="get_portfolio_performance_analysis")
     async def arun(self, bot_id: str):
         timeline_values = await get_timeline_values(bot_id)
         analysis = action_utils.analyze_timeline_value(timeline_values)
@@ -329,7 +330,23 @@ class PortfolioPerformanceAnalysisAct(Action):
         return "Insufficient data for analysis."
 
 
-__all__ = ["ListPositionsAct", "PortfolioPerformanceAnalysisAct"]
+class PortfolioTotalValueAct(Action):
+    @property
+    def name(self):
+        return "get_portfolio_total_value"
+
+    @async_retry()
+    async def arun(self, bot_id: str):
+        latest_value = await calculate_latest_portfolio_value(bot_id)
+        return latest_value["latestPortfolioValue"]
+
+
+__all__ = [
+    "ListPositionsAct",
+    "PortfolioPerformanceAnalysisAct",
+    "PortfolioTotalValueAct",
+    "calculate_latest_portfolio_value",
+]
 
 
 if __name__ == "__main__":
