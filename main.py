@@ -81,6 +81,7 @@ async def main(run_id: str):
         await db.connect()
         await run_agent(run_id)
         logger.info(f"Run {run_id} completed successfully")
+        exit(0)
     except Exception as e:
         run = await db.prisma.run.find_unique(where={"id": run_id})
         if run:
@@ -90,9 +91,9 @@ async def main(run_id: str):
         logger.error(
             f"Failed to run agent {run_id}: {e}. Traceback: {traceback.format_exc()}"
         )
+        exit(1)
     finally:
         await db.disconnect()
-        exit(1)
 
 
 if __name__ == "__main__":
