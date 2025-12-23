@@ -13,7 +13,15 @@ def format_recommendations_markdown(recommendations: list[Recommend]) -> str:
     if not recommendations:
         return "No recommendations found."
 
-    headers = ["Ticker", "Type", "Amount", "Confidence", "Analyst", "Rationale"]
+    headers = [
+        "Ticker",
+        "Type",
+        "Amount",
+        "Allocation",
+        "Confidence",
+        "Analyst",
+        "Rationale",
+    ]
     rows = [
         "| "
         + " | ".join(
@@ -21,6 +29,7 @@ def format_recommendations_markdown(recommendations: list[Recommend]) -> str:
                 rec.ticker,
                 rec.type.value if hasattr(rec.type, "value") else str(rec.type),
                 str(rec.amount),
+                f"{rec.allocation:.2%}",
                 f"{rec.confidence:.2%}",
                 rec.role,
                 rec.rationale.replace("\n", " ").replace("|", "\\|"),
