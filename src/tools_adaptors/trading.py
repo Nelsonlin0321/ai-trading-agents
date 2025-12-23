@@ -283,7 +283,7 @@ class RecommendStockAct(Action):
             data=RecommendCreateInput(
                 ticker=ticker,
                 type=trade_type,
-                amount=amount,
+                amount=int(amount),
                 allocation=allocation,
                 rationale=rationale,
                 confidence=confidence,
