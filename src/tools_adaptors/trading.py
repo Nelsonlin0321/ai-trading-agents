@@ -263,10 +263,10 @@ class RecommendStockAct(Action):
         """
 
         if not (0.0 <= confidence <= 1.0):
-            return "Confidence must be between 0.0 and 1.0"
+            return f"{ticker} Confidence must be between 0.0 and 1.0"
 
         if not (0.0 <= allocation <= 1.0):
-            return "Allocation must be between 0.0 and 1.0"
+            return f"{ticker} Allocation must be between 0.0 and 1.0"
 
         portfolio_values = await calculate_latest_portfolio_value(bot_id)
         latest_quotes_response = await get_latest_quotes(symbols=[ticker])
@@ -279,8 +279,8 @@ class RecommendStockAct(Action):
 
         if amount < 1:
             return (
-                f"Allocation is too small, the minimum amount is 1 but {amount:.2f}"
-                " based on the {allocation:.1%} (allocation) * {portfolio_total_value:.2f} (total portfolio value) / {price:.2f} (price)"
+                f"{ticker} Allocation is too small, the minimum amount is 1 but {amount:.2f}"
+                f" based on the {allocation:.1%} (allocation) * {portfolio_total_value:.2f} (total portfolio value) / {price:.2f} (price)"
             )
         amount = int(amount)
         await db.prisma.recommend.create(
