@@ -233,7 +233,7 @@ class LatestPortfolioValueResult(TypedDict):
     latestPortfolioValue: float
     cash: float
     symbols: list[str]
-    timestamp: datetime
+    timestamp: str
 
 
 @redis_cache(ttl=60 * 60, function_name="calculate_latest_portfolio_value")
@@ -284,7 +284,7 @@ async def calculate_latest_portfolio_value(bot_id: str) -> LatestPortfolioValueR
         "latestPortfolioValue": latest_portfolio_value,
         "cash": portfolio.cash,
         "symbols": symbols,
-        "timestamp": timestamp,
+        "timestamp": timestamp.isoformat(),
     }
 
 
@@ -306,7 +306,7 @@ async def get_timeline_values(bot_id: str) -> list[TimelineValue]:
     latest_value = await calculate_latest_portfolio_value(bot_id)
     points.append(
         {
-            "date": latest_value["timestamp"].isoformat(),
+            "date": latest_value["timestamp"],
             "value": latest_value["latestPortfolioValue"],
         }
     )
