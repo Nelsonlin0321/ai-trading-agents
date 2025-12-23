@@ -8,6 +8,7 @@ from src.utils import async_retry
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+from datetime import datetime, timedelta, timezone
 
 
 class BuyAct(Action):
@@ -355,3 +356,129 @@ class WriteDownTickersToReviewAct(Action):
                 )
             else:
                 return f"Tickers {tickers} written down to review"
+
+
+class TradeHistoryAct(Action):
+    @property
+    def name(self):
+        return "get_trade_history_in_30_days"
+
+    @async_retry()
+    async def arun(self, run_id: str) -> str:
+        run = await db.prisma.run.find_unique(where={"id": run_id})
+        if not run:
+            return f"Run with id {run_id} not found"
+
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+
+        trades = await db.prisma.trade.find_many(
+            where={
+                "botId": run.botId,
+                "createdAt": {"gte": cutoff_date},
+            },
+            order={"createdAt": "desc"},
+        )
+
+        if not trades:
+            return "No trades found in the last 30 days."
+
+        tickers = list(set([t.ticker for t in trades]))
+        quotes_response = await get_latest_quotes(tickers)
+        quotes = quotes_response.get("quotes", {})
+
+        lines = [
+            "Notes:",
+            "- `Date`: trade timestamp (UTC, YYYY-MM-DD HH:MM)",
+            "- `Ticker`: instrument symbol",
+            "- `Type`: `BUY` or `SELL`",
+            "- `Amount`: shares; negative for `SELL`, positive for `BUY`",
+            "- `Trade Price`: executed price at trade time",
+            "- `Current Price`: latest bid price used in PnL calculations",
+            "- `Realized PnL` (SELL): (sell - cost) × amount; `%` = (sell - cost) / cost",
+            "- `Unrealized PnL` (BUY): (bid - trade price) × amount; `%` = (bid - trade price) / trade price",
+            "- `PnL if Held` (SELL): (bid - sell price) × amount; `%` = (bid - sell price) / sell price",
+            "- `PnL if Held` interpretation: > 0 holding would outperform selling; < 0 selling was favorable; ≈ 0 neutral impact",
+            "- `PnL if Held` purpose: quick post-trade indicator to evaluate sell timing and potential profit/loss if held; not for a re-entry recommendation",
+            "- `Rationale`: brief explanation of the decision",
+            "",
+            "| Date | Ticker | Type | Amount | Trade Price | Current Price | Realized PnL | Realized PnL % | Unrealized PnL | Unrealized PnL % | PnL if Held | PnL % if Held | Rationale |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        ]
+
+        for trade in trades:
+            date_str = trade.createdAt.strftime("%Y-%m-%d %H:%M")
+
+            amount = trade.amount
+            realized_pnl_str = "N/A"
+            realized_pnl_percent_str = "N/A"
+            unrealized_pnl_str = "N/A"
+            unrealized_pnl_percent_str = "N/A"
+            pnl_if_held_str = "N/A"
+            pnl_percent_if_held_str = "N/A"
+            current_price_str = "N/A"
+            quote = quotes.get(trade.ticker)
+            bid_price: float | None = None
+            if quote and quote.get("bid_price"):
+                bid_price = float(quote["bid_price"])
+                current_price_str = utils.format_float(bid_price)
+
+            if trade.type == TradeType.SELL:
+                amount = -1 * amount
+                if trade.realizedPL is not None:
+                    realized_pnl_str = utils.format_float(trade.realizedPL)
+                if trade.realizedPLPercent is not None:
+                    realized_pnl_percent_str = utils.format_percent(
+                        trade.realizedPLPercent
+                    )
+                if bid_price is not None:
+                    pnl_if_held = (bid_price - trade.price) * trade.amount
+                    pnl_percent_if_held = (bid_price - trade.price) / trade.price
+                    pnl_if_held_str = utils.format_float(pnl_if_held)
+                    pnl_percent_if_held_str = utils.format_percent(pnl_percent_if_held)
+
+            elif trade.type == TradeType.BUY:
+                if bid_price is not None:
+                    pnl = (bid_price - trade.price) * trade.amount
+                    pnl_percent = (bid_price - trade.price) / trade.price
+                    unrealized_pnl_str = utils.format_float(pnl)
+                    unrealized_pnl_percent_str = utils.format_percent(pnl_percent)
+
+            lines.append(
+                "| "
+                + " | ".join(
+                    [
+                        date_str,
+                        trade.ticker,
+                        trade.type,
+                        str(amount),
+                        str(trade.price),
+                        current_price_str,
+                        realized_pnl_str,
+                        realized_pnl_percent_str,
+                        unrealized_pnl_str,
+                        unrealized_pnl_percent_str,
+                        pnl_if_held_str,
+                        pnl_percent_if_held_str,
+                        trade.rationale,
+                    ]
+                )
+                + " |"
+            )
+
+        return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    #  python -m src.tools_adaptors.trading
+    import asyncio
+    from src import db
+
+    async def test_TradeHistoryAct():
+        await db.connect()
+        act = TradeHistoryAct()
+        run_id = "aeb9c6eb-7a16-442c-a2ed-93f92788fccd"
+        result = await act.arun(run_id)
+        print(result)
+        await db.disconnect()
+
+    asyncio.run(test_TradeHistoryAct())

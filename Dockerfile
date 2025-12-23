@@ -6,6 +6,9 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 # Set working directory
 WORKDIR /app
 
+# Set environment variables for cache locations
+ENV HOME=/app
+
 # Copy requirements.txt first for better caching
 COPY requirements.txt .
 
@@ -26,7 +29,7 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Make the main.py file executable
-RUN chmod +x src/main.py
+RUN chmod +x /app/main.py
 
 # Set the entrypoint to python and default command to show usage
-ENTRYPOINT ["python", "/app/src/main.py"]
+ENTRYPOINT ["python", "/app/main.py"]

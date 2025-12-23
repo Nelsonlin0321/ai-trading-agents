@@ -47,11 +47,11 @@ def get_current_timestamp() -> str:
     )
 
 
-def get_env(name: str) -> str:
+def get_env(name: str, default="") -> str:
     value = os.environ.get(name)
-    if not value:
+    if not value and default == "":
         raise RuntimeError(f"Missing required environment variable: {name}")
-    return value
+    return value or default
 
 
 def dicts_to_markdown_table(data: list[dict[str, Any]]):

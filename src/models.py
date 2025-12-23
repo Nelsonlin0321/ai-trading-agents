@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from src.utils import get_env
 
 OPENAI_API_KEY = SecretStr(get_env("OPENAI_API_KEY"))
-OPENAI_API_URL = get_env("OPENAI_API_URL")
+OPENAI_API_URL = get_env("OPENAI_API_URL", default="https://api.302.ai/v1")
 
 
 def get_model(model_name: str):

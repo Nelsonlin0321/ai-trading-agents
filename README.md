@@ -62,7 +62,7 @@ Set via `.env` or AWS Secrets Manager (`sandx.ai`). Required:
 ## Running
 The main entry consumes a `runId` created in the DB.
 ```bash
-python src/main.py <runId>
+python main.py fb58e18e-b45f-4e64-a55a-4a9a88ff4ae4
 ```
 This:
 - Restores unfinished CIO messages for the run
@@ -80,6 +80,16 @@ docker run --rm \
   -e UPSTASH_REDIS_REST_URL=... -e UPSTASH_REDIS_REST_TOKEN=... \
   -e API_KEY=... -e SANDX_AI_URL=... -e BASE_URL=... \
   ai-trading-agents:latest <runId>
+```
+
+```shell
+docker run --rm \
+  --env-file .docker.env \
+  ai-trading-agents:latest aeb9c6eb-7a16-442c-a2ed-93f92788fccd
+```
+
+```shell
+docker run --rm -it --env-file .docker.env --entrypoint /bin/bash ai-trading-agents:latest
 ```
 
 ## Testing

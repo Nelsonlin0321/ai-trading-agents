@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Awaitable, Callable, TypeVar, cast
+from typing import Awaitable, Callable, TypeVar, cast, Coroutine, Any
 import httpx
 from loguru import logger
 from prisma import types
@@ -138,7 +138,9 @@ def in_db_cache(
 
 def redis_cache(
     function_name: str, ttl: int
-) -> Callable[[Callable[..., Awaitable[T]]], Callable[..., Awaitable[T]]]:
+) -> Callable[
+    [Callable[..., Coroutine[Any, Any, T]]], Callable[..., Coroutine[Any, Any, T]]
+]:
     """Async decorator to cache function results in the database.
 
     - Stores results in Redis with a unique key derived from args/kwargs.
@@ -152,7 +154,9 @@ def redis_cache(
         A decorator that caches the async function's JSON-serializable result.
     """
 
-    def decorator(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
+    def decorator(
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
         async def wrapper(*args, **kwargs) -> T:
             # print(
             #     f"function_name:{function_name} args:{args}, kwargs:{kwargs}")
