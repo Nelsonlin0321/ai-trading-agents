@@ -146,11 +146,6 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
         "- Cash sufficiency for buys\n"
         "- Never short-sell (≤ current holdings)"
     ),
-    Role.USER: (
-        "You are an intellectually curious investor eager to understand how markets function, why prices move, and how "
-        "professional-grade analysis can improve your decision-making. You ask incisive questions, challenge assumptions, "
-        "and actively apply lessons learned in the sandbox to your real-world investment journey."
-    ),
 }
 
 

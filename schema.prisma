@@ -200,6 +200,7 @@ enum RunStatus {
     FAILURE
     RUNNING
     STARTING
+    SKIPPED
 }
 
 model Run {
@@ -226,10 +227,7 @@ enum Role {
     CHIEF_INVESTMENT_OFFICER
     RISK_ANALYST
     TRADING_EXECUTOR
-    QUANTITATIVE_ANALYST
-    PORTFOLIO_MANAGER
     FUNDAMENTAL_ANALYST
-    USER
 }
 
 model AgentMessage {
