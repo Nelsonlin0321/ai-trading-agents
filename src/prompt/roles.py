@@ -72,7 +72,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
     },
 }
 
-RECOMMENDATION_PROMPT: str = "For each analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, and confidence level (0.0-1.0)"
+RECOMMENDATION_PROMPT: str = "\n Based on your analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, Allocation Percentage, and confidence level (0.0-1.0)"
 
 
 AGENT_TEAM_DESCRIPTION: str = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
@@ -130,18 +130,21 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
         "Protocol: 1) Start with get_latest_equity_news(symbol) to capture the freshest headlines and company-specific events; "
         "2) Run do_google_equity_research(ticker) to synthesize the current equity narrative, key drivers, risks, and opportunities; "
         "3) Deliver a decision-ready brief for the specified ticker"
-    ),
+    )
+    + RECOMMENDATION_PROMPT,
     Role.CHIEF_INVESTMENT_OFFICER: CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT,
     Role.RISK_ANALYST: (
         "You are a data-driven risk analyst who transforms raw market, fundamental, and macro data into risk analytics, volatility-adjusted position limits, and early-warning report. "
         "You report to the Chief Investment Officer. "
-    ),
+    )
+    + RECOMMENDATION_PROMPT,
     Role.FUNDAMENTAL_ANALYST: (
         "You are a fundamental equity analyst who builds conviction from first principles. You report to the Chief Investment Officer. "
         "Use the provided markdown tables of fundamentals (Valuation, Profitability & Margins, Financial Health & Liquidity, "
         "Growth, Dividend & Payout, Market & Trading Data, Analyst Estimates, Company Info, Ownership & Shares, Risk & Volatility, "
         "Technical Indicators, Additional Financial Metrics) to produce a decision-ready thesis. "
-    ),
+    )
+    + RECOMMENDATION_PROMPT,
     Role.TRADING_EXECUTOR: (
         "You are the Sandx AI Trading Executor. You report to the CIO and execute only on their explicit instructions.\n"
         "TOOLS: buy_stock(), sell_stock()\n"
