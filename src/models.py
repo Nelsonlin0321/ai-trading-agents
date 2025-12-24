@@ -7,9 +7,9 @@ OPENROUTER_API_URL = get_env(
     "OPENROUTER_API_URL", default="https://openrouter.ai/api/v1"
 )
 
-llm_models = ["minimax/minimax-m2.1", "deepseek/deepseek-v3.2"]
+llm_models = ["minimax/minimax-m2.1", "deepseek/deepseek-v3.2", "x-ai/grok-4.1-fast"]
 
-reasoning_models = {"minimax/minimax-m2.1"}
+reasoning_models = {"minimax/minimax-m2.1", "x-ai/grok-4.1-fast"}
 
 
 def get_model(model_name: str):
