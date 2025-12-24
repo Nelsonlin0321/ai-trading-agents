@@ -29,7 +29,7 @@ reasoning_models = {
 }
 
 routes_to_302_ai = {
-    "deepseek/deepseek-v3.2": "deepseek-v3.2-thinking",
+    "deepseek/deepseek-v3.2": "deepseek-v3.2",
 }
 
 
@@ -39,7 +39,7 @@ def get_model(model_name: str):
             api_key=THREE_TWO_ONE_API_KEY,
             api_base=THREE_TWO_ONE_API_URL,
             model=routes_to_302_ai[model_name],
-            extra_body={"reasoning": {"enabled": True}},
+            # extra_body={"reasoning": {"enabled": True}},
         )
 
     llm = ChatDeepSeek(
