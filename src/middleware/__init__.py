@@ -105,14 +105,15 @@ async def cache_agent_messages(
 
     existing_msg_ids = set(msg["id"] for msg in CACHED_AGENTS_MESSAGES if msg["id"])
 
+    created_at_str = (datetime.now(timezone.utc)).isoformat()
     new_agent_messages = [
         CachedAgentMessage(
             id=msg.id,
             role=role,
             botId=bot_id,
             runId=run_id,
-            createdAt=(datetime.now(timezone.utc)).isoformat(),
-            updatedAt=(datetime.now(timezone.utc)).isoformat(),
+            createdAt=created_at_str,
+            updatedAt=created_at_str,
             messages=msg.model_dump(),
         )
         for msg in messages

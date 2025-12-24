@@ -42,7 +42,7 @@ CachedAgentMessage = TypedDict(
         "runId": str,
         "createdAt": str,
         "updatedAt": str,
-        "messages": dict[str, Any],
+        "messages": dict[str, Any],  # Serialized langchain message content
     },
 )
 
