@@ -47,12 +47,14 @@ async def write_summary_report(runtime: ToolRuntime[Context]):
     messages: list[BaseMessage] = states["messages"]  # type: ignore
     conversation = combine_ai_messages(messages)
     context = runtime.context
-    return await write_investment_report_email_act.arun(
+    await write_investment_report_email_act.arun(
         llm_model=context.llm_model,
         botId=context.bot.id,
         run_id=context.run.id,
         conversation=conversation,
     )
+
+    return "Email written successfully."
 
 
 @tool(send_investment_report_email_act.name)
