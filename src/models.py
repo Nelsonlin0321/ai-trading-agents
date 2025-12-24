@@ -18,12 +18,14 @@ llm_models = [
     "x-ai/grok-4.1-fast",
     "xiaomi/mimo-v2-flash:free",
     "openai/gpt-oss-120b:free",
+    "moonshotai/kimi-k2-thinking",
 ]
 
 reasoning_models = {
     "minimax/minimax-m2.1",
     "x-ai/grok-4.1-fast",
     "openai/gpt-oss-120b:free",
+    "moonshotai/kimi-k2-thinking",
 }
 
 routes_to_302_ai = {
@@ -37,6 +39,7 @@ def get_model(model_name: str):
             api_key=THREE_TWO_ONE_API_KEY,
             api_base=THREE_TWO_ONE_API_URL,
             model=routes_to_302_ai[model_name],
+            extra_body={"reasoning": {"enabled": True}},
         )
 
     llm = ChatDeepSeek(
