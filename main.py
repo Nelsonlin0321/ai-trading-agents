@@ -10,7 +10,7 @@ from src import db
 
 secrets.load()
 
-DEFAULT_USER_PROMPT = """ As AI Agentic Chief Investment Officer,Now,you're tasked to review your portfolio performance,
+DEFAULT_USER_PROMPT = """As AI Agentic Chief Investment Officer,Now,you're tasked to review your portfolio performance,
 identify new opportunities, and recommend appropriate actions to optimize portfolio performance aligned with the user's strategy by orchestrating different investment agents.
 Now, please review the user's strategy and portfolio performance, and provide your recommendations working with your teams of investment agents.
 """
