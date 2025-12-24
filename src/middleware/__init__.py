@@ -1,4 +1,3 @@
-import asyncio
 import json
 from loguru import logger
 from datetime import datetime, timezone
@@ -44,13 +43,11 @@ class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Contex
         messages = state["messages"]
         # Fire-and-forget: schedule persistence in the background without awaiting
 
-        asyncio.create_task(
-            persist_agent_messages(  # type: ignore
-                role=self.role,
-                bot_id=context.bot.id,
-                run_id=context.run.id,
-                messages=messages,
-            )
+        await persist_agent_messages(
+            role=self.role,
+            bot_id=context.bot.id,
+            run_id=context.run.id,
+            messages=messages,
         )
 
         await cache_agent_messages(

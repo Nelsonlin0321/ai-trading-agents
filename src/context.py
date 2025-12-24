@@ -1,9 +1,8 @@
 import json
 from prisma.types import AgentMessageWhereInput
 from prisma.models import Run
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
-
-from src.db import prisma
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from src.db import prisma, CachedAgentMessage, CACHED_AGENTS_MESSAGES
 from src.typings.context import Context
 from src.utils import async_retry
 
@@ -33,7 +32,9 @@ async def build_context(run: Run):
 
 
 @async_retry(silence_error=False)
-async def restore_messages(run_id: str) -> list[BaseMessage] | None:
+async def restore_messages(
+    run_id: str,
+) -> list[HumanMessage | AIMessage | ToolMessage] | None:
     agent_messages = await prisma.agentmessage.find_many(
         where={"runId": run_id}, order={"createdAt": "asc"}
     )
@@ -53,7 +54,13 @@ async def restore_messages(run_id: str) -> list[BaseMessage] | None:
     last_msg = deserialized_messages[-1]
     while last_msg["type"] == "ai":
         deserialized_messages.pop(-1)
-        last_msg = deserialized_messages[-1]
+        cio_agent_msgs.pop(-1)
+
+    if len(deserialized_messages) == 0:
+        await prisma.agentmessage.delete_many(
+            where=AgentMessageWhereInput(runId=run_id)
+        )
+        return
 
     last_msg = deserialized_messages[-1]
 
@@ -64,7 +71,22 @@ async def restore_messages(run_id: str) -> list[BaseMessage] | None:
         where=AgentMessageWhereInput(runId=run_id, createdAt={"gt": timestamp})
     )
 
-    serialized_messages = [
+    updated_cached_messages = [
+        CachedAgentMessage(
+            id=msg.id,
+            role=msg.role.value,
+            botId=msg.botId,
+            runId=run_id,
+            createdAt=(msg.createdAt).isoformat(),
+            updatedAt=(msg.updatedAt).isoformat(),
+            messages=msg.model_dump(),
+        )
+        for msg in cio_agent_msgs
+    ]
+
+    CACHED_AGENTS_MESSAGES.extend(updated_cached_messages)
+
+    serialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
         message_type_map[msg["type"]](**msg) for msg in deserialized_messages
     ]
 
