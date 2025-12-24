@@ -29,6 +29,8 @@ def load() -> dict:
 
         if ENV == "prod":
             secrets["DATABASE_URL"] = secrets.pop("PROD_DATABASE_URL")
+        elif ENV == "preview":
+            secrets["DATABASE_URL"] = secrets.pop("PREVIEW_DATABASE_URL")
         else:
             secrets["DATABASE_URL"] = secrets.pop("DEV_DATABASE_URL")
 
