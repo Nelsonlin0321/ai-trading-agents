@@ -1,5 +1,5 @@
 from pydantic import SecretStr
-from langchain_openai import ChatOpenAI
+from langchain_deepseek import ChatDeepSeek
 from src.utils import get_env
 
 OPENROUTER_API_KEY = SecretStr(get_env("OPENROUTER_API_KEY"))
@@ -7,11 +7,18 @@ OPENROUTER_API_URL = get_env(
     "OPENROUTER_API_URL", default="https://openrouter.ai/api/v1"
 )
 
+llm_models = ["minimax/minimax-m2.1", "deepseek/deepseek-v3.2"]
+
+reasoning_models = {"minimax/minimax-m2.1"}
+
 
 def get_model(model_name: str):
-    llm = ChatOpenAI(
+    llm = ChatDeepSeek(
         api_key=OPENROUTER_API_KEY,
-        base_url=OPENROUTER_API_URL,
+        api_base=OPENROUTER_API_URL,
         model=model_name,
+        extra_body={"reasoning": {"enabled": True}}
+        if model_name in reasoning_models
+        else None,
     )
     return llm
