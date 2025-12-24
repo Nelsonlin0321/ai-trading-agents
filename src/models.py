@@ -7,6 +7,11 @@ OPENROUTER_API_URL = get_env(
     "OPENROUTER_API_URL", default="https://openrouter.ai/api/v1"
 )
 
+THREE_TWO_ONE_API_KEY = SecretStr(get_env("THREE_TWO_ONE_API_KEY"))
+THREE_TWO_ONE_API_URL = get_env(
+    "THREE_TWO_ONE_API_URL", default="https://api.302.ai/v1"
+)
+
 llm_models = [
     "minimax/minimax-m2.1",
     "deepseek/deepseek-v3.2",
@@ -21,8 +26,19 @@ reasoning_models = {
     "openai/gpt-oss-120b:free",
 }
 
+routes_to_302_ai = {
+    "deepseek/deepseek-v3.2": "deepseek-v3.2-thinking",
+}
+
 
 def get_model(model_name: str):
+    if model_name in routes_to_302_ai:
+        return ChatDeepSeek(
+            api_key=THREE_TWO_ONE_API_KEY,
+            api_base=THREE_TWO_ONE_API_URL,
+            model=routes_to_302_ai[model_name],
+        )
+
     llm = ChatDeepSeek(
         api_key=OPENROUTER_API_KEY,
         api_base=OPENROUTER_API_URL,
