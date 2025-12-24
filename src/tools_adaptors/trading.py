@@ -337,7 +337,7 @@ class GetAnalystsRecommendationsAct(Action):
 
         grouped_recs: dict[str, Recommend] = {}
         for rec in recommendations:
-            key = f"{rec.role.value}-{rec.ticker}"
+            key = f"{rec.role}-{rec.ticker}"
             if key not in grouped_recs:
                 grouped_recs[key] = rec
 

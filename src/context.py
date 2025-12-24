@@ -51,18 +51,16 @@ async def restore_messages(
 
     deserialized_messages = [json.loads(agt_msg.messages) for agt_msg in cio_agent_msgs]
 
-    last_msg = deserialized_messages[-1]
-    while last_msg["type"] == "ai":
-        deserialized_messages.pop(-1)
-        cio_agent_msgs.pop(-1)
+    # Trim trailing AI messages iteratively
+    while deserialized_messages and deserialized_messages[-1]["type"] == "ai":
+        deserialized_messages.pop()
+        cio_agent_msgs.pop()
 
     if len(deserialized_messages) == 0:
         await prisma.agentmessage.delete_many(
             where=AgentMessageWhereInput(runId=run_id)
         )
         return
-
-    last_msg = deserialized_messages[-1]
 
     timestamp = cio_agent_msgs[-1].createdAt
 
