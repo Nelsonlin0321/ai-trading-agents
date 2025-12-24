@@ -1,7 +1,7 @@
 import json
 from prisma.types import AgentMessageWhereInput
 from prisma.models import Run
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 
 from src.db import prisma
 from src.typings.context import Context
@@ -33,7 +33,9 @@ async def build_context(run: Run):
 
 
 @async_retry(silence_error=False)
-async def restore_messages(run_id: str) -> list[BaseMessage] | None:
+async def restore_messages(
+    run_id: str,
+) -> list[HumanMessage | AIMessage | ToolMessage] | None:
     agent_messages = await prisma.agentmessage.find_many(
         where={"runId": run_id}, order={"createdAt": "asc"}
     )
@@ -64,7 +66,7 @@ async def restore_messages(run_id: str) -> list[BaseMessage] | None:
         where=AgentMessageWhereInput(runId=run_id, createdAt={"gt": timestamp})
     )
 
-    serialized_messages = [
+    serialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
         message_type_map[msg["type"]](**msg) for msg in deserialized_messages
     ]
 
