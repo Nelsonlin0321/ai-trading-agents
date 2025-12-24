@@ -1,4 +1,3 @@
-import os
 import sys
 import traceback
 import asyncio
@@ -10,8 +9,6 @@ from src import secrets  # import secret first before db
 from src import db
 
 secrets.load()
-
-ENV = os.environ.get("ENV", "dev")
 
 DEFAULT_USER_PROMPT = """ As AI Agentic Chief Investment Officer,Now,you're tasked to review your portfolio performance,
 identify new opportunities, and recommend appropriate actions to optimize portfolio performance aligned with the user's strategy by orchestrating different investment agents.

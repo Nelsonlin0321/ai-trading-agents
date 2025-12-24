@@ -17,7 +17,7 @@ from src.utils import async_retry
 
 PERSISTED_MSG_IDS: set[str] = set()
 
-langchain_model = get_model("deepseek")
+langchain_model = get_model("minimax/minimax-m2.1")
 
 
 summarization_middleware = middleware.SummarizationMiddleware(
