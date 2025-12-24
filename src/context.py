@@ -72,7 +72,7 @@ async def restore_messages(
     updated_cached_messages = [
         CachedAgentMessage(
             id=msg.id,
-            role=msg.role.value,
+            role=msg.role,  # pyright: ignore
             botId=msg.botId,
             runId=run_id,
             createdAt=(msg.createdAt).isoformat(),
