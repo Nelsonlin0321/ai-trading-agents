@@ -2,7 +2,7 @@ from prisma.enums import Role
 
 from src.context import Context
 from src.prompt import ROLE_PROMPTS_MAP
-from src.tools_adaptors import ListPositionsAct
+from src.tools_adaptors import ListPositionsAct, GetUserInvestmentStrategyAct
 
 
 async def build_agent_system_prompt(context: Context, role: Role) -> str:
@@ -30,16 +30,17 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
     )
 
     positions_markdown = await ListPositionsAct().arun(bot_id=context.bot.id)
-    # performance_narrative = await PortfolioPerformanceAnalysisAct().arun(
-    #     bot_id=context.bot.id
-    # )
+    user_investment_strategy = await GetUserInvestmentStrategyAct().arun(
+        bot_id=context.bot.id
+    )
+    user_investment_strategy = (
+        "### User Investment Strategy\n" + user_investment_strategy
+    )
     sections = [
-        # SANDX_AI_INTRODUCTION,
         ROLE_PROMPTS_MAP[role],
-        # user_name,
+        user_investment_strategy,
         tickers,
         watchlist_prompt,
         positions_markdown,
-        # performance_narrative,
     ]
     return "\n\n".join([s for s in sections if s])
