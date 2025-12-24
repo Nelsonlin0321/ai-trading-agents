@@ -14,7 +14,6 @@ dependencies = [
     { name = "boto3" },
     { name = "google-genai" },
     { name = "langchain" },
-    { name = "langchain-deepseek" },
     { name = "langchain-openai" },
     { name = "loguru" },
     { name = "markdownify" },
@@ -42,7 +41,6 @@ requires-dist = [
     { name = "boto3", specifier = ">=1.42.9" },
     { name = "google-genai", specifier = ">=1.50.1" },
     { name = "langchain", specifier = ">=1.0.7" },
-    { name = "langchain-deepseek", specifier = ">=1.0.1" },
     { name = "langchain-openai", specifier = ">=1.0.3" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "markdownify", specifier = ">=1.2.2" },
@@ -1132,19 +1130,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c8/86/bd678d69341ae4178bc8dfa04024d63636e5d580ff03d4502c8bc2262917/langchain_core-1.2.5.tar.gz", hash = "sha256:d674f6df42f07e846859b9d3afe547cad333d6bf9763e92c88eb4f8aaedcd3cc", size = 820445 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/83/bd/9df897cbc98290bf71140104ee5b9777cf5291afb80333aa7da5a497339b/langchain_core-1.2.5-py3-none-any.whl", hash = "sha256:3255944ef4e21b2551facb319bfc426057a40247c0a05de5bd6f2fc021fbfa34", size = 484851 },
-]
-
-[[package]]
-name = "langchain-deepseek"
-version = "1.0.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "langchain-core" },
-    { name = "langchain-openai" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/c4/de579ea21e22777959f214af165761c6cd101248222bcc0886d020d67185/langchain_deepseek-1.0.1.tar.gz", hash = "sha256:e7a0238f2c14e928e1562641b2df639c19cdf867287a7f2293ffb1372daf83ae", size = 147216 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/dd/a803dfbf64273232f3fc82f859487331abb717671bbcdf266fd80de6ef78/langchain_deepseek-1.0.1-py3-none-any.whl", hash = "sha256:0a9862f335f1873370bb0fe1928ac19b8b9292b014ef5412da462ded8bb82c5a", size = 8325 },
 ]
 
 [[package]]

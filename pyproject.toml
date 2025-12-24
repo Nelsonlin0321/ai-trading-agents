@@ -9,7 +9,6 @@ dependencies = [
     "boto3>=1.42.9",
     "google-genai>=1.50.1",
     "langchain>=1.0.7",
-    "langchain-deepseek>=1.0.1",
     "langchain-openai>=1.0.3",
     "loguru>=0.7.3",
     "markdownify>=1.2.2",
