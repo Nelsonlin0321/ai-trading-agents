@@ -121,7 +121,7 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
     "STEP 5: FINAL REPORTING\n"
     "- Compile all findings, rationales, and execution results.\n"
     "- Send a comprehensive, well-styled HTML investment recommendation summary email to the user.\n"
-) + f"{AGENT_TEAM_DESCRIPTION}"
+) + AGENT_TEAM_DESCRIPTION
 
 
 RolePromptMap = dict[Role, str]
