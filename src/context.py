@@ -56,7 +56,6 @@ async def restore_messages(
     # Trim trailing AI messages iteratively
     while deserialized_messages and deserialized_messages[-1]["type"] == "ai":
         deserialized_messages.pop(-1)
-        cio_agent_msg_rows.pop(-1)
 
     if len(deserialized_messages) == 0:
         await prisma.agentmessage.delete_many(
@@ -73,7 +72,11 @@ async def restore_messages(
     )
 
     updated_cached_messages: list[CachedAgentMessage] = []
-    for row in cio_agent_msg_rows:
+
+    remained_agent_messages = await prisma.agentmessage.find_many(
+        where={"runId": run_id}, order={"createdAt": "asc"}
+    )
+    for row in remained_agent_messages:
         updated_cached_messages.append(
             CachedAgentMessage(
                 id=row.id,

@@ -3,8 +3,12 @@ import json
 import traceback
 import boto3
 from loguru import logger
+import dotenv
+
+dotenv.load_dotenv()
 
 ENV = os.environ.get("ENV", "dev")
+logger.info(f"Loading secrets in {ENV} environment")
 
 
 def load() -> dict:

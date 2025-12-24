@@ -16,6 +16,7 @@ async def build_chief_investment_officer_agent(context: Context):
     system_prompt = await build_agent_system_prompt(
         context, Role.CHIEF_INVESTMENT_OFFICER
     )
+
     langchain_model = get_model(context.llm_model)
 
     agent = create_agent(
