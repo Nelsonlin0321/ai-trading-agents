@@ -10,9 +10,18 @@ from src import db
 
 secrets.load()
 
-DEFAULT_USER_PROMPT = """As AI Agentic Chief Investment Officer,Now,you're tasked to review your portfolio performance,
-identify new opportunities, and recommend appropriate actions to optimize portfolio performance aligned with the user's strategy by orchestrating different investment agents.
-Now, please review the user's strategy and portfolio performance, and provide your recommendations working with your teams of investment agents.
+DEFAULT_USER_PROMPT = """As the Chief Investment Officer, you are tasked with a comprehensive review and optimization of the portfolio.
+
+Your objective is to execute a disciplined investment process to optimize the portfolio performance aligning with the user's strategy:
+1. **Portfolio & Strategy Review**: Analyze the current portfolio performance and confirm alignment with the user's investment strategy.
+2. **Market Intelligence**: Commission the Market Analyst to provide a broad market overview and identify key trends.
+3. **Idea Generation**: Identify potential investment opportunities. Check historical records to avoid re-evaluating recently reviewed tickers.
+4. **Deep Dive Analysis**: Select 1-3 high-potential tickers. Coordinate parallel deep-dive analysis with the Equity Analyst (technical/price), Fundamental Analyst (financial health/valuation), and Risk Analyst (exposure/downside).
+5. **Synthesis & Decision**: Synthesize all reports into a cohesive investment thesis. Formulate clear BUY, SELL, or HOLD recommendations with specific allocation targets.
+6. **Execution**: If the market is open and confidence is high, instruct the Trading Executor to place orders.
+7. **Reporting**: Compile a final, professional investment report summarizing the market view, portfolio status, analysis details, and executed actions.
+
+Please proceed with this systematic approach, utilizing your team of agents effectively to deliver maximum value aligning with the user's strategy.
 """
 
 
