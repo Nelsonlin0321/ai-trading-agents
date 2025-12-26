@@ -203,3 +203,20 @@ async def get_analysts_recommendations(
     return await get_analysts_recommendations_act.arun(
         run_id=run_id,
     )
+
+
+@tool("get_CIO_execution_instructions")
+async def get_CIO_execution_instructions(
+    runtime: ToolRuntime[Context],
+) -> str:
+    """Retrieve consolidated CIO recommendations for the trading execution.
+
+    Returns:
+        List of CIO recommendations with keys: ticker, action (BUY/SELL/HOLD),
+        price_target, rationale.
+    """
+    run_id = runtime.context.run.id
+    return await get_analysts_recommendations_act.arun(
+        run_id=run_id,
+        role=Role.CHIEF_INVESTMENT_OFFICER,
+    )

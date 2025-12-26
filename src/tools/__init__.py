@@ -39,6 +39,7 @@ from src.tools.trading_tools import (
     get_recommend_stock_tool,
     get_analysts_recommendations,
     write_down_tickers_to_review,
+    get_CIO_execution_instructions,
 )
 
 # avoid circular import
@@ -72,5 +73,6 @@ __all__ = [
     "write_down_tickers_to_review",
     "get_historical_reviewed_tickers",
     "get_portfolio_total_value",
+    "get_CIO_execution_instructions",
     # "handoff_to_specialist", # Avoid circular import
 ]
