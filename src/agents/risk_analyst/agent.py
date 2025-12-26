@@ -18,6 +18,7 @@ async def build_risk_analyst_agent(context: Context):
             tools.get_price_risk_indicators,
             tools.get_volatility_risk_indicators,
             tools.get_stock_live_historical_price_change,
+            tools.get_analyst_analysis,
             tools.get_recommend_stock_tool(Role.RISK_ANALYST),
         ],
         middleware=[

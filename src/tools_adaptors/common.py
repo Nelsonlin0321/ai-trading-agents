@@ -1,9 +1,12 @@
 import os
+import json
 from datetime import datetime
+from typing import Literal, TypedDict
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from src import db
-from prisma.enums import RunStatus
+from prisma.enums import RunStatus, Role
+from prisma.types import AgentMessageWhereInput
 from src import utils
 from src.models import get_model
 from src.utils import async_retry, send_ses_email
@@ -155,3 +158,47 @@ class GetHistoricalReviewedTickersAct(Action):
                 run_tickers.append(tmp_dict)
         tickers_markdown = utils.dicts_to_markdown_table(run_tickers)
         return tickers_markdown
+
+
+class GetAnalystAnalysisAct(Action):
+    @property
+    def name(self) -> str:
+        return "get_other_analyst_analysis"
+
+    @async_retry()
+    async def arun(
+        self,
+        role: Literal[
+            "MARKET_ANALYST",
+            "RISK_ANALYST",
+            "EQUITY_RESEARCH_ANALYST",
+            "FUNDAMENTAL_ANALYST",
+        ],
+        run_id: str,
+    ) -> str:
+        agent_msg_rows = await db.prisma.agentmessage.find_many(
+            where=AgentMessageWhereInput(
+                role=Role(role),
+                runId=run_id,
+            ),
+            order={"createdAt": "asc"},
+        )
+
+        contents = []
+
+        baseMessage = TypedDict(
+            "baseMessage",
+            {
+                "type": Literal["human", "ai", "tool"],
+                "content": str,
+            },
+        )
+
+        for row in agent_msg_rows:
+            langchain_message: baseMessage = json.loads(row.messages)
+
+            if langchain_message["type"] == "ai":
+                contents.append(langchain_message["content"])
+
+        analysis = "\n".join(contents)
+        return analysis

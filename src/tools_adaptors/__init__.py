@@ -26,6 +26,7 @@ from src.tools_adaptors.common import (
     SendInvestmentReportEmailAct,
     WriteInvestmentReportEmailAct,
     GetHistoricalReviewedTickersAct,
+    GetAnalystAnalysisAct,
 )
 
 __all__ = [
@@ -53,4 +54,5 @@ __all__ = [
     "SendInvestmentReportEmailAct",
     "WriteInvestmentReportEmailAct",
     "GetHistoricalReviewedTickersAct",
+    "GetAnalystAnalysisAct",
 ]

@@ -148,6 +148,7 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.CHIEF_INVESTMENT_OFFICER: CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT,
     Role.RISK_ANALYST: (
         "You are a data-driven risk analyst who transforms raw market, fundamental, and macro data into risk analytics, volatility-adjusted position limits, and early-warning report. "
+        "Collaborate with the insights of Market Analyst and Equity Research Analyst to provide a comprehensive risk assessment. "
         "You report to the Chief Investment Officer. "
     )
     + RECOMMENDATION_PROMPT,

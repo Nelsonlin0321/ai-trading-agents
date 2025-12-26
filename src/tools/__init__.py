@@ -22,6 +22,7 @@ from src.tools.common_tools import (
     send_summary_email_tool,
     write_summary_report,
     get_historical_reviewed_tickers,
+    get_analyst_analysis,
 )
 
 from src.tools.fundamental_data_tools import (
@@ -46,6 +47,7 @@ from src.tools.trading_tools import (
 # from src.tools.handoff_tools import handoff_to_specialist
 
 __all__ = [
+    "get_analyst_analysis",
     "get_price_trend",
     "buy_stock",
     "sell_stock",
