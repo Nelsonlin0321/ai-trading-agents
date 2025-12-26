@@ -1,3 +1,4 @@
+from typing import Optional
 from prisma.types import PositionCreateInput, PositionUpdateInput, TradeCreateInput
 from src.services.alpaca import get_latest_quotes
 from prisma.enums import TradeType
@@ -314,6 +315,7 @@ class GetAnalystsRecommendationsAct(Action):
     async def arun(
         self,
         run_id: str,
+        role: Optional[Role] = None,
     ) -> str:
         """
         Get analysts recommendations.
@@ -339,7 +341,11 @@ class GetAnalystsRecommendationsAct(Action):
         for rec in recommendations:
             key = f"{rec.role}-{rec.ticker}"
             if key not in grouped_recs:
-                grouped_recs[key] = rec
+                if role is not None:
+                    if rec.role == role.value:
+                        grouped_recs[key] = rec
+                else:
+                    grouped_recs[key] = rec
 
         recommendations = sorted(list(grouped_recs.values()), key=lambda x: str(x.role))
 
