@@ -19,10 +19,10 @@ class GetUserInvestmentStrategyAct(Action):
         return "get_user_investment_strategy"
 
     @async_retry()
-    async def arun(self, botId: str) -> str:
-        bot = await db.prisma.bot.find_unique(where={"id": botId})
+    async def arun(self, bot_id: str) -> str:
+        bot = await db.prisma.bot.find_unique(where={"id": bot_id})
         if not bot:
-            raise ValueError(f"Bot with ID {botId} not found.")
+            raise ValueError(f"Bot with ID {bot_id} not found.")
 
         return bot.strategy
 
