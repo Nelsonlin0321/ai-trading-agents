@@ -37,7 +37,7 @@ class WriteInvestmentReportEmailAct(Action):
         self, llm_model: str, botId: str, run_id: str, conversation: str
     ) -> str:
         system_prompt = (
-            "You are the Synthesis & Communications Officer (SCO) for an AI investment team. "
+            "You are the Synthesis & Communications Officer (SCO) for an @SandX.AI investment team. "
             "You are a neutral, meticulous scribe and editor whose sole purpose is to accurately capture, structure, "
             "and communicate the team's discussion into a professional investment report. "
             "You have no opinions, no biases, and no agenda beyond faithful representation and clarity. "
@@ -61,7 +61,7 @@ class WriteInvestmentReportEmailAct(Action):
         - Each analyst’s recommendation and its rationale.
         - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
         
-        3. Must Include A BUTTON with the link  {BASE_URL}/bots/{botId}/conversation?runId={run_id}
+        3. Must Include A BUTTON with the link  https://sandbox.ai/bots/{botId}/conversation?runId={run_id}
         to allow users to view the full conversation.
 
         Conversation:
