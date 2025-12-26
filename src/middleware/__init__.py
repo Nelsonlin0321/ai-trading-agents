@@ -26,8 +26,34 @@ summarization_middleware = middleware.SummarizationMiddleware(
     messages_to_keep=20,
 )
 
+WRITE_TODOS_SYSTEM_PROMPT = """## `write_todos`
 
-todo_list_middleware = middleware.TodoListMiddleware()
+You have access to the `write_todos` tool to help you manage and plan complex objectives.
+Use this tool for complex objectives to ensure that you are tracking each necessary step and giving the user visibility into your progress.
+This tool is very helpful for planning complex objectives, and for breaking down these larger complex objectives into smaller steps.
+
+It is critical that you mark todos as completed as soon as you are done with a step. Do not batch up multiple steps before marking them as completed.
+For simple objectives that only require a few steps, it is better to just complete the objective directly and NOT use this tool.
+Writing todos takes time and tokens, use it when it is helpful for managing complex many-step problems! But not for simple few-step requests.
+
+## Important To-Do List Usage Notes to Remember
+- The `write_todos` tool should never be called multiple times in parallel.
+- Don't be afraid to revise the To-Do list as you go. New information may reveal new tasks that need to be done, or old tasks that are irrelevant.
+
+## Example Planning for Regular Task
+Here is an example of how to plan a regular investment task:
+1) Review user's investment strategy and portfolio performance
+2) Get market analysis from Market Analyst
+3) Check historical reviewed tickers to avoid duplicates
+4) Select 1-3 tickers for deep dive analysis
+5) For each selected ticker, conduct parallel analysis on with Equity, Fundamental Analysts, and then Risk Analyst
+6) Synthesize analysis results into final recommendations
+7) Execute trades by handoff to trading executor if market is open and recommendations are high-confidence
+8) Compile and send final investment report"""  # noqa: E501
+
+todo_list_middleware = middleware.TodoListMiddleware(
+    system_prompt=WRITE_TODOS_SYSTEM_PROMPT
+)
 
 
 class LoggingMiddleware(middleware.AgentMiddleware[middleware.AgentState, Context]):
