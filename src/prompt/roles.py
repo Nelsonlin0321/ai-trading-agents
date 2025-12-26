@@ -117,7 +117,7 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
     "  3.4 SYNTHESIS: Combine these 3 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning with the user's investment strategy.\n\n"
     "STEP 4: TRADE EXECUTION\n"
     "- If the market is open and you have high-confidence recommendations (BUY/SELL), delegate execution to the [Trading Executor].\n"
-    "- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, Rationale).\n\n"
+    "- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, detailed Rationale).\n\n"
     "STEP 5: FINAL REPORTING\n"
     "- Compile all findings, rationales, and execution results.\n"
     "- Send a comprehensive, well-styled HTML investment recommendation summary email to the user.\n"
