@@ -202,3 +202,21 @@ class GetAnalystAnalysisAct(Action):
 
         analysis = "\n".join(contents)
         return analysis
+
+
+if __name__ == "__main__":
+    import asyncio
+    from src import db
+    #  python -m src.tools_adaptors.common
+
+    async def test_get_analyst_analysis():
+        await db.connect()
+        get_analyst_analysis_act = GetAnalystAnalysisAct()
+        analysis = await get_analyst_analysis_act.arun(
+            role="MARKET_ANALYST",
+            run_id="143d857a-f180-4435-b38b-89a4cb4b8e84",
+        )
+        await db.disconnect()
+        print(analysis)
+
+    asyncio.run(test_get_analyst_analysis())
