@@ -123,7 +123,7 @@ class SellAct(Action):
     def name(self):
         return "sell_stock"
 
-    @utils.async_retry()
+    @async_retry()
     async def arun(
         self,
         runId,
@@ -238,7 +238,7 @@ class RecommendStockAct(Action):
     def name(self):
         return "recommend_stock"
 
-    @utils.async_retry()
+    @async_retry()
     async def arun(
         self,
         ticker: str,
@@ -311,7 +311,7 @@ class GetAnalystsRecommendationsAct(Action):
     def name(self):
         return "get_analysts_recommendations"
 
-    @utils.async_retry()
+    @async_retry()
     async def arun(
         self,
         run_id: str,
@@ -519,4 +519,13 @@ if __name__ == "__main__":
         print(result)
         await db.disconnect()
 
+    async def test_get_analyst_recommendation():
+        await db.connect()
+        act = GetAnalystsRecommendationsAct()
+        run_id = "143d857a-f180-4435-b38b-89a4cb4b8e84"
+        result = await act.arun(run_id, role=Role("CHIEF_INVESTMENT_OFFICER"))
+        print(result)
+        await db.disconnect()
+
     asyncio.run(test_TradeHistoryAct())
+    asyncio.run(test_get_analyst_recommendation())

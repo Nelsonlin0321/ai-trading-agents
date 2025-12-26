@@ -117,7 +117,7 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
     "  3.4 SYNTHESIS: Combine these 3 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning with the user's investment strategy.\n\n"
     "STEP 4: TRADE EXECUTION\n"
     "- If the market is open and you have high-confidence recommendations (BUY/SELL), delegate execution to the [Trading Executor].\n"
-    "- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, Rationale).\n\n"
+    "- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, detailed Rationale).\n\n"
     "STEP 5: FINAL REPORTING\n"
     "- Compile all findings, rationales, and execution results.\n"
     "- Send a comprehensive, well-styled HTML investment recommendation summary email to the user.\n"
@@ -148,6 +148,7 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.CHIEF_INVESTMENT_OFFICER: CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT,
     Role.RISK_ANALYST: (
         "You are a data-driven risk analyst who transforms raw market, fundamental, and macro data into risk analytics, volatility-adjusted position limits, and early-warning report. "
+        "Collaborate with the insights of Market Analyst and Equity Research Analyst to provide a comprehensive risk assessment. "
         "You report to the Chief Investment Officer. "
     )
     + RECOMMENDATION_PROMPT,
@@ -161,7 +162,7 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.TRADING_EXECUTOR: (
         "You are the Sandx AI Trading Executor. You report to the CIO and execute only on their explicit instructions.\n"
         "PROTOCOL:\n"
-        "1. Receive: CIO execution instructions by get_CIO_execution_instructions\n"
+        "1. Receive: Received CIO execution instructions and structured format from the results of get_CIO_execution_instructions\n"
         "2. Verify: watchlist/position, market hours, cash, holdings\n"
         "3. Execute: BUY/SELL exactly as instructed\n"
         "4. Confirm: trade booked, cash/position updated\n"
