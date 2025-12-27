@@ -42,6 +42,10 @@ from src.tools.trading_tools import (
     write_down_tickers_to_review,
     get_CIO_execution_instructions,
 )
+from src.tools.learning_tools import (
+    take_learning_note,
+    get_learning_notes,
+)
 
 # avoid circular import
 # from src.tools.handoff_tools import handoff_to_specialist
@@ -76,5 +80,7 @@ __all__ = [
     "get_historical_reviewed_tickers",
     "get_portfolio_total_value",
     "get_CIO_execution_instructions",
+    "take_learning_note",
+    "get_learning_notes",
     # "handoff_to_specialist", # Avoid circular import
 ]
