@@ -8,7 +8,7 @@ from src.typings import ErrorLiteral
 class TakeLearningAct(Action[str | ErrorLiteral]):
     @property
     def name(self) -> str:
-        return "take_learning"
+        return "take_learning_notes"
 
     @async_retry()
     async def arun(self, bot_id: str, run_id: str, note: str):
@@ -21,7 +21,7 @@ class TakeLearningAct(Action[str | ErrorLiteral]):
 class GetLearningsAct(Action[str | ErrorLiteral]):
     @property
     def name(self) -> str:
-        return "get_learnings"
+        return "get_learning_notes"
 
     @async_retry()
     async def arun(self, bot_id: str, limit: int = 10) -> str:
