@@ -1,3 +1,5 @@
+import csv
+import os
 import asyncio
 from datetime import time, datetime, timedelta, timezone, date
 from typing import TypedDict, List
@@ -551,6 +553,105 @@ class GetPriceTrendAct(Action):
         return stock_price_changes
 
 
+class DownloadTickerBarsDataAct(Action[str]):
+    @property
+    def name(self):
+        return "download_ticker_bars_data"
+
+    @async_retry()
+    async def arun(
+        self,
+        ticker: str,
+    ) -> str:
+        """
+        Download historical ticker bars data for the past year and save to CSV.
+
+        Args:
+            ticker: The ticker symbol (e.g., "AAPL").
+            timeframe: Timeframe for bars (default "1Day").
+
+        Returns:
+            str: Message indicating where the files were saved.
+        """
+        # Calculate start and end dates (past 1 year)
+        end_dt = date.today()
+        start_dt = end_dt - timedelta(days=365 * 3)
+
+        end_date = end_dt.strftime("%Y-%m-%d")
+        start_date = start_dt.strftime("%Y-%m-%d")
+
+        tickers = [ticker]
+
+        bars_by_symbol = await get_historical_price_bars(
+            symbols=tickers,
+            timeframe="1Day",
+            start=start_date,
+            end=end_date,
+            sort="desc",
+        )
+
+        output_dir = os.path.join(os.environ["HOME"], "downloads/ticker_bars")
+        os.makedirs(output_dir, exist_ok=True)
+        csv_filename = f"{ticker}.csv"
+        csv_path = os.path.join(output_dir, csv_filename)
+
+        all_rows = []
+        # Define fieldnames
+        field_names = [
+            "symbol",
+            "timestamp",
+            "open_price",
+            "high_price",
+            "low_price",
+            "close_price",
+            "volume",
+            "trade_count",
+            "volume_weighted_average_price",
+        ]
+
+        for symbol, bars in bars_by_symbol.items():
+            for bar in bars:
+                row = {"symbol": symbol, **bar}
+                all_rows.append(row)
+
+        if not all_rows:
+            return "Data retrieved but was empty."
+
+        with open(csv_path, "w", newline="") as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=field_names)
+            writer.writeheader()
+            writer.writerows(all_rows)
+
+        sample_markdown = utils.dicts_to_markdown_table(all_rows[:5])
+        sample_markdown = "**Sample Data**\n\n" + sample_markdown
+        metadata_string = f"""Ticker: {ticker}
+Start Date: {start_date}
+End Date: {end_date}
+Timeframe: 1Day
+Downloaded At: {datetime.now().isoformat()}
+Record Count: {len(all_rows)}
+Order: Descending by timestamp
+Duration: 3 years
+Columns:
+- symbol: Ticker symbol of the stock (string)
+- timestamp: Time of the bar (UTC) (string format: "YYYY-MM-DD")
+- open_price: Opening price of the bar (float)
+- high_price: Highest price during the bar (float)
+- low_price: Lowest price during the bar (float)
+- close_price: Closing price of the bar (float)
+- volume: Trading volume during the bar (int)
+- trade_count: Number of trades during the bar (int)
+- volume_weighted_average_price: Volume weighted average price (float)
+{sample_markdown}
+"""
+
+        return (
+            f"Successfully downloaded historical bars.\n"
+            f"CSV File Path: {csv_path}\n"
+            f"Metadata: {metadata_string}"
+        )
+
+
 # only Act
 __all__ = [
     "StockRawSnapshotAct",
@@ -561,19 +662,28 @@ __all__ = [
     "MostActiveStockersAct",
     "SingleLatestQuotesAct",
     "MultiLatestQuotesAct",
+    "DownloadTickerBarsDataAct",
 ]
 
 
 if __name__ == "__main__":
-    # python -m src.tools.actions.stocks
+    # python -m src.tools_adaptors.stocks
     async def main():
-        changes = await StockLivePriceChangeAct().arun(["AAPL"])
-        print(changes)
+        bars_data = await DownloadTickerBarsDataAct().arun("AAPL")
+        print(bars_data)
+        # changes = await StockLivePriceChangeAct().arun(["AAPL"])
+        # print(changes)
 
-        etf_changes = await ETFLivePriceChangeAct().arun()
-        print(etf_changes)
+        # etf_changes = await ETFLivePriceChangeAct().arun()
+        # print(etf_changes)
 
-        most_active_stocks = await MostActiveStockersAct().arun()
-        print(most_active_stocks)
+        # most_active_stocks = await MostActiveStockersAct().arun()
+        # print(most_active_stocks)
+
+        # single_quote = await SingleLatestQuotesAct().arun(["AAPL"])
+        # print(single_quote)
+
+        # multi_quotes = await MultiLatestQuotesAct().arun(["AAPL", "MSFT"])
+        # print(multi_quotes)
 
     asyncio.run(main())
