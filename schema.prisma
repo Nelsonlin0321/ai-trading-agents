@@ -51,6 +51,7 @@ model Bot {
     recommends                 Recommend[]
     createdAt                  DateTime                     @default(now())
     updatedAt                  DateTime                     @updatedAt
+    learningNotes              LearningNote[]
 
     @@index([userId])
     @@index([active])
@@ -217,8 +218,9 @@ model Run {
     updatedAt        DateTime         @updatedAt
     completedAt      DateTime?
     recommends       Recommend[]
-    marketResearches MarketResearch[]
     equityResearches EquityResearch[]
+    marketResearches MarketResearch[]
+    learningNotes    LearningNote[]
 
     @@index([botId, status])
 }
@@ -311,6 +313,17 @@ model MarketResearch {
     runId     String
     run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
     research  String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model LearningNote {
+    id        String   @id @default(uuid())
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    runId     String
+    run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+    note      String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
