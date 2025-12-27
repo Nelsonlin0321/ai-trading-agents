@@ -51,6 +51,7 @@ model Bot {
     recommends                 Recommend[]
     createdAt                  DateTime                     @default(now())
     updatedAt                  DateTime                     @updatedAt
+    learningNotes              LearningNote[]
 
     @@index([userId])
     @@index([active])
@@ -204,19 +205,22 @@ enum RunStatus {
 }
 
 model Run {
-    id            String         @id @default(uuid())
-    botId         String
-    bot           Bot            @relation(fields: [botId], references: [id], onDelete: Cascade)
-    status        RunStatus
-    instruction   String?
-    summary       String?
-    tickers       String?
-    trades        Trade[]
-    agentMessages AgentMessage[]
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @updatedAt
-    completedAt   DateTime?
-    recommends    Recommend[]
+    id               String           @id @default(uuid())
+    botId            String
+    bot              Bot              @relation(fields: [botId], references: [id], onDelete: Cascade)
+    status           RunStatus
+    instruction      String?
+    summary          String?
+    tickers          String?
+    trades           Trade[]
+    agentMessages    AgentMessage[]
+    createdAt        DateTime         @default(now())
+    updatedAt        DateTime         @updatedAt
+    completedAt      DateTime?
+    recommends       Recommend[]
+    equityResearches EquityResearch[]
+    marketResearches MarketResearch[]
+    learningNotes    LearningNote[]
 
     @@index([botId, status])
 }
@@ -292,4 +296,34 @@ model Cache {
     expiresAt DateTime
 
     @@index([function, key, expiresAt])
+}
+
+model EquityResearch {
+    id        String   @id @default(uuid())
+    runId     String
+    run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+    ticker    String
+    research  String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model MarketResearch {
+    id        String   @id @default(uuid())
+    runId     String
+    run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+    research  String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model LearningNote {
+    id        String   @id @default(uuid())
+    botId     String
+    bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+    runId     String
+    run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+    note      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }

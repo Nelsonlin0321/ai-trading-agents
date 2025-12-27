@@ -28,6 +28,7 @@ from src.tools_adaptors.common import (
     GetHistoricalReviewedTickersAct,
     GetAnalystAnalysisAct,
 )
+from src.tools_adaptors.learning import TakeLearningAct, GetLearningsAct
 
 __all__ = [
     "Action",
@@ -55,4 +56,6 @@ __all__ = [
     "WriteInvestmentReportEmailAct",
     "GetHistoricalReviewedTickersAct",
     "GetAnalystAnalysisAct",
+    "TakeLearningAct",
+    "GetLearningsAct",
 ]

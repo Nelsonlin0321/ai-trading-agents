@@ -1,4 +1,8 @@
 from langchain.tools import tool
+from langchain.tools import ToolRuntime
+from prisma.types import EquityResearchCreateInput, MarketResearchCreateInput
+from src import db
+from src.context import Context
 from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.research import GoogleMarketResearchAct, GoogleEquityResearchAct
 
@@ -7,7 +11,7 @@ google_equity_research_action = GoogleEquityResearchAct()
 
 
 @tool(google_market_research_action.name)
-async def do_google_market_research():
+async def do_google_market_research(runtime: ToolRuntime[Context]):
     """
     Performs market research to synthesize and present the comprehensive current market narrative,
     key drivers, risks, and opportunities based on real-time data and recent news using Google’s grounded LLM.
@@ -21,12 +25,28 @@ async def do_google_market_research():
     - Make informed investment or allocation decisions grounded in the latest public information
     """
     # user_investment_strategy = runtime.context.bot.strategy
+
+    runId = runtime.context.run.id
+    existed = await db.prisma.equityresearch.find_first(
+        where={
+            "runId": runId,
+        }
+    )
+    if existed:
+        return existed.research
+
     market_research = await google_market_research_action.arun()
+    await db.prisma.marketresearch.create(
+        data=MarketResearchCreateInput(
+            runId=runId,
+            research=market_research,
+        )
+    )
     return market_research
 
 
 @tool(google_equity_research_action.name)
-async def do_google_equity_research(ticker: str):
+async def do_google_equity_research(ticker: str, runtime: ToolRuntime[Context]):
     """
     Performs equity research to synthesize and present the comprehensive current market narrative,
     key drivers, risks, and opportunities based on real-time data and recent news using Google’s grounded LLM.
@@ -40,7 +60,23 @@ async def do_google_equity_research(ticker: str):
     if not is_valid:
         return f"{symbol} is an invalid ticker symbol"
 
+    runId = runtime.context.run.id
+    existed = await db.prisma.equityresearch.find_first(
+        where={
+            "runId": runId,
+            "ticker": symbol,
+        }
+    )
+    if existed:
+        return existed.research
     equity_research = await google_equity_research_action.arun(ticker)
+    await db.prisma.equityresearch.create(
+        data=EquityResearchCreateInput(
+            runId=runId,
+            ticker=symbol,
+            research=equity_research,
+        )
+    )
     return equity_research
 
 
