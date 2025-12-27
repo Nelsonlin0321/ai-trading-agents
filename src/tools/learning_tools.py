@@ -12,15 +12,16 @@ async def take_learning_note(
     runtime: ToolRuntime[Context],
 ):
     """
-    Take a learning note for the current run to learn from the past.
+    Record a specific, actionable trading insight to improve future decision-making.
 
-    Use this tool to:
-    - Record key insights, lessons learned, or observations from the current trading session.
-    - Store knowledge that can be useful for future decision-making.
-    - Document reasons for success or failure of specific strategies or actions.
+    - Noting key insights from research or market observations, rationales, research insights, performance reflections, or strategy
+    adjustments to refine judgment, identify patterns in decision-making, reduce biases and continuously improve investment performance.
+
+    This tool is your mechanism for self-evolution. Do not record generic observations (e.g., "Market went down").
+    Instead, record specific cause-and-effect lessons that you want your future self to remember.
 
     Args:
-        note: The content of the learning note.
+        note: The insightful, actionable lesson to record.
     """
     bot_id = runtime.context.bot.id
     run_id = runtime.context.run.id
@@ -30,18 +31,18 @@ async def take_learning_note(
 @tool(get_learnings_act.name)
 async def get_learning_notes(
     runtime: ToolRuntime[Context],
-    limit: int = 10,
 ):
     """
-    Get past learning notes for the bot to improve future performance.
+    Retrieve past trading insights to inform current decisions and avoid repeating mistakes.
+
+    Before making decisions, consult your "past self" to see what you have learned.
 
     Use this tool to:
-    - Review past lessons learned and insights.
-    - Avoid repeating past mistakes.
-    - Adapt strategies based on historical observations.
-
-    Args:
-        limit: The maximum number of notes to retrieve. Defaults to 10.
+    - Check if a current market setup resembles a past failure or success.
+    - Recall specific adjustments you promised to make to your strategy.
+    - Validate your current rationale against historical lessons.
+    - Ensure you are applying previously learned constraints or opportunities.
     """
+
     bot_id = runtime.context.bot.id
-    return await get_learnings_act.arun(bot_id=bot_id, limit=limit)
+    return await get_learnings_act.arun(bot_id=bot_id)
