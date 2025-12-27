@@ -1,6 +1,8 @@
 from langchain.tools import tool, ToolRuntime
 from src.context import Context
 from src.tools_adaptors.learning import TakeLearningAct, GetLearningsAct
+from src.utils.constants import LEARNING_RATE
+
 
 take_learning_act = TakeLearningAct()
 get_learnings_act = GetLearningsAct()
@@ -45,4 +47,4 @@ async def get_learning_notes(
     """
 
     bot_id = runtime.context.bot.id
-    return await get_learnings_act.arun(bot_id=bot_id)
+    return await get_learnings_act.arun(bot_id=bot_id, limit=LEARNING_RATE)
