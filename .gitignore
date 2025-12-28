@@ -207,3 +207,4 @@ marimo/_lsp/
 __marimo__/
 completion_request_*.json
 .docker.env
+tkr-tz.db

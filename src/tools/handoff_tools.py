@@ -15,6 +15,7 @@ agent_building_map = {
     "EQUITY_RESEARCH_ANALYST": agents.build_equity_research_analyst_agent,
     "FUNDAMENTAL_ANALYST": agents.build_fundamental_analyst_agent,
     "TRADING_EXECUTOR": agents.build_trading_executor_agent,
+    "TECHNICAL_ANALYST": agents.build_technical_analyst_agent,
 }
 
 

@@ -58,6 +58,16 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
         ],
         "strength_weight": 0.30,  # Fundamentals provide the valuation anchor
     },
+    "TECHNICAL_ANALYST": {
+        "title": "Technical Analyst",
+        "description": "Technical analyst who performs technical analysis on ticker data using Python code execution.",
+        "key_capabilities": [
+            "Perform technical analysis on historical price data",
+            "Execute Python code to calculate indicators and print out the results",
+            "Provide buy/sell signals based on technical indicators",
+        ],
+        "strength_weight": 0.20,  # Technical analysis provides timing and trend confirmation
+    },
     "TRADING_EXECUTOR": {
         "title": "Trading Executor",
         "description": "Trading executor who executes trades based on instructions from the Chief Investment Officer.",
@@ -113,8 +123,9 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
     "For each selected ticker, execute the following delegation in parallel:\n"
     "  3.1 [Equity Research Analyst]: Request current news and narrative analysis with BUY/SELL/HOLD recommendation.\n"
     "  3.2 [Fundamental Analyst]: Request valuation and financial health analysis with BUY/SELL/HOLD recommendation.\n"
-    "  3.3 [Risk Analyst]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.\n"
-    "  3.4 SYNTHESIS: Combine these 3 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning with the user's investment strategy.\n\n"
+    "  3.3 [Technical Analyst]: Request technical analysis with BUY/SELL/HOLD recommendation.\n"
+    "  3.4 [Risk Analyst]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.\n"
+    "  3.5 SYNTHESIS: Combine these 4 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning with the user's investment strategy.\n\n"
     "STEP 4: TRADE EXECUTION\n"
     "- If the market is open and you have high-confidence recommendations (BUY/SELL), delegate execution to the [Trading Executor].\n"
     "- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, detailed Rationale).\n\n"
@@ -157,6 +168,17 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
         "Use the provided markdown tables of fundamentals (Valuation, Profitability & Margins, Financial Health & Liquidity, "
         "Growth, Dividend & Payout, Market & Trading Data, Analyst Estimates, Company Info, Ownership & Shares, Risk & Volatility, "
         "Technical Indicators, Additional Financial Metrics) to produce a decision-ready thesis. "
+    )
+    + RECOMMENDATION_PROMPT,
+    Role.TECHNICAL_ANALYST: (
+        "You are a Technical Analyst on the Sandx AI investment desk. You report to the Chief Investment Officer. "
+        "Your main responsibility is to perform technical analysis on ticker data. "
+        "You are equipped with a Python execution tool (`execute_python_technical_analysis`) to calculate indicators, analyze trends, and visualize data. "
+        "Use the `execute_python_technical_analysis` tool to write and execute Python scripts that analyze price history, calculate technical indicators (RSI, MACD, Bollinger Bands, etc.), and identify trading signals. "
+        "IMPORTANT: Before running any analysis, you MUST first download the historical data using `download_ticker_bars_data(ticker)`. "
+        "The data will be saved to a CSV file which you can then load in your Python script using pandas. "
+        "Always output your analysis results to the console using `print()` within your Python scripts so you can read them. "
+        "Combine your technical findings into a clear BUY/SELL/HOLD recommendation."
     )
     + RECOMMENDATION_PROMPT,
     Role.TRADING_EXECUTOR: (

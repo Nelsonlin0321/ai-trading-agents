@@ -10,6 +10,21 @@ most_active_stockers_act = tools_adaptors.MostActiveStockersAct()
 single_latest_quotes_act = tools_adaptors.SingleLatestQuotesAct()
 multi_latest_quotes_act = tools_adaptors.MultiLatestQuotesAct()
 get_price_trend_act = tools_adaptors.GetPriceTrendAct()
+download_ticker_bars_data_act = tools_adaptors.DownloadTickerBarsDataAct()
+
+
+@tool(download_ticker_bars_data_act.name)
+async def download_ticker_bars_data(ticker: str):
+    """
+    Download historical price bars for a single ticker symbol for technical analysis.
+    Args:
+        ticker (str): The ticker symbol of the stock or ETF (e.g. "AAPL", "SPY").
+    """
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
+        return f"Invalid ticker symbol: {ticker}"
+    results = await download_ticker_bars_data_act.arun(ticker)
+    return results
 
 
 @tool(eft_live_price_change_act.name)
@@ -244,6 +259,7 @@ async def get_price_trend(tickers: list[str]):
 __all__ = [
     "get_etf_live_historical_price_change",
     "get_stock_live_historical_price_change",
+    "download_ticker_bars_data",
     "get_most_active_stockers",
     "get_latest_quotes",
     "get_latest_quote",
