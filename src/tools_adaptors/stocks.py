@@ -634,7 +634,7 @@ Order: Ascending by timestamp
 Duration: 3 years
 Columns:
 - symbol: Ticker symbol of the stock (string)
-- timestamp: Time of the bar (UTC) (string format: "YYYY-MM-DD")
+- timestamp: Time of the bar (UTC) (string format: "YYYY-MM-DDTHH:MM:SSZ" Example: 2023-01-05T05:00:00Z)
 - open_price: Opening price of the bar (float)
 - high_price: Highest price during the bar (float)
 - low_price: Lowest price during the bar (float)
