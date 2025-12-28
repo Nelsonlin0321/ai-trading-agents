@@ -73,6 +73,8 @@ def execute_python_technical_analysis(code: str, ticker: str) -> str:
         "requests",
         "urllib",
         "http",
+        "boto3",
+        "prisma",
     ]
 
     # Check for prohibited keywords
