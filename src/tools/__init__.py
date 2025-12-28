@@ -3,6 +3,7 @@ from src.tools.news_tools import get_latest_market_news, get_latest_equity_news
 from src.tools.stock_tools import (
     get_etf_live_historical_price_change,
     get_stock_live_historical_price_change,
+    download_ticker_bars_data,
     get_most_active_stockers,
     get_latest_quotes,
     get_latest_quote,
@@ -46,11 +47,14 @@ from src.tools.learning_tools import (
     take_learning_note,
     get_learning_notes,
 )
+from src.tools.python_tools import execute_python_technical_analysis
 
 # avoid circular import
 # from src.tools.handoff_tools import handoff_to_specialist
 
 __all__ = [
+    "execute_python_technical_analysis",
+    "download_ticker_bars_data",
     "get_analyst_analysis",
     "get_price_trend",
     "buy_stock",
