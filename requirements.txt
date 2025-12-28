@@ -13,5 +13,5 @@ upstash-redis==1.5.0
 yfinance==0.2.66
 markdownify==1.2.2
 langchain-experimental==0.4.1
-numpy==2.2.6
-pandas==2.3.3
+numpy
+pandas
