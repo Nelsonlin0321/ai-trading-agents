@@ -1,4 +1,3 @@
-import os
 import json
 from datetime import datetime
 from typing import Literal, TypedDict
@@ -11,9 +10,6 @@ from src import utils
 from src.models import get_model
 from src.utils import async_retry, send_ses_email
 from src.tools_adaptors.base import Action
-
-
-BASE_URL = os.getenv("BASE_URL", "http://localhost:3000")
 
 
 class GetUserInvestmentStrategyAct(Action):
