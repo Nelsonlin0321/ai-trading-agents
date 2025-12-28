@@ -587,7 +587,7 @@ class DownloadTickerBarsDataAct(Action[str]):
             timeframe="1Day",
             start=start_date,
             end=end_date,
-            sort="desc",
+            sort="asc",
         )
 
         output_dir = os.path.join(os.environ["HOME"], "downloads/ticker_bars")
@@ -630,7 +630,7 @@ End Date: {end_date}
 Timeframe: 1Day
 Downloaded At: {datetime.now().isoformat()}
 Record Count: {len(all_rows)}
-Order: Descending by timestamp
+Order: Ascending by timestamp
 Duration: 3 years
 Columns:
 - symbol: Ticker symbol of the stock (string)
@@ -646,8 +646,8 @@ Columns:
 """
 
         return (
-            f"Successfully downloaded historical bars.\n"
-            f"CSV File Path: {csv_path}\n"
+            f"Successfully downloaded historical bars. \n\n"
+            f"CSV File Path: {csv_path} \n\n"
             f"Metadata: {metadata_string}"
         )
 
