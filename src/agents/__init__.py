@@ -3,10 +3,13 @@ from src.agents.fundamental_analyst.agent import build_fundamental_analyst_agent
 from src.agents.risk_analyst.agent import build_risk_analyst_agent
 from src.agents.equity_research_analyst.agent import build_equity_research_analyst_agent
 from src.agents.trading_executive.agent import build_trading_executor_agent
+from src.agents.technical_analyst.agent import build_technical_analyst_agent
+
+#  import chief_investment_officer_agent last
 from src.agents.chief_investment_officer.agent import (
     build_chief_investment_officer_agent,
 )
-from src.agents.technical_analyst.agent import build_technical_analyst_agent
+
 
 __all__ = [
     "build_trading_executor_agent",
