@@ -11,6 +11,7 @@ from src.tools_adaptors.stocks import (
     SingleLatestQuotesAct,
     MultiLatestQuotesAct,
     GetPriceTrendAct,
+    DownloadTickerBarsDataAct,
 )
 from src.tools_adaptors.portfolio import (
     ListPositionsAct,
@@ -58,4 +59,5 @@ __all__ = [
     "GetAnalystAnalysisAct",
     "TakeLearningAct",
     "GetLearningsAct",
+    "DownloadTickerBarsDataAct",
 ]

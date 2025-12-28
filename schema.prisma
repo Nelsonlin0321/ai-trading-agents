@@ -232,6 +232,7 @@ enum Role {
     RISK_ANALYST
     TRADING_EXECUTOR
     FUNDAMENTAL_ANALYST
+    TECHNICAL_ANALYST
 }
 
 model AgentMessage {

@@ -58,6 +58,16 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
         ],
         "strength_weight": 0.30,  # Fundamentals provide the valuation anchor
     },
+    "TECHNICAL_ANALYST": {
+        "title": "Technical Analyst",
+        "description": "Technical analyst who performs technical analysis on ticker data using Python code execution.",
+        "key_capabilities": [
+            "Perform technical analysis on historical price data",
+            "Execute Python code to calculate indicators and print out the results",
+            "Provide buy/sell signals based on technical indicators",
+        ],
+        "strength_weight": 0.20,  # Technical analysis provides timing and trend confirmation
+    },
     "TRADING_EXECUTOR": {
         "title": "Trading Executor",
         "description": "Trading executor who executes trades based on instructions from the Chief Investment Officer.",
@@ -113,8 +123,9 @@ CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
     "For each selected ticker, execute the following delegation in parallel:\n"
     "  3.1 [Equity Research Analyst]: Request current news and narrative analysis with BUY/SELL/HOLD recommendation.\n"
     "  3.2 [Fundamental Analyst]: Request valuation and financial health analysis with BUY/SELL/HOLD recommendation.\n"
-    "  3.3 [Risk Analyst]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.\n"
-    "  3.4 SYNTHESIS: Combine these 3 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning with the user's investment strategy.\n\n"
+    "  3.3 [Technical Analyst]: Request technical analysis with BUY/SELL/HOLD recommendation.\n"
+    "  3.4 [Risk Analyst]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.\n"
+    "  3.5 SYNTHESIS: Combine these 4 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning with the user's investment strategy.\n\n"
     "STEP 4: TRADE EXECUTION\n"
     "- If the market is open and you have high-confidence recommendations (BUY/SELL), delegate execution to the [Trading Executor].\n"
     "- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, detailed Rationale).\n\n"
@@ -157,6 +168,67 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
         "Use the provided markdown tables of fundamentals (Valuation, Profitability & Margins, Financial Health & Liquidity, "
         "Growth, Dividend & Payout, Market & Trading Data, Analyst Estimates, Company Info, Ownership & Shares, Risk & Volatility, "
         "Technical Indicators, Additional Financial Metrics) to produce a decision-ready thesis. "
+    )
+    + RECOMMENDATION_PROMPT,
+    Role.TECHNICAL_ANALYST: (
+        "You are a Technical Analyst on the Sandx AI investment desk, reporting to the CIO. "
+        "Your goal is to provide advanced technical analysis that goes beyond basic indicators to identify high-conviction trading setups.\n\n"
+        "**WORKFLOW:**\n"
+        "1. **Data**: Download historical data via `download_ticker_bars_data(ticker)`. Load the saved CSV using pandas.\n"
+        "2. **Analysis**: Use `execute_python_technical_analysis` to write and execute Python scripts. "
+        "Calculate indicators, analyze trends, and identify signals. Print all results to the console.\n"
+        "3. **Insight Generation**: Do not just list indicator values. Interpret what they mean for future price action. "
+        "Identify patterns (Head & Shoulders, Flags), divergences (Price vs RSI), and key levels (Support/Resistance).\n"
+        "4. **Synthesis**: Combine indicators from different categories to build a multi-factor thesis. "
+        "Look for confluence (e.g., trend support + oversold momentum + volume spike).\n\n"
+        "**INDICATOR REFERENCE (Implement via Python):**\n"
+        """
+#### Trend Indicators
+- **Simple Moving Average (SMA)**: Averages close_price over N periods.
+- **Exponential Moving Average (EMA)**: Weighted average of close_price, emphasizing recent data.
+- **Moving Average Convergence Divergence (MACD)**: Difference between two EMAs of close_price; includes signal line and histogram.
+- **Average Directional Index (ADX)**: From high_price, low_price, close_price (calculates directional movement).
+- **Parabolic SAR**: From high_price, low_price, close_price (acceleration factors based on extremes).
+- **Ichimoku Cloud**: From high_price, low_price, close_price (multiple lines like Tenkan-sen, Kijun-sen).
+- **SuperTrend**: From high_price, low_price, close_price, and ATR (see below).
+- **Pivot Points**: From prior high_price, low_price, close_price (calculates support/resistance levels).
+
+#### Momentum Indicators (Oscillators)
+These rely on price changes, ranges, or typical prices (average of high/low/close).
+- **Relative Strength Index (RSI)**: From close_price changes (up/down moves over N periods).
+- **Stochastic Oscillator**: From high_price, low_price, close_price (compares close to range).
+- **Commodity Channel Index (CCI)**: From typical price ( (high + low + close)/3 ) and its deviation.
+- **Rate of Change (ROC)**: Percentage change in close_price over N periods.
+- **Williams %R**: From high_price, low_price, close_price (inverted Stochastic-like).
+- **Ultimate Oscillator**: Weighted average of momentum over multiple periods using high, low, close.
+- **Chande Momentum Oscillator (CMO)**: From close_price ups/downs.
+- **Know Sure Thing (KST)**: Smoothed ROC from close_price over varying periods.
+
+#### Volatility Indicators
+These measure price fluctuation using ranges or deviations.
+- **Bollinger Bands**: SMA of close_price with bands based on standard deviation.
+- **Average True Range (ATR)**: From high_price, low_price, close_price (true range = max(high-low, high-prev_close, prev_close-low)).
+- **Keltner Channels**: EMA of typical price with bands using ATR.
+- **Donchian Channels**: Rolling max high_price and min low_price over N periods.
+
+#### Volume-Based Indicators
+These incorporate volume to confirm price moves or detect accumulation/distribution.
+- **On-Balance Volume (OBV)**: Cumulative volume based on close_price direction (up/down).
+- **Accumulation/Distribution Line (A/D)**: From close_price, high_price, low_price, volume (money flow multiplier).
+- **Chaikin Money Flow (CMF)**: Sum of A/D over N periods, divided by total volume.
+- **Money Flow Index (MFI)**: RSI-like but using typical price and volume (raw money flow = typical_price * volume).
+- **Volume Weighted Average Price (VWAP)**: Already provided, but can be recalculated from volume and typical/close_price if needed for intraday (though data is daily).
+- **Klinger Oscillator**: From high, low, close, volume (trend volume based on price direction).
+- **Ease of Movement (EOM)**: From high-low range and volume (distance moved per volume unit).
+
+#### Other Specialized Indicators
+- **Fibonacci Retracement**: Applied to high_price and low_price swings for ratio-based levels.
+- **Aroon Indicator**: From high_price and low_price (days since recent high/low).
+- **Coppock Curve**: Weighted ROC of close_price over long periods.
+- **Elder-Ray Index**: Bull/Bear power from high/low vs EMA of close.
+"""
+        "**INSIGHT & DECISION:**\n"
+        "provide a clear BUY/SELL/HOLD recommendation with a detailed RATIONALE explaining the 'Why'"
     )
     + RECOMMENDATION_PROMPT,
     Role.TRADING_EXECUTOR: (

@@ -1,3 +1,4 @@
+from typing import List
 from langchain.tools import tool, ToolRuntime
 from src.context import Context
 from src.tools_adaptors.learning import TakeLearningAct, GetLearningsAct
@@ -10,11 +11,11 @@ get_learnings_act = GetLearningsAct()
 
 @tool(take_learning_act.name)
 async def take_learning_note(
-    note: str,
+    notes: List[str],
     runtime: ToolRuntime[Context],
 ):
     """
-    Record a specific, actionable trading insight to improve future decision-making.
+    Record specific, actionable trading insights to improve future decision-making.
 
     - Noting key insights from research or market observations, rationales, research insights, performance reflections, or strategy
     adjustments to refine judgment, identify patterns in decision-making, reduce biases and continuously improve investment performance.
@@ -23,10 +24,11 @@ async def take_learning_note(
     Instead, record specific cause-and-effect lessons that you want your future self to remember.
 
     Args:
-        note: The insightful, actionable lesson to record.
+        notes: A list of insightful, actionable trading lessons to record.
     """
     bot_id = runtime.context.bot.id
     run_id = runtime.context.run.id
+    note = "\n\n".join(notes)
     return await take_learning_act.arun(bot_id=bot_id, run_id=run_id, note=note)
 
 
