@@ -60,7 +60,7 @@ class WriteInvestmentReportEmailAct(Action):
         - Each analyst’s recommendation and its rationale.
         - Final trading actions (buy/sell/hold) with supporting rationale for each ticker.
         
-        3. Must Include A BUTTON with the link  https://sandbox.ai/bots/{botId}/conversation?runId={run_id}
+        3. Must Include A BUTTON with the link  https://sandx.ai/bots/{botId}/conversation?runId={run_id}
         to allow users to view the full conversation.
 
         Conversation:
