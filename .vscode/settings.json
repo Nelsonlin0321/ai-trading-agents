@@ -26,6 +26,7 @@
         "OPENROUTER",
         "pfunc",
         "Referer",
+        "scipy",
         "venvpath"
     ],
     "cSpell.ignorePaths": [

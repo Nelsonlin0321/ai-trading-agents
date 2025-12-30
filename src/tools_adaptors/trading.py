@@ -54,9 +54,9 @@ class BuyAct(Action):
                 raise ValueError("Portfolio not found")
             if portfolio.cash < total_cost:
                 return f"Not enough cash to buy {volume} shares of {ticker} at {price} per share."
-            portfolio.cash -= total_cost
+
             await transaction.portfolio.update(
-                where={"botId": bot_id}, data={"cash": portfolio.cash}
+                where={"botId": bot_id}, data={"cash": {"decrement": total_cost}}
             )
 
             await transaction.trade.create(

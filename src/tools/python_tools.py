@@ -12,7 +12,7 @@ DOC_STRING = f"""
     The format output of code execution is plain text only, 
     you should print the execution output with `print(...)` to show your analysis results.
 
-    Basically you can use pandas, numpy, pandas_ta in this environment to analyze the data, or do the data analysis using native Python.
+    Basically you can use pandas, numpy, scipy in this environment to analyze the data, or do the data analysis using native Python.
 
     GUARDRAILS:
     - You are STRICTLY PROHIBITED from accessing, printing, revealing, deleting, or modifying environment variables (os.environ), system files, or any files outside the `{DATA_DIR}` directory.
