@@ -12,7 +12,7 @@ DOC_STRING = f"""
     The format output of code execution is plain text only, 
     you should print the execution output with `print(...)` to show your analysis results.
 
-    Basically you can use pandas, numpy, pandas_ta in this environment to analyze the data, or do the data analysis using native Python.
+    Basically you can use pandas, numpy, scipy in this environment to analyze the data, or do the data analysis using native Python.
 
     GUARDRAILS:
     - You are STRICTLY PROHIBITED from accessing, printing, revealing, deleting, or modifying environment variables (os.environ), system files, or any files outside the `{DATA_DIR}` directory.
@@ -53,10 +53,10 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
     # Simple static analysis for guardrails
     # Note: This is a basic check and can be bypassed. For production, use a sandbox environment.
     prohibited_keywords = [
-        "os.environ",
-        "os.getenv",
-        "os.putenv",
-        "os.unsetenv",
+        "environ",
+        "getenv",
+        "putenv",
+        "unsetenv",
         "write(",
         "delete(",
         "remove(",
@@ -84,6 +84,14 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
             return f"Security Violation: Prohibited command or keyword `{keyword}` found in code. Please focus on data analysis using pandas/numpy."
 
     output = python_repl.run(code)
+
+    # Mask environment variables in the output
+    if output:
+        for _, value in sorted(
+            os.environ.items(), key=lambda item: len(item[1]), reverse=True
+        ):
+            if value and len(value) > 3 and value in output:
+                output = output.replace(value, "******")
 
     code = code.strip()
     if not code.startswith("```"):
