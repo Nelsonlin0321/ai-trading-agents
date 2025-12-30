@@ -25,7 +25,7 @@ DOC_STRING = f"""
 
 
 @tool("execute_python_technical_analysis")
-def execute_python_technical_analysis(code: str, ticker: str) -> str:
+async def execute_python_technical_analysis(code: str, ticker: str) -> str:
     """
     Execute Python code for technical analysis on the ticker data.
 
@@ -37,7 +37,8 @@ def execute_python_technical_analysis(code: str, ticker: str) -> str:
         str: The execution output or an error message.
     """
 
-    if not is_valid_ticker(ticker):
+    is_valid = await is_valid_ticker(ticker)
+    if not is_valid:
         return f"Invalid ticker symbol: `{ticker}`"
 
     csv_data_path = os.path.join(DATA_DIR, f"{ticker}.csv")
