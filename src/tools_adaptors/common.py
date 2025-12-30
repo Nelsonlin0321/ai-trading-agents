@@ -63,6 +63,7 @@ class WriteInvestmentReportEmailAct(Action):
         3. Must Include A BUTTON with the link  https://sandx.ai/bots/{botId}/conversation?runId={run_id}
         to allow users to view the full conversation.
 
+        4. Must include a link: https://sandx.ai/bots/{botId}/setting to enable users to unsubscribe the bot notification by deactivating the bot.
         Conversation:
         -------------
         {conversation}
