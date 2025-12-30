@@ -85,6 +85,14 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
 
     output = python_repl.run(code)
 
+    # Mask environment variables in the output
+    if output:
+        for _, value in sorted(
+            os.environ.items(), key=lambda item: len(item[1]), reverse=True
+        ):
+            if value and len(value) > 3 and value in output:
+                output = output.replace(value, "******")
+
     code = code.strip()
     if not code.startswith("```"):
         code = f"```python\n{code}\n```"
