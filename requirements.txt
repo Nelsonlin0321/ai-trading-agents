@@ -12,7 +12,6 @@ tqdm==4.67.1
 upstash-redis==1.5.0
 yfinance==0.2.66
 markdownify==1.2.2
-langchain-experimental==0.4.1
 numpy
 pandas
 scipy
