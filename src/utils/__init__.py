@@ -305,7 +305,7 @@ def send_gmail_email(subject: str, recipient: str, html_body: str):
 def send_ses_email(
     subject: str,
     recipient: str,
-    sender: str = "notifications@sandx.ai",
+    sender: str = "SandX.AI <notifications@sandx.ai>",
     html_body: str = "",
 ):
     client = boto3.client("ses", region_name=os.getenv("AWS_REGION", "us-east-1"))
