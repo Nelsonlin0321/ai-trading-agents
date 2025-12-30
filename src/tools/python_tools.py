@@ -1,6 +1,6 @@
 import os
 from src.utils.ticker import is_valid_ticker
-from langchain_experimental.utilities import PythonREPL
+from src.utils.python import PythonREPL
 from langchain.tools import tool
 
 HOME_DIR = os.environ["HOME"]

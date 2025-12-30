@@ -99,7 +99,7 @@ class HistoricalPriceChangePeriods(TypedDict):
     three_months: str | None
     six_months: str | None
     one_year: str | None
-    three_years: str | None
+    # three_years: str | None
 
 
 class StockHistoricalPriceChangesAct(Action):
@@ -149,7 +149,7 @@ class StockHistoricalPriceChangesAct(Action):
             "one_month": timedelta(days=30),
             "three_months": timedelta(days=90),
             "six_months": timedelta(days=180),
-            # "one_year": timedelta(days=365),
+            "one_year": timedelta(days=365),
             # "three_years": timedelta(days=365 * 3),
         }
 
@@ -179,7 +179,7 @@ class StockHistoricalPriceChangesAct(Action):
                 "three_months": None,
                 "six_months": None,
                 "one_year": None,
-                "three_years": None,
+                # "three_years": None,
             }
 
             for key, delta in period_deltas.items():
@@ -206,7 +206,7 @@ class StockPriceSnapshotWithHistory(TypedDict):
     three_months: str | None
     six_months: str | None
     one_year: str | None
-    three_years: str | None
+    # three_years: str | None
 
 
 class ETFPriceSnapshotWithHistory(TypedDict):
@@ -221,7 +221,7 @@ class ETFPriceSnapshotWithHistory(TypedDict):
     three_months: str | None
     six_months: str | None
     one_year: str | None
-    three_years: str | None
+    # three_years: str | None
 
 
 class StockLivePriceChangeAct(Action):
@@ -269,7 +269,7 @@ class StockLivePriceChangeAct(Action):
                 three_months=history["three_months"],
                 six_months=history["six_months"],
                 one_year=history["one_year"],
-                three_years=history["three_years"],
+                # three_years=history["three_years"],
             )
 
         return results
@@ -322,7 +322,7 @@ class ETFLivePriceChangeAct(Action):
                 three_months=history["three_months"],
                 six_months=history["six_months"],
                 one_year=history["one_year"],
-                three_years=history["three_years"],
+                # three_years=history["three_years"],
             )
 
         return results
@@ -340,7 +340,7 @@ class ActiveStockFullPriceMetrics(TypedDict):
     three_months: str | None
     six_months: str | None
     one_year: str | None
-    three_years: str | None
+    # three_years: str | None
 
 
 class MostActiveStockFullPriceMetrics(TypedDict):
