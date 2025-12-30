@@ -53,10 +53,10 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
     # Simple static analysis for guardrails
     # Note: This is a basic check and can be bypassed. For production, use a sandbox environment.
     prohibited_keywords = [
-        "os.environ",
-        "os.getenv",
-        "os.putenv",
-        "os.unsetenv",
+        "environ",
+        "getenv",
+        "putenv",
+        "unsetenv",
         "write(",
         "delete(",
         "remove(",
