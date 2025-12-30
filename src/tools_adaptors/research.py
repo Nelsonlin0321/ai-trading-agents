@@ -31,7 +31,7 @@ class GoogleMarketResearchAct(Action):
 
     @property
     def name(self):
-        return "google_finance_market_research"
+        return "google_finance_market_deep_research"
 
     @async_retry()  # pyright: ignore [reportArgumentType]
     @redis_cache(function_name="GoogleMarketResearch.arun", ttl=60 * 60 * 6)
@@ -93,7 +93,7 @@ class GoogleEquityResearchAct(Action):
 
     @property
     def name(self):
-        return "google_equity_research"
+        return "google_equity_deep_research"
 
     @async_retry()  # pyright: ignore [reportArgumentType]
     @redis_cache(function_name="GoogleEquityResearch.arun", ttl=60 * 60 * 24)
