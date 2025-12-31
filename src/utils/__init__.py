@@ -340,6 +340,6 @@ if __name__ == "__main__":
     #  python -m src.utils.__init__
     send_ses_email(
         subject="Test Email",
-        recipient="sandx.ai.contact@gmail.com",
+        recipient="contact@sandx.ai",
         html_body="<h1>Hello, World!</h1>",
     )
