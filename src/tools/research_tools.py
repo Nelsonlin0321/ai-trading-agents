@@ -3,7 +3,8 @@ from langchain.tools import ToolRuntime
 from prisma.types import EquityResearchCreateInput, MarketResearchCreateInput
 from src import db
 from src.context import Context
-from src.utils.ticker import is_valid_ticker
+
+# from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.research import GoogleMarketResearchAct, GoogleEquityResearchAct
 
 google_market_research_action = GoogleMarketResearchAct()
@@ -55,16 +56,16 @@ async def do_google_equity_research(ticker: str, runtime: ToolRuntime[Context]):
     Args:
         ticker (str): The stock ticker symbol (e.g., 'AAPL', 'TSLA') for which to generate research.
     """
-    symbol = ticker.upper().strip()
-    is_valid = await is_valid_ticker(symbol)
-    if not is_valid:
-        return f"{symbol} is an invalid ticker symbol"
+    # symbol = ticker.upper().strip()
+    # is_valid = await is_valid_ticker(symbol)
+    # if not is_valid:
+    #     return f"{symbol} is an invalid ticker symbol"
 
     runId = runtime.context.run.id
     existed = await db.prisma.equityresearch.find_first(
         where={
             "runId": runId,
-            "ticker": symbol,
+            "ticker": ticker,
         }
     )
     if existed:
@@ -73,7 +74,7 @@ async def do_google_equity_research(ticker: str, runtime: ToolRuntime[Context]):
     await db.prisma.equityresearch.create(
         data=EquityResearchCreateInput(
             runId=runId,
-            ticker=symbol,
+            ticker=ticker,
             research=equity_research,
         )
     )

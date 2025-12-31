@@ -1,5 +1,6 @@
 import os
-from src.utils.ticker import is_valid_ticker
+
+# from src.utils.ticker import is_valid_ticker
 from src.utils.python import PythonREPL
 from langchain.tools import tool
 
@@ -37,9 +38,9 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
         str: The execution output or an error message.
     """
 
-    is_valid = await is_valid_ticker(ticker)
-    if not is_valid:
-        return f"Invalid ticker symbol: `{ticker}`"
+    # is_valid = await is_valid_ticker(ticker)
+    # if not is_valid:
+    #     return f"Invalid ticker symbol: `{ticker}`"
 
     csv_data_path = os.path.join(DATA_DIR, f"{ticker}.csv")
     if not os.path.exists(csv_data_path):
