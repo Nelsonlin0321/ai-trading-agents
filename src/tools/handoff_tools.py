@@ -1,6 +1,7 @@
-from typing import List, Annotated
+from typing import List, Annotated, Any
 from langchain.tools import tool, ToolRuntime
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
+from langchain_core.tools.base import BaseTool
 from src.context import Context
 from src import agents
 from src.context import message_type_map
@@ -8,10 +9,9 @@ from src.db import CACHED_AGENTS_MESSAGES
 from src.typings.agent_roles import SubAgentRole
 from src.typings.langgraph_agents import LangGraphAgent
 from src.utils.message import combine_ai_messages
-from src.utils.constants import SPECIALIST_ROLES
 
 
-AGENT_BUILDING_MAP = {
+AGENT_BUILDING_MAP: dict[SubAgentRole, Any] = {
     "MARKET_ANALYST": agents.build_market_analyst_agent,
     "RISK_ANALYST": agents.build_risk_analyst_agent,
     "EQUITY_RESEARCH_ANALYST": agents.build_equity_research_analyst_agent,
@@ -24,36 +24,38 @@ AGENT_BUILDING_MAP = {
 REQUIRED_HISTORICAL_CONVERSATION_AGENTS = {"EQUITY_SELECTION_ANALYST"}
 
 
-@tool("handoff_to_specialist")
-async def handoff_to_specialist(
-    role: Annotated[
-        SubAgentRole,
-        f"Role of the specialist agent to handoff to. Must be one of: {' | '.join(SPECIALIST_ROLES)}",
-    ],
-    task: Annotated[
-        str,
-        "A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
-    ],
-    runtime: ToolRuntime[Context],
+def get_handoff_agent_tools():
+    tools: List[BaseTool] = []
+    for role, _ in AGENT_BUILDING_MAP.items():
+        role: SubAgentRole = role
+        role_name = role.lower()
+        role_name = "_".join([word.capitalize() for word in role_name.split("_")])
+
+        description = f"""
+        Delegate, handoff a specific investment-related task to the {role_name} to get the {role_name}'s analysis result.
+        """
+
+        @tool(f"handoff_to_{role_name}", description=description)
+        async def handoff_to_specialist(
+            task: Annotated[
+                str,
+                "A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
+            ],
+            runtime: ToolRuntime[Context],
+        ) -> str:
+            content = await handoff_to_specialist_func(role, task, runtime.context)
+            return content
+
+        tools.append(handoff_to_specialist)
+
+    return tools
+
+
+async def handoff_to_specialist_func(
+    role: SubAgentRole,
+    task: str,
+    context: Context,
 ) -> str:
-    """
-    Delegate a specific investment-related task to a specialist analyst agent and return the analyst's response.
-
-
-    Args:
-        role: Role of the specialist agent to handoff to.
-        task: A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.
-
-    Returns:
-        A single string containing the combined AI messages from the specialist agent's response.
-
-    Raises:
-        ValueError: If the provided role is not in the list of valid specialist roles.
-    """
-    context = runtime.context
-    if role not in AGENT_BUILDING_MAP:
-        return f"Invalid role: {role}. Must be one of: {SPECIALIST_ROLES}"
-
     agent: LangGraphAgent = await AGENT_BUILDING_MAP[role](context)
 
     default_message = HumanMessage(
@@ -86,4 +88,4 @@ async def handoff_to_specialist(
     return content
 
 
-__all__ = ["handoff_to_specialist"]
+__all__ = ["get_handoff_agent_tools"]

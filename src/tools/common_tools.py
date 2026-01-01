@@ -2,7 +2,6 @@ from typing import Literal
 from langchain.tools import tool, ToolRuntime
 from langchain_core.messages import BaseMessage
 from db import CACHED_AGENTS_MESSAGES
-from src.tools_adaptors import GoogleMarketResearchAct
 from src.utils.message import combine_ai_messages
 from src.context import Context
 from src.utils.constants import MAX_TICKERS_ALLOWED
@@ -122,9 +121,9 @@ async def get_market_deep_research_analysis():
     content = "Market Analysis Result is not available. Please wait for the Market Analyst to generate the analysis."
     for agent_message in CACHED_AGENTS_MESSAGES:
         langchain_serialized_msg = agent_message["messages"]
-        type_ = langchain_serialized_msg.get("type")
+        msg_type = langchain_serialized_msg.get("type")
         name = langchain_serialized_msg.get("name")
-        if type_ == "tool" and name == GoogleMarketResearchAct.name:
+        if msg_type == "tool" and name == "handoff_to_market_analyst":
             content = langchain_serialized_msg.get("content")
             return content
     return content

@@ -1,7 +1,7 @@
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import tools
-from src.tools.handoff_tools import handoff_to_specialist
+from src.tools.handoff_tools import get_handoff_agent_tools
 from src.middleware import (
     LoggingMiddleware,
     todo_list_middleware,
@@ -10,6 +10,8 @@ from src.middleware import (
 from src.models import get_model
 from src.context import Context
 from src.prompt import build_agent_system_prompt
+
+handoff_agent_tools = get_handoff_agent_tools()
 
 
 async def build_chief_investment_officer_agent(context: Context):
@@ -32,7 +34,7 @@ async def build_chief_investment_officer_agent(context: Context):
             tools.get_market_status,
             tools.take_learning_note,
             tools.get_learning_notes,
-            handoff_to_specialist,
+            *handoff_agent_tools,
         ],
         middleware=[
             todo_list_middleware,  # type: ignore
