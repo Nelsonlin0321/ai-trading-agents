@@ -24,7 +24,11 @@ REQUIRED_HISTORICAL_CONVERSATION_AGENTS = {"EQUITY_SELECTION_ANALYST"}
 
 tool_name_template = "handoff_to_{role_name}"
 description_template = "Delegate a specific investment-related task to the {role_name} to get the {role_name}'s analysis result."
-task_parameter_annotation = "A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively."
+task_parameter_annotation = (
+    "A clear, detailed description of the task the specialist should perform."
+    "Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
+    "In addition to their analysis, Ask them their recommendation and state BUY, SELL, or HOLD with your rationale, Allocation Percentage, and confidence level (0.0-1.0)",
+)
 
 
 @tool(
