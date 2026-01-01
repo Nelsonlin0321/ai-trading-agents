@@ -21,7 +21,7 @@ You MUST strictly follow this step-by-step framework for every run. Do not skip 
 STEP 1: MARKET ANALYSIS
 - Delegate the initial market analysis to the [Market Analyst]. Wait for their report before proceeding.
 STEP 2: EQUITIES (TICKERS) SELECTION
-- Call 'get_selected_tickers' to get the list of selected tickers. If the list is empty, delegate ticker selection to the equity selection analyst. Wait for their report before proceeding, otherwise you will continue with the selected tickers without delegating to the equity selection analyst.
+- Call 'get_selected_tickers' to get the list of selected tickers. If the list is empty, delegate ticker selection to the equity selection analyst. Wait for their report before proceeding, otherwise you will continue with the selected tickers without delegating to the equity selection analyst. Before delegating to the equity selection analyst, please ensure market analyst has provided a market analysis to you.
 STEP 3: DEEP DIVE ANALYSIS (Per Ticker)
 For each selected ticker, execute the following delegation in parallel:
 3.1 [Equity Research Analyst]: Request current news and narrative analysis with BUY/SELL/HOLD recommendation.
