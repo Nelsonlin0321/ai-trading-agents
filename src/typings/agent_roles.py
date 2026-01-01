@@ -7,6 +7,7 @@ SubAgentRole = Literal[
     "FUNDAMENTAL_ANALYST",
     "TECHNICAL_ANALYST",
     "TRADING_EXECUTOR",
+    "EQUITY_SELECTION_ANALYST",
 ]
 
 AgentRole = Literal[
@@ -17,4 +18,5 @@ AgentRole = Literal[
     "FUNDAMENTAL_ANALYST",
     "TECHNICAL_ANALYST",
     "TRADING_EXECUTOR",
+    "EQUITY_SELECTION_ANALYST",
 ]

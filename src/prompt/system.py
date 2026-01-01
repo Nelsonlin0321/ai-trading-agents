@@ -13,7 +13,7 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
     tickers = context.run.tickers
 
     tickers = (
-        f"Here's the tickers that user specified, you can trade only on these stocks: {tickers}"
+        f"Here's the tickers that user specified, you should focus on these stocks analysis: {tickers}"
         if tickers
         else ""
     )
@@ -26,7 +26,7 @@ async def build_agent_system_prompt(context: Context, role: Role) -> str:
             ", ".join([w.ticker for w in watchlist])
         )
         if tickers
-        else ""
+        else "User do not have any watchlist."
     )
 
     positions_markdown = await ListPositionsAct().arun(bot_id=context.bot.id)
