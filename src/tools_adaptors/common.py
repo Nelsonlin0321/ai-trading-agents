@@ -201,6 +201,85 @@ class GetAnalystAnalysisAct(Action):
         return analysis
 
 
+class WriteDownSelectedTickersAct(Action):
+    @property
+    def name(self):
+        return "write_down_selected_tickers"
+
+    @async_retry()
+    async def arun(self, run_id: str, tickers: list[str]) -> str:
+        runId = run_id
+        tickers = [t.strip().upper() for t in tickers]
+        run = await db.prisma.run.find_unique(
+            where={
+                "id": runId,
+            }
+        )
+        if not run:
+            return f"Run with id {runId} not found"
+
+        if not run.tickers:
+            await db.prisma.run.update(
+                where={
+                    "id": runId,
+                },
+                data={
+                    "tickers": ",".join(tickers),
+                },
+            )
+            return f"Tickers {tickers} written down for analysis"
+        else:
+            existing_tickers = set([t.strip().upper() for t in run.tickers.split(",")])
+            new_tickers = set([t.strip().upper() for t in tickers])
+            tickers_to_updated = existing_tickers.union(new_tickers)
+
+            await db.prisma.run.update(
+                where={
+                    "id": runId,
+                },
+                data={
+                    "tickers": ",".join(tickers_to_updated),
+                },
+            )
+            return f"Tickers {tickers_to_updated} written down for analysis"
+
+            # if existing_tickers != new_tickers:
+            #     return (
+            #         "You have been overwrite the tickers for review."
+            #         "The tickers that already exists are: "
+            #         f"{', '.join(existing_tickers)}"
+            #         "The tickers that have been overwritten are: "
+            #         f"{', '.join(new_tickers)}"
+            #         "That's might be a mistake because you have already selected these tickers."
+            #         "Please double check again and overwrite all selected tickers at once instead separately."
+            #     )
+            # else:
+            #     return f"Tickers {tickers} written down to review"
+
+
+class GetSelectedTickersAct(Action):
+    @property
+    def name(self):
+        return "get_selected_tickers"
+
+    @async_retry()
+    async def arun(self, run_id: str) -> str:
+        runId = run_id
+
+        run = await db.prisma.run.find_unique(
+            where={
+                "id": runId,
+            }
+        )
+        if not run:
+            return f"Run with id {runId} not found"
+
+        if run.tickers:
+            return f"Tickers selected: {run.tickers}"
+        else:
+            return "No tickers selected yet."
+
+
 if __name__ == "__main__":
     import asyncio
     from src import db

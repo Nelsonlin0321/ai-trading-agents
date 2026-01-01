@@ -49,15 +49,15 @@ async def restore_messages(
         if msg_row.role == "CHIEF_INVESTMENT_OFFICER"
     ]
 
-    deserialized_messages = [
+    serialized_messages = [
         json.loads(msg_row.messages) for msg_row in cio_agent_msg_rows
     ]
 
     # Trim trailing AI messages iteratively
-    while deserialized_messages and deserialized_messages[-1]["type"] == "ai":
-        deserialized_messages.pop(-1)
+    while serialized_messages and serialized_messages[-1]["type"] == "ai":
+        serialized_messages.pop(-1)
 
-    if len(deserialized_messages) == 0:
+    if len(serialized_messages) == 0:
         await prisma.agentmessage.delete_many(
             where=AgentMessageWhereInput(runId=run_id)
         )
@@ -92,11 +92,11 @@ async def restore_messages(
     CACHED_AGENTS_MESSAGES.extend(updated_cached_messages)
     _ = json.dumps(CACHED_AGENTS_MESSAGES)  # make sure it's able to serialize
 
-    serialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
-        message_type_map[msg["type"]](**msg) for msg in deserialized_messages
+    deserialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
+        message_type_map[msg["type"]](**msg) for msg in serialized_messages
     ]
 
-    return serialized_messages
+    return deserialized_messages
 
 
 if __name__ == "__main__":

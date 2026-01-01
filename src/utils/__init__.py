@@ -343,3 +343,8 @@ if __name__ == "__main__":
         recipient="contact@sandx.ai",
         html_body="<h1>Hello, World!</h1>",
     )
+
+
+def read_text(file_path: str) -> str:
+    with open(file_path, "r") as file:
+        return file.read()

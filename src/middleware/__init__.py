@@ -44,9 +44,8 @@ Writing todos takes time and tokens, use it when it is helpful for managing comp
 Here is an example of how to plan a regular investment task:
 1) Review user's investment strategy and portfolio performance
 2) Get market analysis from Market Analyst
-3) Check historical reviewed tickers to avoid duplicates
-4) Select 1-3 tickers for deep dive analysis
-5) For each selected ticker, conduct parallel analysis on with Equity, Fundamental Analysts, and then Risk Analyst
+3) Delegate Ticker Prioritization to Equity Selection Analyst to select 4 tickers, 2 of existing tickers, 2 of new tickers for deep dive analysis if the user didn't specify any tickers
+5) For each selected ticker, conduct parallel analysis on with Equity, Fundamental Analysts,Technical Analyst, and then finally Risk Analyst
 6) Synthesize analysis results into final recommendations
 7) Execute trades by handoff to trading executor if market is open and recommendations are high-confidence
 8) Compile and send final investment report"""  # noqa: E501
