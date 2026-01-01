@@ -11,7 +11,7 @@ from src.utils.message import combine_ai_messages
 from src.utils.constants import SPECIALIST_ROLES
 
 
-agent_building_map = {
+AGENT_BUILDING_MAP = {
     "MARKET_ANALYST": agents.build_market_analyst_agent,
     "RISK_ANALYST": agents.build_risk_analyst_agent,
     "EQUITY_RESEARCH_ANALYST": agents.build_equity_research_analyst_agent,
@@ -51,24 +51,24 @@ async def handoff_to_specialist(
         ValueError: If the provided role is not in the list of valid specialist roles.
     """
     context = runtime.context
-    if role not in agent_building_map:
+    if role not in AGENT_BUILDING_MAP:
         return f"Invalid role: {role}. Must be one of: {SPECIALIST_ROLES}"
 
-    agent: LangGraphAgent = await agent_building_map[role](context)
+    agent: LangGraphAgent = await AGENT_BUILDING_MAP[role](context)
 
     default_message = HumanMessage(
         content=f"Task from the chief investment officer to you: {task}"
     )
 
-    input_messages = []
+    input_messages: list[HumanMessage | AIMessage | ToolMessage] = []
     if role in REQUIRED_HISTORICAL_CONVERSATION_AGENTS:
         historical_messages = [
             msg["messages"] for msg in CACHED_AGENTS_MESSAGES if msg["role"] == role
         ]
-        serialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
+        deserialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
             message_type_map[msg["type"]](**msg) for msg in historical_messages
         ]
-        input_messages.extend(serialized_messages)
+        input_messages.extend(deserialized_messages)
     input_messages.append(default_message)
 
     response = await agent.ainvoke(
