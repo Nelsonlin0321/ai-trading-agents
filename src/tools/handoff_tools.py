@@ -61,7 +61,7 @@ async def handoff_to_equity_selection_analyst(
 ) -> str:
     task = (
         "Review deep market research results conducted by market_analyst and select exactly 4 tickers for further in-depth analysis:"
-        "2 from the user's existing holdings and 2 new tickers that represent fresh opportunities"
+        "2 from the user's existing holdings and 2 new tickers that represent fresh opportunities "
         "if the user didn't specify any tickers"
     )
     content = await handoff_to_specialist_func(
