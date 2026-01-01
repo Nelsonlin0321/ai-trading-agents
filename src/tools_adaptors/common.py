@@ -227,22 +227,34 @@ class WriteDownSelectedTickersAct(Action):
                     "tickers": ",".join(tickers),
                 },
             )
-            return f"Tickers {tickers} written down to review"
+            return f"Tickers {tickers} written down for analysis"
         else:
             existing_tickers = set([t.strip().upper() for t in run.tickers.split(",")])
             new_tickers = set([t.strip().upper() for t in tickers])
+            tickers_to_updated = existing_tickers.union(new_tickers)
 
-            if existing_tickers != new_tickers:
-                return (
-                    "The tickers to review are not the same as the ones that user specified."
-                    "Please check the tickers and try again. "
-                    "The tickers that user specified are: "
-                    f"{', '.join(new_tickers)}"
-                    "The tickers that you are going to write down are: "
-                    f"{', '.join(new_tickers)}"
-                )
-            else:
-                return f"Tickers {tickers} written down to review"
+            await db.prisma.run.update(
+                where={
+                    "id": runId,
+                },
+                data={
+                    "tickers": ",".join(tickers_to_updated),
+                },
+            )
+            return f"Tickers {tickers_to_updated} written down for analysis"
+
+            # if existing_tickers != new_tickers:
+            #     return (
+            #         "You have been overwrite the tickers for review."
+            #         "The tickers that already exists are: "
+            #         f"{', '.join(existing_tickers)}"
+            #         "The tickers that have been overwritten are: "
+            #         f"{', '.join(new_tickers)}"
+            #         "That's might be a mistake because you have already selected these tickers."
+            #         "Please double check again and overwrite all selected tickers at once instead separately."
+            #     )
+            # else:
+            #     return f"Tickers {tickers} written down to review"
 
 
 class GetSelectedTickersAct(Action):
