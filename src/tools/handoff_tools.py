@@ -1,8 +1,10 @@
 from typing import List, Annotated
 from langchain.tools import tool, ToolRuntime
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
 from src.context import Context
 from src import agents
+from src.context import message_type_map
+from src.db import CACHED_AGENTS_MESSAGES
 from src.typings.agent_roles import SubAgentRole
 from src.typings.langgraph_agents import LangGraphAgent
 from src.utils.message import combine_ai_messages
@@ -18,6 +20,8 @@ agent_building_map = {
     "TECHNICAL_ANALYST": agents.build_technical_analyst_agent,
     "EQUITY_SELECTION_ANALYST": agents.build_equity_selection_analyst_agent,
 }
+
+REQUIRED_HISTORICAL_CONVERSATION_AGENTS = {"EQUITY_SELECTION_ANALYST"}
 
 
 @tool("handoff_to_specialist")
@@ -52,14 +56,25 @@ async def handoff_to_specialist(
 
     agent: LangGraphAgent = await agent_building_map[role](context)
 
+    default_message = HumanMessage(
+        content=f"Task from the chief investment officer to you: {task}"
+    )
+
+    input_messages = []
+    if role in REQUIRED_HISTORICAL_CONVERSATION_AGENTS:
+        historical_messages = [
+            msg["messages"] for msg in CACHED_AGENTS_MESSAGES if msg["role"] == role
+        ]
+        serialized_messages: list[HumanMessage | AIMessage | ToolMessage] = [
+            message_type_map[msg["type"]](**msg) for msg in historical_messages
+        ]
+        input_messages.extend(serialized_messages)
+    input_messages.append(default_message)
+
     response = await agent.ainvoke(
         {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": f"Task from the chief investment officer to you: {task}",
-                }
-            ]
+            # pyright: ignore [reportArgumentType]
+            "messages": input_messages
         },
         context=context,
     )
