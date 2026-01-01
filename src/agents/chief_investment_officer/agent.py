@@ -22,22 +22,14 @@ async def build_chief_investment_officer_agent(context: Context):
     agent = create_agent(
         model=langchain_model,
         tools=[
-            # Portfolio management tools
-            # tools.list_current_positions,
             tools.get_portfolio_performance_analysis,
             tools.get_user_investment_strategy,
-            # tools.buy_stock,
-            # tools.sell_stock,
-            # tools.get_latest_quotes,
-            # tools.get_latest_quote,
             tools.get_analysts_recommendations,
             tools.get_recommend_stock_tool(Role.CHIEF_INVESTMENT_OFFICER),
             tools.send_summary_email_tool,
             tools.write_summary_report,
-            tools.write_down_tickers_to_review,
+            tools.get_selected_tickers,
             tools.get_market_status,
-            tools.get_historical_reviewed_tickers,
-            tools.get_portfolio_total_value,
             tools.take_learning_note,
             tools.get_learning_notes,
             handoff_to_specialist,

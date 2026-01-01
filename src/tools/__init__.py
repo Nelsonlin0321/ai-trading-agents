@@ -24,6 +24,8 @@ from src.tools.common_tools import (
     write_summary_report,
     get_historical_reviewed_tickers,
     get_analyst_analysis,
+    get_selected_tickers,
+    write_down_selected_tickers,
 )
 
 from src.tools.fundamental_data_tools import (
@@ -40,7 +42,6 @@ from src.tools.trading_tools import (
     get_market_status,
     get_recommend_stock_tool,
     get_analysts_recommendations,
-    write_down_tickers_to_review,
     get_CIO_execution_instructions,
 )
 from src.tools.learning_tools import (
@@ -80,7 +81,8 @@ __all__ = [
     "get_fundamental_risk_data",
     "get_volatility_risk_indicators",
     "get_price_risk_indicators",
-    "write_down_tickers_to_review",
+    "get_selected_tickers",
+    "write_down_selected_tickers",
     "get_historical_reviewed_tickers",
     "get_portfolio_total_value",
     "get_CIO_execution_instructions",

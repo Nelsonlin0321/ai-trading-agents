@@ -599,3 +599,5 @@ ALL_ROLES: List[AgentRole] = [
 ]
 
 LEARNING_RATE = 10
+
+MAX_TICKERS_ALLOWED = 4

@@ -352,50 +352,6 @@ class GetAnalystsRecommendationsAct(Action):
         return format_recommendations_markdown(recommendations)
 
 
-class WriteDownTickersToReviewAct(Action):
-    @property
-    def name(self):
-        return "write_down_tickers_to_review"
-
-    @async_retry()
-    async def arun(self, run_id: str, tickers: list[str]) -> str:
-        runId = run_id
-
-        run = await db.prisma.run.find_unique(
-            where={
-                "id": runId,
-            }
-        )
-        if not run:
-            return f"Run with id {runId} not found"
-
-        if not run.tickers:
-            await db.prisma.run.update(
-                where={
-                    "id": runId,
-                },
-                data={
-                    "tickers": ",".join(tickers),
-                },
-            )
-            return f"Tickers {tickers} written down to review"
-        else:
-            existing_tickers = set([t.strip().upper() for t in run.tickers.split(",")])
-            new_tickers = set([t.strip().upper() for t in tickers])
-
-            if existing_tickers != new_tickers:
-                return (
-                    "The tickers to review are not the same as the ones that user specified."
-                    "Please check the tickers and try again. "
-                    "The tickers that user specified are: "
-                    f"{', '.join(new_tickers)}"
-                    "The tickers that you are going to write down are: "
-                    f"{', '.join(new_tickers)}"
-                )
-            else:
-                return f"Tickers {tickers} written down to review"
-
-
 class TradeHistoryAct(Action):
     @property
     def name(self):

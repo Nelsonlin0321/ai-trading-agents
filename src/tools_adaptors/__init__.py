@@ -28,6 +28,8 @@ from src.tools_adaptors.common import (
     WriteInvestmentReportEmailAct,
     GetHistoricalReviewedTickersAct,
     GetAnalystAnalysisAct,
+    WriteDownSelectedTickersAct,
+    GetSelectedTickersAct,
 )
 from src.tools_adaptors.learning import TakeLearningAct, GetLearningsAct
 
@@ -60,4 +62,6 @@ __all__ = [
     "TakeLearningAct",
     "GetLearningsAct",
     "DownloadTickerBarsDataAct",
+    "WriteDownSelectedTickersAct",
+    "GetSelectedTickersAct",
 ]

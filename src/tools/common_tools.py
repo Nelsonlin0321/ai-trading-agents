@@ -3,6 +3,7 @@ from langchain.tools import tool, ToolRuntime
 from langchain_core.messages import BaseMessage
 from src.utils.message import combine_ai_messages
 from src.context import Context
+from src.utils.constants import MAX_TICKERS_ALLOWED
 
 from src.tools_adaptors import (
     GetUserInvestmentStrategyAct,
@@ -10,6 +11,8 @@ from src.tools_adaptors import (
     SendInvestmentReportEmailAct,
     GetHistoricalReviewedTickersAct,
     GetAnalystAnalysisAct,
+    WriteDownSelectedTickersAct,
+    GetSelectedTickersAct,
 )
 
 
@@ -18,6 +21,8 @@ send_investment_report_email_act = SendInvestmentReportEmailAct()
 write_investment_report_email_act = WriteInvestmentReportEmailAct()
 get_historical_reviewed_tickers_act = GetHistoricalReviewedTickersAct()
 get_analyst_analysis_act = GetAnalystAnalysisAct()
+write_down_selected_tickers_act = WriteDownSelectedTickersAct()
+get_selected_tickers_act = GetSelectedTickersAct()
 
 
 @tool("get_user_investment_strategy")
@@ -102,4 +107,39 @@ async def get_analyst_analysis(
     return await get_analyst_analysis_act.arun(
         role=role,
         run_id=runtime.context.run.id,
+    )
+
+
+@tool(write_down_selected_tickers_act.name)
+async def write_down_selected_tickers(
+    tickers: list[str],
+    runtime: ToolRuntime[Context],
+):
+    """Write down the selected tickers.
+
+    Args:
+        tickers: List of tickers to review
+    """
+    if len(tickers) > MAX_TICKERS_ALLOWED:
+        return f"Only {MAX_TICKERS_ALLOWED} tickers are allowed at a time.Please choose at most {MAX_TICKERS_ALLOWED} tickers."
+
+    runId = runtime.context.run.id
+    return await write_down_selected_tickers_act.arun(
+        run_id=runId,
+        tickers=tickers,
+    )
+
+
+@tool(get_selected_tickers_act.name)
+async def get_selected_tickers(
+    runtime: ToolRuntime[Context],
+):
+    """Write down the selected tickers.
+
+    Args:
+        tickers: List of tickers to review
+    """
+    runId = runtime.context.run.id
+    return await get_selected_tickers_act.arun(
+        run_id=runId,
     )
