@@ -16,6 +16,7 @@ agent_building_map = {
     "FUNDAMENTAL_ANALYST": agents.build_fundamental_analyst_agent,
     "TRADING_EXECUTOR": agents.build_trading_executor_agent,
     "TECHNICAL_ANALYST": agents.build_technical_analyst_agent,
+    "EQUITY_SELECTION_ANALYST": agents.build_equity_selection_analyst_agent,
 }
 
 
@@ -32,14 +33,8 @@ async def handoff_to_specialist(
     runtime: ToolRuntime[Context],
 ) -> str:
     """
-    Delegate a specific investment-related task to a specialist agent and return the agent's response.
+    Delegate a specific investment-related task to a specialist analyst agent and return the analyst's response.
 
-    This function:
-    1. Validates that the requested role is one of the registered specialist roles.
-    2. Combines the agent's response messages into a single string and returns it.
-
-    The returned string consolidates all AI-generated messages from the specialist, providing
-    a concise summary or detailed output depending on the task performed.
 
     Args:
         role: Role of the specialist agent to handoff to.
