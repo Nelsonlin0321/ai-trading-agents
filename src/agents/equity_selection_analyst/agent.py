@@ -1,6 +1,7 @@
 from langchain.agents import create_agent
 from prisma.enums import Role
 from src import middleware
+from src import tools
 from src.models import get_model
 from src.context import Context
 from src.prompt import build_agent_system_prompt
@@ -14,10 +15,12 @@ async def build_equity_selection_analyst_agent(context: Context):
     agent = create_agent(
         model=langchain_model,
         tools=[
-            # tools.do_google_equity_research,
-            # tools.get_latest_equity_news,
-            # tools.get_price_trend,
-            # tools.get_recommend_stock_tool(Role.EQUITY_RESEARCH_ANALYST),
+            tools.get_user_investment_strategy,
+            tools.get_selected_tickers,
+            tools.write_down_selected_tickers,
+            tools.list_current_positions,
+            tools.get_historical_reviewed_tickers,
+            tools.get_market_deep_research_analysis,
         ],
         middleware=[
             # middleware.summarization_middleware,  # type: ignore

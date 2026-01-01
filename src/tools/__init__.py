@@ -26,7 +26,9 @@ from src.tools.common_tools import (
     get_analyst_analysis,
     get_selected_tickers,
     write_down_selected_tickers,
+    get_market_deep_research_analysis,
 )
+
 
 from src.tools.fundamental_data_tools import (
     get_fundamental_data,
@@ -88,5 +90,6 @@ __all__ = [
     "get_CIO_execution_instructions",
     "take_learning_note",
     "get_learning_notes",
+    "get_market_deep_research_analysis",
     # "handoff_to_specialist", # Avoid circular import
 ]
