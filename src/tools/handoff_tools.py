@@ -3,6 +3,7 @@ from langchain.tools import tool, ToolRuntime
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
 from src.context import Context
 from src import agents
+from src.prompt import RECOMMENDATION_PROMPT
 from src.context import message_type_map
 from src.db import CACHED_AGENTS_MESSAGES
 from src.typings.agent_roles import SubAgentRole
@@ -27,7 +28,6 @@ description_template = "Delegate a specific investment-related task to the {role
 task_parameter_annotation = (
     "A clear, detailed description of the task the specialist should perform."
     "Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
-    "In addition to their analysis, Ask them their recommendation and state BUY, SELL, or HOLD with your rationale, Allocation Percentage, and confidence level (0.0-1.0)",
 )
 
 
@@ -51,12 +51,13 @@ async def handoff_to_market_analyst(
     description=description_template.format(role_name="equity_selection_analyst"),
 )
 async def handoff_to_equity_selection_analyst(
-    task: Annotated[
-        str,
-        task_parameter_annotation,
-    ],
     runtime: ToolRuntime[Context],
 ) -> str:
+    task = (
+        "Review deep market research results conducted by market_analyst and select exactly 4 tickers for further in-depth analysis:"
+        "2 from the user's existing holdings and 2 new tickers that represent fresh opportunities"
+        "if the user didn't specify any tickers"
+    )
     content = await handoff_to_specialist_func(
         "EQUITY_SELECTION_ANALYST", task, runtime.context
     )
@@ -74,6 +75,7 @@ async def handoff_to_risk_analyst(
     ],
     runtime: ToolRuntime[Context],
 ) -> str:
+    task = task + RECOMMENDATION_PROMPT
     content = await handoff_to_specialist_func("RISK_ANALYST", task, runtime.context)
     return content
 
@@ -89,6 +91,7 @@ async def handoff_to_fundamental_analyst(
     ],
     runtime: ToolRuntime[Context],
 ) -> str:
+    task = task + RECOMMENDATION_PROMPT
     content = await handoff_to_specialist_func(
         "FUNDAMENTAL_ANALYST", task, runtime.context
     )
@@ -106,6 +109,7 @@ async def handoff_to_technical_analyst(
     ],
     runtime: ToolRuntime[Context],
 ) -> str:
+    task = task + RECOMMENDATION_PROMPT
     content = await handoff_to_specialist_func(
         "TECHNICAL_ANALYST", task, runtime.context
     )
@@ -123,6 +127,7 @@ async def handoff_to_equity_research_analyst(
     ],
     runtime: ToolRuntime[Context],
 ) -> str:
+    task = task + RECOMMENDATION_PROMPT
     content = await handoff_to_specialist_func(
         "EQUITY_RESEARCH_ANALYST", task, runtime.context
     )
@@ -188,32 +193,6 @@ async def handoff_to_specialist_func(
 
     return content
 
-
-# def get_handoff_agent_tools():
-#     tools: List[BaseTool] = []
-#     for role, _ in AGENT_BUILDING_MAP.items():
-#         role: SubAgentRole = role
-#         role_name = role.lower()
-#         role_name = "_".join([word.capitalize() for word in role_name.split("_")])
-
-#         description = f"""
-#         Delegate, handoff a specific investment-related task to the {role_name} to get the {role_name}'s analysis result.
-#         """
-
-#         @tool(f"handoff_to_{role_name}", description=description)
-#         async def handoff_to_specialist(
-#             task: Annotated[
-#                 str,
-#                 "A clear, detailed description of the task the specialist should perform. Include relevant context, and expected deliverables to ensure the specialist can act effectively.",
-#             ],
-#             runtime: ToolRuntime[Context],
-#         ) -> str:
-#             content = await handoff_to_specialist_func(role, task, runtime.context)
-#             return content
-
-#         tools.append(handoff_to_specialist)
-
-#     return tools
 
 __all__ = [
     "handoff_to_market_analyst",

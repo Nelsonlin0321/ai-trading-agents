@@ -92,7 +92,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
     },
 }
 
-RECOMMENDATION_PROMPT: str = "\n Based on your analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, Allocation Percentage, and confidence level (0.0-1.0)"
+RECOMMENDATION_PROMPT: str = "\n\n In addition to analysis, based on your analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, Allocation Percentage, and confidence level (0.0-1.0)"
 
 
 AGENT_TEAM_DESCRIPTION: str = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
