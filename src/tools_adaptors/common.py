@@ -209,7 +209,7 @@ class WriteDownSelectedTickersAct(Action):
     @async_retry()
     async def arun(self, run_id: str, tickers: list[str]) -> str:
         runId = run_id
-
+        tickers = [t.strip().upper() for t in tickers]
         run = await db.prisma.run.find_unique(
             where={
                 "id": runId,

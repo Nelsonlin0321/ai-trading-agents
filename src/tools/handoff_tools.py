@@ -5,7 +5,7 @@ from src.context import Context
 from src import agents
 from src.prompt import RECOMMENDATION_PROMPT
 from src.context import message_type_map
-from src.db import CACHED_AGENTS_MESSAGES
+from src.db import CACHED_AGENTS_MESSAGES, prisma
 from src.typings.agent_roles import SubAgentRole
 from src.typings.langgraph_agents import LangGraphAgent
 from src.utils.message import combine_ai_messages
@@ -22,6 +22,12 @@ AGENT_BUILDING_MAP: dict[SubAgentRole, Any] = {
 }
 
 REQUIRED_HISTORICAL_CONVERSATION_AGENTS = {"EQUITY_SELECTION_ANALYST"}
+REQUIRED_RECOMMENDATION_AGENTS = {
+    "RISK_ANALYST",
+    "EQUITY_RESEARCH_ANALYST",
+    "FUNDAMENTAL_ANALYST",
+    "TECHNICAL_ANALYST",
+}
 
 tool_name_template = "handoff_to_{role_name}"
 description_template = "Delegate a specific investment-related task to the {role_name} to get the {role_name}'s analysis result."
@@ -188,10 +194,66 @@ async def handoff_to_specialist_func(
     )
 
     messages: List[BaseMessage] = response["messages"]
+    if role in REQUIRED_RECOMMENDATION_AGENTS:
+        tickers_has_recommended = await check_analyst_recommendations(
+            context.run.id, role
+        )
+        force_recommendation_message = (
+            "You haven't recommended below ticker with a buy, sell, or hold action. \n\n"
+            "Based on your analysis, you need to frame your final recommendation and state BUY, SELL, or HOLD with your rationale,"
+            "allocation percentage, and confidence level(0.0-1.0) for following tickers: \n"
+        )
+        for ticker, has_recommended in tickers_has_recommended.items():
+            if not has_recommended:
+                force_recommendation_message += f", {ticker}"
+        messages.append(HumanMessage(content=force_recommendation_message))
+        response = await agent.ainvoke(
+            {
+                # pyright: ignore [reportArgumentType]
+                "messages": input_messages
+            },
+            context=context,
+        )
+        messages: List[BaseMessage] = response["messages"]
 
     content = combine_ai_messages(messages)
 
     return content
+
+
+async def check_analyst_recommendations(runId, role: SubAgentRole) -> dict[str, bool]:
+    """
+    Check if the analyst has recommended any ticker with a buy, sell, or hold action.
+    Returns a dictionary with tickers as keys and True/False as values indicating if they were recommended.
+    """
+    run = await prisma.run.find_unique(
+        where={
+            "id": runId,
+        },
+        include={
+            "recommends": True,
+        },
+    )
+
+    if run is None:
+        raise ValueError(f"Run with id {runId} not found")
+
+    if run.tickers is None:
+        return {}
+
+    selected_ticker = run.tickers.split(",")
+    if run.recommends is None:
+        return {}
+
+    recommended_tickers = [
+        recommend.ticker for recommend in run.recommends if recommend.role == role
+    ]
+
+    has_recommended = {
+        ticker: ticker in recommended_tickers for ticker in selected_ticker
+    }
+
+    return has_recommended
 
 
 __all__ = [

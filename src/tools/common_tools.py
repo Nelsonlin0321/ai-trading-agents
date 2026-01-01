@@ -134,7 +134,7 @@ async def write_down_selected_tickers(
     tickers: list[str],
     runtime: ToolRuntime[Context],
 ):
-    """Write down the selected tickers.
+    """Write down all selected tickers in a single call.
 
     Args:
         tickers: List of tickers to review
