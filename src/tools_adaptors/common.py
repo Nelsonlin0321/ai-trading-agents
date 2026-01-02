@@ -240,7 +240,7 @@ class WriteDownSelectedTickersAct(Action):
                     "tickers": ",".join(new_tickers),
                 },
             )
-            return f"Overwrote existing tickers {existing_tickers} with {tickers}. Please double check if it's intended."
+            return f"Overwrote existing tickers {existing_tickers} with {', '.join(new_tickers)}. Please double check if it's intended."
 
             # if existing_tickers != new_tickers:
             #     return (

@@ -1,97 +1,66 @@
-import functools
-import logging
-import multiprocessing
+import os
+import subprocess
 import sys
-from io import StringIO
-from typing import Dict, Optional
-
-from pydantic import BaseModel, Field
-
-logger = logging.getLogger(__name__)
+import uuid
 
 
-@functools.lru_cache(maxsize=None)
-def warn_once() -> None:
-    """Warn once about the dangers of PythonREPL."""
-    logger.warning("Python REPL can execute arbitrary code. Use with caution.")
+def run_python_script(script_path: str):
+    """Run a Python script and return the output.
+
+    Args:
+        script_path (str): The path to the Python script.
+
+    Returns:
+        str: The output of the script.
+    """
+    try:
+        # Define the command as a list of strings
+        # It's generally best practice to use the absolute path to your Python interpreter
+        # For this example, we use 'sys.executable' to use the same interpreter as the current script
+        command = [sys.executable, script_path]
+
+        # Use subprocess.run()
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+
+        response = ""
+        response += f"STDOUT: {result.stdout}"
+        response += f"STDERR: {result.stderr}"
+        response += f"Process finished with exit code: {result.returncode}"
+        return response
+    except subprocess.CalledProcessError as e:
+        response = ""
+        response += f"Process failed with error code {e.returncode}"
+        response += f"STDOUT: {e.stdout}"
+        response += f"STDERR: {e.stderr}"
+        return response
+    except FileNotFoundError:
+        return "Error: The script file or the python interpreter was not found."
 
 
-class PythonREPL(BaseModel):
-    """Simulates a standalone Python REPL."""
+def run_python_code(code: str) -> str:
+    """Run Python code and return the output.
 
-    globals: Optional[Dict] = Field(default_factory=dict, alias="_globals")  # type: ignore[arg-type]
-    locals: Optional[Dict] = Field(default_factory=dict, alias="_locals")  # type: ignore[arg-type]
+    Args:
+        code (str): The Python code to run.
 
-    @staticmethod
-    def sanitize_input(query: str) -> str:
-        """Sanitize input to the python REPL.
+    Returns:
+        str: The output of the code.
+    """
+    # give it a unique name
+    with open(f"{uuid.uuid4()}.py", "w") as f:
+        f.write(code)
+        temp_path = f.name
 
-        Remove whitespace, backtick & python
-        (if llm mistakes python console as terminal)
+    response = run_python_script(temp_path)
+    os.remove(temp_path)
+    return response
 
-        Args:
-            query: The query to sanitize
 
-        Returns:
-            str: The sanitized query
-        """
-        # query = re.sub(r"^(\s|`)*(?i:python)?\s*", "", query)
-        # query = re.sub(r"(\s|`)*$", "", query)
-        query = query.strip()
-        if query.startswith("```python"):
-            query = query[len("```python") :]
-        if query.startswith("```"):
-            query = query[len("```") :]
-        if query.endswith("```"):
-            query = query[:-3]
-        query = query.strip()
-        return query
-
-    @classmethod
-    def worker(
-        cls,
-        command: str,
-        globals: Optional[Dict],
-        locals: Optional[Dict],
-        queue: multiprocessing.Queue,
-    ) -> None:
-        old_stdout = sys.stdout
-        sys.stdout = mystdout = StringIO()
-        try:
-            cleaned_command = cls.sanitize_input(command)
-            exec(cleaned_command, globals, locals)
-            sys.stdout = old_stdout
-            queue.put(mystdout.getvalue())
-        except Exception as e:
-            sys.stdout = old_stdout
-            queue.put(repr(e))
-
-    def run(self, command: str, timeout: Optional[int] = None) -> str:
-        """Run command with own globals/locals and returns anything printed.
-        Timeout after the specified number of seconds."""
-
-        # Warn against dangers of PythonREPL
-        warn_once()
-
-        queue: multiprocessing.Queue = multiprocessing.Queue()
-
-        # Only use multiprocessing if we are enforcing a timeout
-        if timeout is not None:
-            # create a Process
-            p = multiprocessing.Process(
-                target=self.worker, args=(command, self.globals, self.locals, queue)
-            )
-
-            # start it
-            p.start()
-
-            # wait for the process to finish or kill it after timeout seconds
-            p.join(timeout)
-
-            if p.is_alive():
-                p.terminate()
-                return "Execution timed out"
-        else:
-            self.worker(command, self.globals, self.locals, queue)
-        # get the result from the worker function
-        return queue.get()
+if __name__ == "__main__":
+    #  python src/utils/python.py
+    code = """
+import pandas as pd
+df = pd.read_csv("data/AAPL.csv")
+print(df.head())
+"""
+    print(run_python_code(code))

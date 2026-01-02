@@ -1,7 +1,7 @@
 import os
 
 # from src.utils.ticker import is_valid_ticker
-from src.utils.python import PythonREPL
+from src.utils.python import run_python_code
 from langchain.tools import tool
 
 HOME_DIR = os.environ["HOME"]
@@ -49,8 +49,6 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
             "Please call `download_ticker_bars_data` to download the ticker data first."
         )
 
-    python_repl = PythonREPL()
-
     # Simple static analysis for guardrails
     # Note: This is a basic check and can be bypassed. For production, use a sandbox environment.
     prohibited_keywords = [
@@ -84,7 +82,7 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
         if keyword in code:
             return f"Security Violation: Prohibited command or keyword `{keyword}` found in code. Please focus on data analysis using pandas/numpy."
 
-    output = python_repl.run(code)
+    output = run_python_code(code)
 
     # Mask environment variables in the output
     if output:
