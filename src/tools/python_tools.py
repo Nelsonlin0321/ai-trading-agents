@@ -49,39 +49,6 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
             "Please call `download_ticker_bars_data` to download the ticker data first."
         )
 
-    # Simple static analysis for guardrails
-    # Note: This is a basic check and can be bypassed. For production, use a sandbox environment.
-    prohibited_keywords = [
-        "environ",
-        "getenv",
-        "putenv",
-        "unsetenv",
-        "write(",
-        "delete(",
-        "remove(",
-        "unlink(",
-        "rmdir(",
-        "shutil",
-        "subprocess",
-        "eval",
-        "exec",
-        "compile",
-        "pip",
-        "install",
-        "wget",
-        "curl",
-        "requests",
-        "urllib",
-        "http",
-        "boto3",
-        "prisma",
-    ]
-
-    # Check for prohibited keywords
-    for keyword in prohibited_keywords:
-        if keyword in code:
-            return f"Security Violation: Prohibited command or keyword `{keyword}` found in code. Please focus on data analysis using pandas/numpy."
-
     output = run_python_code(code)
 
     # Mask environment variables in the output
