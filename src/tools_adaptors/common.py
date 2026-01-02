@@ -229,19 +229,18 @@ class WriteDownSelectedTickersAct(Action):
             )
             return f"Tickers {tickers} written down for analysis"
         else:
-            existing_tickers = set([t.strip().upper() for t in run.tickers.split(",")])
-            new_tickers = set([t.strip().upper() for t in tickers])
-            tickers_to_updated = existing_tickers.union(new_tickers)
+            existing_tickers = run.tickers
+            new_tickers = tickers
 
             await db.prisma.run.update(
                 where={
                     "id": runId,
                 },
                 data={
-                    "tickers": ",".join(tickers_to_updated),
+                    "tickers": ",".join(new_tickers),
                 },
             )
-            return f"Tickers {tickers_to_updated} written down for analysis"
+            return f"Overwrote existing tickers {existing_tickers} with {', '.join(new_tickers)}. Please double check if it's intended."
 
             # if existing_tickers != new_tickers:
             #     return (

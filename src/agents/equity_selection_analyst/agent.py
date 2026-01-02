@@ -21,6 +21,10 @@ async def build_equity_selection_analyst_agent(context: Context):
             tools.list_current_positions,
             tools.get_historical_reviewed_tickers,
             tools.get_market_deep_research_analysis,
+            tools.get_latest_market_news,
+            tools.get_etf_live_historical_price_change,
+            tools.get_stock_live_historical_price_change,
+            tools.get_most_active_stockers,
         ],
         middleware=[
             # middleware.summarization_middleware,  # type: ignore
