@@ -41,13 +41,6 @@ class BuyAct(Action):
 
         ticker = ticker.upper().strip()
 
-        valid_ticker = await db.prisma.ticker.find_unique(
-            where={"ticker": ticker.replace(".", "-")}
-        )
-
-        if valid_ticker is None:
-            return f"Invalid ticker {ticker}"
-
         async with db.prisma.tx() as transaction:
             portfolio = await transaction.portfolio.find_unique(where={"botId": bot_id})
             if portfolio is None:
@@ -145,13 +138,6 @@ class SellAct(Action):
         total_proceeds = price * volume
 
         ticker = ticker.upper().strip()
-
-        valid_ticker = await db.prisma.ticker.find_unique(
-            where={"ticker": ticker.replace(".", "-")}
-        )
-
-        if valid_ticker is None:
-            return f"Invalid ticker {ticker}"
 
         async with db.prisma.tx() as transaction:
             portfolio = await transaction.portfolio.find_unique(where={"botId": bot_id})
