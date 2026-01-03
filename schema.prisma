@@ -38,6 +38,7 @@ model Bot {
     accumulatedPL              Float?
     accumulatedPLPercent       Float?
     llmModel                   String?                      @default("deepseek-v3.2")
+    agents                     String?
     watchlist                  WatchlistItem[]
     depositWithdrawCash        DepositWithdrawCash[]
     trades                     Trade[]
@@ -202,6 +203,8 @@ enum RunStatus {
     RUNNING
     STARTING
     SKIPPED
+    TIMEOUT
+    CANCELED
 }
 
 model Run {
@@ -212,6 +215,7 @@ model Run {
     instruction      String?
     summary          String?
     tickers          String?
+    batchJobId       String?
     trades           Trade[]
     agentMessages    AgentMessage[]
     createdAt        DateTime         @default(now())
