@@ -13,6 +13,7 @@ THREE_TWO_ONE_API_URL = get_env(
 )
 
 llm_models = {
+    "google/gemini-2.0-flash-exp:free": {"reasoning": False, "provider": None},
     "minimax/minimax-m2.1": {"reasoning": True, "provider": ["minimax/fp8"]},
     "deepseek/deepseek-v3.2": {"reasoning": False, "provider": None},
     "x-ai/grok-4.1-fast": {"reasoning": True, "provider": None},
