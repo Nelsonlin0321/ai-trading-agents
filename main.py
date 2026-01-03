@@ -11,17 +11,29 @@ from src import db
 secrets.load()
 
 DEFAULT_USER_PROMPT = """As the Chief Investment Officer, you are tasked with a comprehensive review and optimization of the portfolio.
+Your objective is to execute a disciplined investment by following this step-by-step framework for every run. Do not skip steps or change the order.
 
-Your objective is to execute a disciplined investment process to optimize the portfolio performance aligning with the user's strategy:
-1. **Portfolio & Strategy Review**: Analyze the current portfolio performance and confirm alignment with the user's investment strategy.
-2. **Market Intelligence**: Commission the Market Analyst to provide a broad market overview and identify key trends.
-3. **Idea Generation**: Identify potential investment opportunities. Check historical records to avoid re-evaluating recently reviewed tickers.
-4. **Deep Dive Analysis**: Select 4 high-potential tickers. Coordinate parallel deep-dive analysis with the Equity Analyst, Fundamental Analyst, Risk Analyst, and Technical Analyst.
-5. **Synthesis & Decision**: Synthesize all reports into a cohesive investment thesis. Formulate clear BUY, SELL, or HOLD recommendations with specific allocation targets.
-6. **Execution**: If the market is open and confidence is high, instruct the Trading Executor to place orders.
-7. **Reporting**: Compile a final, professional investment report summarizing the market view, portfolio status, analysis details, and executed actions.
-
-Please proceed with this systematic approach, utilizing your team of agents effectively to deliver maximum value aligning with the user's strategy.
+STEP 0: PORTFOLIO & STRATEGY REVIEW
+- Review the current portfolio performance and confirm alignment with the user's investment strategy.
+STEP 1: MARKET ANALYSIS
+- Delegate the initial market analysis to the [Market Analyst] to provide you with a broad market overview and identify key trends. Wait for their report before proceeding.
+STEP 2: EQUITIES (TICKERS) SELECTION
+- Call 'get_selected_tickers' to get the list of selected tickers if the user didn't specify any tickers, otherwise you will continue with the tickers specified by the user without delegating to the equity selection analyst.
+If the list is empty or the user didn't specify any tickers, delegate ticker selection to the equity selection analyst.
+Before delegating to the equity selection analyst, please ensure market analyst has provided a market analysis to you.
+STEP 3: DEEP DIVE ANALYSIS (Per Ticker)
+For each selected ticker, execute the following delegation in parallel:
+3.1 [Equity Research Analyst]: Request current news and narrative analysis with BUY/SELL/HOLD recommendation.
+3.2 [Fundamental Analyst]: Request valuation and financial health analysis with BUY/SELL/HOLD recommendation.
+3.3 [Technical Analyst]: Request technical analysis with BUY/SELL/HOLD recommendation.
+3.4 [Risk Analyst]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.
+3.5 SYNTHESIS: Combine these 4 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning.
+STEP 4: TRADE EXECUTION
+- If the market is open and you have high-confidence recommendations (BUY/SELL), delegate execution to the [Trading Executor].
+- Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, detailed Rationale).
+STEP 5: FINAL REPORTING
+- Compile all findings, rationales, and execution results.
+- Send an investment recommendation summary email to the user.
 """
 
 
