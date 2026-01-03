@@ -1,6 +1,5 @@
 import json
 import re
-from typing import Any
 from loguru import logger
 from datetime import datetime, timezone
 from langchain_core.messages import AnyMessage, ToolMessage, AIMessage
@@ -164,21 +163,20 @@ class CleanUpPythonMiddleware(
 ):
     async def abefore_model(
         self, state: middleware.AgentState, runtime: Runtime[Context]
-    ) -> dict[str, Any]:
+    ) -> dict[str, list[AnyMessage]]:
         #
         messages = state["messages"]
         success_flag_str = "Process finished with exit code: 0"
         tool_name = "execute_python_technical_analysis"
-        new_messages = []
+        new_messages: list[AnyMessage] = []
         before_last_n = 2
         msg_size = len(messages)
         for i, msg in enumerate(messages):
-            # Not clean up the last n tool messages
+            # Not clean up the last n messages
             if i >= msg_size - before_last_n:
                 new_messages.append(msg)
                 continue
 
-            # Clean up the python tool content
             if isinstance(msg, ToolMessage):
                 if msg.name == tool_name:
                     if (
@@ -189,7 +187,6 @@ class CleanUpPythonMiddleware(
                             new_messages.append(msg)
 
             #  Optional: You want to clean up the historical generated codes
-            #  Clean up tool calls python code parameters
             if isinstance(msg, AIMessage):
                 tool_calls = msg.tool_calls
                 for call in tool_calls:
@@ -198,9 +195,7 @@ class CleanUpPythonMiddleware(
                             call["args"]["code"] = "# python code has been cleaned up"
                 new_messages.append(msg)
 
-        return {
-            "messages": new_messages,
-        }
+        return {"messages": new_messages}
 
 
 def remove_python_from_content(content: str) -> str:
