@@ -8,6 +8,7 @@ class AgentDescription(TypedDict):
     title: str
     description: str
     key_capabilities: list[str]
+    required: bool
     # strength_weight: float
 
 
@@ -22,6 +23,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Imminent event risk (earnings, Fed speakers, data releases)",
             "Cross-asset flow and sentiment inflections",
         ],
+        "required": True,
         # "strength_weight": 0.25
     },
     "EQUITY_SELECTION_ANALYST": {
@@ -32,6 +34,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Selects exactly 2 existing holdings for reassessment based on new material impacts from research",
             "Identifies 2 high-conviction new tickers that offer fresh exposure or alpha potential",
         ],
+        "required": True,
         # "strength_weight": 0.2,  # Equity selection is important
     },
     "RISK_ANALYST": {
@@ -42,6 +45,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Stress-tests portfolios under various market conditions",
             "Designs hedging frameworks for risk mitigation",
         ],
+        "required": False,
         # "strength_weight": 0.2,  # Risk management is equally important
     },
     "EQUITY_RESEARCH_ANALYST": {
@@ -53,6 +57,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Event risk assessment for individual stocks",
             "Market sentiment and flow analysis for securities",
         ],
+        "required": False,
         # "strength_weight": 0.5,  # Catalysts and timing are important
     },
     "FUNDAMENTAL_ANALYST": {
@@ -66,6 +71,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Analyzes capital returns and payout sustainability",
             "Outlines key catalysts and risks with monitoring indicators",
         ],
+        "required": False,
         # "strength_weight": 0.30,  # Fundamentals provide the valuation anchor
     },
     "TECHNICAL_ANALYST": {
@@ -76,6 +82,7 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Execute Python code to calculate indicators and print out the results",
             "Provide buy/sell signals based on technical indicators",
         ],
+        "required": False,
         # "strength_weight": 0.20,  # Technical analysis provides timing and trend confirmation
     },
     "TRADING_EXECUTOR": {
@@ -88,24 +95,12 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
             "Ensure cash sufficiency for buys",
             "Never short-sell (≤ current holdings)",
         ],
+        "required": True,
         # "strength_weight": 0,  # Execution role, lower weight in decision synthesis
     },
 }
 
 RECOMMENDATION_PROMPT: str = "\n\n In addition to analysis, based on your analysis, you should frame your final recommendation and state BUY, SELL, or HOLD with your rationale, Allocation Percentage, and confidence level (0.0-1.0)"
-
-
-AGENT_TEAM_DESCRIPTION: str = "## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
-    f"### {idx}. {AGENT_DESCRIPTIONS[role]['title']}\n"
-    f"**Description:** {AGENT_DESCRIPTIONS[role]['description']}\n"
-    f"**Capabilities:** {AGENT_DESCRIPTIONS[role]['key_capabilities']}\n"
-    # f"**Default Strength weight in decisions:** {int(AGENT_DESCRIPTIONS[role]['strength_weight'] * 100)}%\n"
-    for idx, role in enumerate(AGENT_DESCRIPTIONS.keys(), start=1)
-)
-
-CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT: str = (
-    read_text("src/prompt/chief_investment_officer.md") + AGENT_TEAM_DESCRIPTION
-)
 
 
 RolePromptMap = dict[Role, str]
@@ -114,7 +109,7 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.MARKET_ANALYST: read_text("src/prompt/market_analyst.md"),
     Role.EQUITY_SELECTION_ANALYST: read_text("src/prompt/equity_selection_analyst.md"),
     Role.EQUITY_RESEARCH_ANALYST: read_text("src/prompt/equity_research_analyst.md"),
-    Role.CHIEF_INVESTMENT_OFFICER: CHIEF_INVESTMENT_OFFICER_ROLE_PROMPT,
+    Role.CHIEF_INVESTMENT_OFFICER: read_text("src/prompt/chief_investment_officer.md"),
     Role.RISK_ANALYST: read_text("src/prompt/risk_analyst.md") + RECOMMENDATION_PROMPT,
     Role.FUNDAMENTAL_ANALYST: read_text("src/prompt/fundamental_analyst.md")
     + RECOMMENDATION_PROMPT,
@@ -124,4 +119,4 @@ ROLE_PROMPTS_MAP: RolePromptMap = {
 }
 
 
-__all__ = ["RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP", "AGENT_TEAM_DESCRIPTION"]
+__all__ = ["RECOMMENDATION_PROMPT", "ROLE_PROMPTS_MAP"]
