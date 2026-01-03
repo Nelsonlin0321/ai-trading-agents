@@ -216,6 +216,8 @@ async def handoff_to_specialist_func(
         )
         messages: List[BaseMessage] = response["messages"]
 
+    #  remove the first message
+    messages = messages[1:]
     content = combine_ai_messages(messages)
 
     return content
