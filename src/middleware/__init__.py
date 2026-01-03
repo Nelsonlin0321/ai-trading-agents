@@ -1,7 +1,9 @@
 import json
+import re
+from typing import Any
 from loguru import logger
 from datetime import datetime, timezone
-from langchain_core.messages import AnyMessage
+from langchain_core.messages import AnyMessage, ToolMessage, AIMessage
 from langgraph.runtime import Runtime
 from langchain.agents import middleware
 from prisma.types import (
@@ -155,3 +157,53 @@ async def cache_agent_messages(
 
     if not is_success:
         logger.warning(f"Failed to cache agent messages for run_id: {run_id}")
+
+
+class CleanUpPythonMiddleware(
+    middleware.AgentMiddleware[middleware.AgentState, Context]
+):
+    async def abefore_model(
+        self, state: middleware.AgentState, runtime: Runtime[Context]
+    ) -> dict[str, Any]:
+        #
+        messages = state["messages"]
+        success_flag_str = "Process finished with exit code: 0"
+        tool_name = "execute_python_technical_analysis"
+        new_messages = []
+        before_last_n = 2
+        msg_size = len(messages)
+        for i, msg in enumerate(messages):
+            # Not clean up the last n tool messages
+            if i >= msg_size - before_last_n:
+                new_messages.append(msg)
+                continue
+
+            # Clean up the python tool content
+            if isinstance(msg, ToolMessage):
+                if msg.name == tool_name:
+                    if (
+                        success_flag_str in msg.content
+                    ):  # Only add successful executed content
+                        if isinstance(msg.content, str):
+                            msg.content = remove_python_from_content(msg.content)
+                            new_messages.append(msg)
+
+            #  Optional: You want to clean up the historical generated codes
+            #  Clean up tool calls python code parameters
+            if isinstance(msg, AIMessage):
+                tool_calls = msg.tool_calls
+                for call in tool_calls:
+                    if call.get("name") == tool_name:
+                        if call.get("args", {}).get("code"):
+                            call["args"]["code"] = "# python code has been cleaned up"
+                new_messages.append(msg)
+
+        return {
+            "messages": new_messages,
+        }
+
+
+def remove_python_from_content(content: str) -> str:
+    #  please remove ```python ...````
+    pattern = r"```python(.*?)```"
+    return re.sub(pattern, "", content, flags=re.DOTALL)
