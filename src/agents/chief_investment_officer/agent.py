@@ -10,7 +10,7 @@ from src.middleware import (
 )
 from src.models import get_model
 from src.context import Context
-from src.prompt import build_agent_system_prompt
+from src.prompt import build_agent_system_prompt, AGENT_DESCRIPTIONS
 
 agent_handoff_tool_map = {
     "EQUITY_RESEARCH_ANALYST": handoff_tools.handoff_to_equity_research_analyst,
@@ -31,6 +31,17 @@ async def build_chief_investment_officer_agent(context: Context):
     for role in OPTIONAL_ROLES:
         if role in agents:
             optional_handoff_tools.append(agent_handoff_tool_map[role])
+
+    team_description: str = "\n\n ## YOUR INVESTMENT TEAM:\n\n" + "\n".join(
+        f"### {idx}. {AGENT_DESCRIPTIONS[role]['title']}\n"
+        f"**Description:** {AGENT_DESCRIPTIONS[role]['description']}\n"
+        f"**Capabilities:** {AGENT_DESCRIPTIONS[role]['key_capabilities']}\n"
+        # f"**Default Strength weight in decisions:** {int(AGENT_DESCRIPTIONS[role]['strength_weight'] * 100)}%\n"
+        for idx, role in enumerate(AGENT_DESCRIPTIONS.keys(), start=1)
+        if role in agents
+    )
+
+    system_prompt = system_prompt + team_description
 
     langchain_model = get_model(context.llm_model)
 
