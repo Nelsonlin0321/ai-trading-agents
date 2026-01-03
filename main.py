@@ -23,11 +23,11 @@ If the list is empty or the user didn't specify any tickers, delegate ticker sel
 Before delegating to the equity selection analyst, please ensure market analyst has provided a market analysis to you.
 STEP 3: DEEP DIVE ANALYSIS (Per Ticker)
 For each selected ticker, execute the following delegation in parallel:
-3.1 [Equity Research Analyst]: Request current news and narrative analysis with BUY/SELL/HOLD recommendation.
-3.2 [Fundamental Analyst]: Request valuation and financial health analysis with BUY/SELL/HOLD recommendation.
-3.3 [Technical Analyst]: Request technical analysis with BUY/SELL/HOLD recommendation.
-3.4 [Risk Analyst]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.
-3.5 SYNTHESIS: Combine these 4 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning.
+  - 3.1 [Equity Research Analyst if available]: Request current news and narrative analysis with BUY/SELL/HOLD recommendation.
+  - 3.2 [Fundamental Analyst if available]: Request valuation and financial health analysis with BUY/SELL/HOLD recommendation.
+  - 3.3 [Technical Analyst if available]: Request technical analysis with BUY/SELL/HOLD recommendation.
+  - 3.4 [Risk Analyst if available]: Request risk assessment and position limit checks with BUY/SELL/HOLD recommendation.
+  - 3.5 SYNTHESIS: Combine these 4 analyses' results into a final BUY/SELL/HOLD recommendation with a specific rationale and confidence score aligning.
 STEP 4: TRADE EXECUTION
 - If the market is open and you have high-confidence recommendations (BUY/SELL), delegate execution to the [Trading Executor].
 - Provide clear and detailed instructions summary including all tickers your recommended (Ticker, Action, Quantity/Allocation, Confidence Score, detailed Rationale).
