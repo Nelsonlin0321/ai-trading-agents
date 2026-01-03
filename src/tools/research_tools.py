@@ -36,6 +36,13 @@ async def do_google_market_research(runtime: ToolRuntime[Context]):
     if existed:
         return existed.research
 
+    existed = await db.prisma.marketresearch.find_first(
+        where={
+            "runId": runId,
+        }
+    )
+    if existed:
+        return existed.research
     market_research = await google_market_research_action.arun()
     await db.prisma.marketresearch.create(
         data=MarketResearchCreateInput(
