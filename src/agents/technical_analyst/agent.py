@@ -19,6 +19,7 @@ async def build_technical_analyst_agent(context: Context):
         ],
         middleware=[
             middleware.LoggingMiddleware(Role.TECHNICAL_ANALYST.value),
+            middleware.CleanUpPythonMiddleware(),
         ],
         system_prompt=system_prompt,
         context_schema=Context,
