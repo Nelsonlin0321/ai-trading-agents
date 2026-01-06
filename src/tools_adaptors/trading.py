@@ -162,9 +162,8 @@ class SellAct(Action):
                     f"Current volume is {existing.volume}."
                 )
 
-            portfolio.cash += total_proceeds
             await transaction.portfolio.update(
-                where={"botId": bot_id}, data={"cash": portfolio.cash}
+                where={"botId": bot_id}, data={"cash": {"increment": total_proceeds}}
             )
 
             new_volume = existing.volume - volume
