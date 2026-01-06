@@ -68,8 +68,9 @@ class StockCurrentPriceAndIntradayChangeAct(Action):
         ticker_price_changes = {}
 
         snapshots = await get_snapshots(tickers)
-
         for ticker in tickers:
+            if ticker not in snapshots:
+                continue
             # Get current time in New York timezone
             current_time = utils.get_new_york_datetime().time()
             # Use dailyBar if before 9:30 AM, otherwise use prevDailyBar
