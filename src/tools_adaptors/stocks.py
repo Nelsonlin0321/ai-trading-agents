@@ -154,7 +154,7 @@ class StockHistoricalPriceChangesAct(Action):
             # "three_years": timedelta(days=365 * 3),
         }
 
-        start = (date.today() - timedelta(days=180 + 7)).isoformat()
+        start = (date.today() - timedelta(days=365 + 7)).isoformat()
         end = date.today().isoformat()
 
         bars_by_symbol = await get_historical_price_bars(
