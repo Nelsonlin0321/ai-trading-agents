@@ -1,3 +1,4 @@
+import random
 from typing import Literal
 from langchain.tools import tool, ToolRuntime
 from langchain_core.messages import BaseMessage
@@ -53,11 +54,22 @@ async def write_summary_report(runtime: ToolRuntime[Context]):
     Write the final investment report email for the current trading run.
     """
     #  use free model for cost saving
-    llm_model = "qwen/qwen3-coder:free"
+    llm_models = [
+        "qwen/qwen3-coder:free",
+        "z-ai/glm-4.5-air:free",
+        "mistralai/devstral-2512:free",
+        "moonshotai/kimi-k2:free",
+        "xiaomi/mimo-v2-flash:free",
+        "openai/gpt-oss-120b:free",
+    ]
+
+    llm_model = random.choice(llm_models)
+
     states = runtime.state
     messages: list[BaseMessage] = states["messages"]  # type: ignore
     conversation = combine_ai_messages(messages)
     context = runtime.context
+
     await write_investment_report_email_act.arun(
         llm_model=llm_model,
         botId=context.bot.id,
