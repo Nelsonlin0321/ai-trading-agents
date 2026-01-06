@@ -68,8 +68,9 @@ class StockCurrentPriceAndIntradayChangeAct(Action):
         ticker_price_changes = {}
 
         snapshots = await get_snapshots(tickers)
-
         for ticker in tickers:
+            if ticker not in snapshots:
+                continue
             # Get current time in New York timezone
             current_time = utils.get_new_york_datetime().time()
             # Use dailyBar if before 9:30 AM, otherwise use prevDailyBar
@@ -153,7 +154,7 @@ class StockHistoricalPriceChangesAct(Action):
             # "three_years": timedelta(days=365 * 3),
         }
 
-        start = (date.today() - timedelta(days=180 + 7)).isoformat()
+        start = (date.today() - timedelta(days=365 + 7)).isoformat()
         end = date.today().isoformat()
 
         bars_by_symbol = await get_historical_price_bars(
