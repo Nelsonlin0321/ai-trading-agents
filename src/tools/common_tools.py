@@ -53,7 +53,7 @@ async def write_summary_report(runtime: ToolRuntime[Context]):
     Write the final investment report email for the current trading run.
     """
     #  use free model for cost saving
-    llm_model = "google/gemini-2.0-flash-exp:free"
+    llm_model = "qwen/qwen3-coder:free"
     states = runtime.state
     messages: list[BaseMessage] = states["messages"]  # type: ignore
     conversation = combine_ai_messages(messages)
