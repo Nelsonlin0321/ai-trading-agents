@@ -28,9 +28,6 @@ routes_to_302_ai = {
 
 
 def get_model(model_name: str):
-    if model_name not in llm_models:
-        raise ValueError(f"Model {model_name} not found in llm_models")
-
     if model_name in routes_to_302_ai:
         return ChatDeepSeek(
             api_key=THREE_TWO_ONE_API_KEY,
@@ -50,6 +47,9 @@ def get_model(model_name: str):
 
 def get_extract_body(model_name: str):
     body = None
+
+    if model_name not in llm_models:
+        return body
 
     if llm_models[model_name]["reasoning"]:
         body = {"reasoning": {"enabled": True}}
