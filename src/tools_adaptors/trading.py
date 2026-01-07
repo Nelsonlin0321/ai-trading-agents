@@ -44,7 +44,10 @@ class BuyAct(Action):
 
         if limit_price:
             if price > limit_price:
-                return f"Price {price} is higher than limit price (Target price to buy at) {limit_price}. Cannot buy."
+                return (
+                    f"Current Price ${price} is higher than limit price (Target price to buy at) ${limit_price}. Cannot buy."
+                    "Confirm with the Chief Investment Officer if he wants to buy at the market price."
+                )
 
         price = float(price)
         generated_volume = volume
@@ -174,7 +177,10 @@ class SellAct(Action):
 
         if limit_price:
             if price < limit_price:
-                return f"Price {price} is lower than limit price (Target price to sell at) {limit_price}. Cannot sell."
+                return (
+                    f"Current Price ${price} is lower than limit price (Target price to sell at) ${limit_price}. Cannot sell."
+                    "Confirm with the Chief Investment Officer if he wants to sell at the market price."
+                )
 
         price = float(price)
         generated_volume = volume
