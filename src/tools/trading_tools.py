@@ -43,16 +43,19 @@ async def buy_stock(
     volume: float,
     rationale: str,
     confidence: float,
+    limit_price: float | None,
     runtime: ToolRuntime[Context],
 ):
-    """Send an order to a buy order for a stock.
+    """Send an order to a buy a stock.
 
     Args:
         ticker: Stock symbol to buy
         allocation: Additional allocation to buy (0.0-1.0). 0.05 means use 5% of the total portfolio allocation to buy.
-        volume: Number of shares to buy
+        volume: Number of shares to buy as the reference. The actual volume to buy will be based on the allocation and portfolio value.
         rationale: Rationale for the buy order
         confidence: Confidence in the buy order (0.0-1.0)
+        limit_price: Optional limit price to buy at. If None, buy at the current ask price.
+        - When provided, the order will be executed only if the market price is at or below this value.
     """
     ticker = ticker.upper().strip()
     if allocation < 0.0 or allocation > 1.0:
@@ -72,6 +75,7 @@ async def buy_stock(
             volume=volume,
             rationale=rationale,
             confidence=confidence,
+            limit_price=limit_price,
         )
     logger.info(
         f"Released lock of buying {volume} shares of {ticker} with allocation {allocation}"
@@ -86,6 +90,7 @@ async def sell_stock(
     volume: float,
     rationale: str,
     confidence: float,
+    limit_price: float | None,
     runtime: ToolRuntime[Context],
 ):
     """Send an order to a sell order for a stock.
@@ -94,9 +99,11 @@ async def sell_stock(
         ticker: Stock symbol to sell
         allocation: Percentage of total portfolio(allocation) to sell (0.0-1.0). 0.05 means 5% of the total portfolio allocation.
         if it's 1.0, it means sell all the stock. if it's 0.0, it means sell nothing.
-        volume: Number of shares to sell
+        volume: Number of shares to sell as the reference. The actual volume to sell will be based on the allocation and portfolio value.
         rationale: Rationale for the sell order
         confidence: Confidence in the sell order (0.0-1.0)
+        limit_price: Optional limit price to sell at. If None, sell at the current bid price.
+        - When provided, the order will be executed only if the market price is at or above this value.
     """
     ticker = ticker.upper().strip()
     if allocation < 0.0 or allocation > 1.0:
@@ -116,6 +123,7 @@ async def sell_stock(
             volume=volume,
             rationale=rationale,
             confidence=confidence,
+            limit_price=limit_price,
         )
     logger.info(
         f"Released lock of selling {volume} shares of {ticker} with allocation {allocation}"
@@ -162,10 +170,6 @@ def get_recommend_stock_tool(role: Role):
             confidence: Confidence in the recommendation (0.0-1.0)
             trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
         """
-        # ticker = ticker.upper().strip()
-        # is_valid = await is_valid_ticker(ticker)
-        # if not is_valid:
-        #     return f"{ticker} is an invalid ticker symbol"
 
         bot_id = runtime.context.bot.id
         run_id = runtime.context.run.id
