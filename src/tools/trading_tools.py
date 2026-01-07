@@ -119,30 +119,18 @@ def get_recommend_stock_tool(role: Role):
         allocation: float,
         rationale: str,
         confidence: float,
-        trade_type: Literal["BUY", "SELL", "HOLD"],
+        rating: Literal["BUY", "SELL", "HOLD"],
         runtime: ToolRuntime[Context],
     ):
-        """Record a BUY, SELL, or HOLD recommendation for a stock.
-
+        """Record a allocation-based BUY, SELL, or HOLD recommendation for a stock.
         Calling tool is mandatory to log your trading suggestions when you recommend a stock.
-        capturing the ticker symbol, desired action (buy, sell, or hold),
-        allocation percentage (0.0-1.0),
-
-        the number of shares involved (amount = the total portfolio value * allocation, nearest integer), the reasoning behind the recommendation with the confidence level.
-
-        These recorded recommendations can later be reviewed or aggregated to guide final investment decisions.
-
         Args:
             ticker: Stock symbol to recommend to BUY, SELL, or HOLD
-            allocation: Allocation of the total value of the portfolio to recommend to BUY, SELL, or HOLD: Allocation percentage (0.0-1.0) = amount / total portfolio value
-            rationale: Rationale for the recommendation
+            allocation: Allocation of the total value of the portfolio to increase, decrease or hold. If the rating is hold, the allocation must be the 0.0 or same as the existing allocation.
+            rationale: Detailed rationale for the recommendation based on your analysis of the stock.
             confidence: Confidence in the recommendation (0.0-1.0)
-            trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
+            rating: Whether to buy, sell, or hold the stock based on the allocation: `BUY`, `SELL`, or `HOLD`.
         """
-        # ticker = ticker.upper().strip()
-        # is_valid = await is_valid_ticker(ticker)
-        # if not is_valid:
-        #     return f"{ticker} is an invalid ticker symbol"
 
         bot_id = runtime.context.bot.id
         run_id = runtime.context.run.id
@@ -154,7 +142,7 @@ def get_recommend_stock_tool(role: Role):
             allocation=allocation,
             rationale=rationale,
             confidence=confidence,
-            trade_type=TradeType(trade_type),
+            trade_type=TradeType(rating),
             role=role,
         )
 
