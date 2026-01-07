@@ -153,15 +153,11 @@ def get_recommend_stock_tool(role: Role):
         trade_type: Literal["BUY", "SELL", "HOLD"],
         runtime: ToolRuntime[Context],
     ):
-        """Record a BUY, SELL, or HOLD recommendation for a stock.
+        """Record a BUY, SELL, or HOLD recommendation for a stock based on the current market status and its live price.
 
-        Calling tool is mandatory to log your trading suggestions when you recommend a stock.
+        Calling tool is mandatory to log your trading suggestions when you recommend a stock,
         capturing the ticker symbol, desired action (buy, sell, or hold),
-        allocation percentage (0.0-1.0),
-
-        the number of shares involved (amount = the total portfolio value * allocation, nearest integer), the reasoning behind the recommendation with the confidence level.
-
-        These recorded recommendations can later be reviewed or aggregated to guide final investment decisions.
+        and allocation percentage (0.0-1.0).
 
         Args:
             ticker: Stock symbol to recommend to BUY, SELL, or HOLD

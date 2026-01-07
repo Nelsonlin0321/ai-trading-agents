@@ -341,6 +341,9 @@ class RecommendStockAct(Action):
                 type=trade_type,
                 amount=amount,
                 allocation=allocation,
+                limitPrice=latest_quotes["ask_price"]
+                if trade_type == TradeType.BUY
+                else latest_quotes["bid_price"],
                 rationale=rationale,
                 confidence=confidence,
                 role=role,

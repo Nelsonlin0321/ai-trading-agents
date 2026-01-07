@@ -277,6 +277,7 @@ model Recommend {
     ticker     String
     amount     Float
     allocation Float?
+    limitPrice Float?
     rationale  String
     confidence Float
     role       Role
