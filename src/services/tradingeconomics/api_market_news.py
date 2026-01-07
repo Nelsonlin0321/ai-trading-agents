@@ -102,7 +102,7 @@ def _format_relative_time(date_str: str, *, now: datetime | None = None) -> str:
 
 
 async def get_news() -> Sequence[News]:
-    @redis_cache(function_name="tradingeconomics_news", ttl=60 * 5)
+    @redis_cache(function_name="tradingeconomics_news", ttl=60 * 60)
     async def _get():
         raw_news_list = await api_client.get(
             params={"c": "united states", "start": 0, "size": 30}, timeout=15.0

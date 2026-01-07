@@ -1,7 +1,7 @@
 from typing import Sequence, Annotated, TypedDict
 from datetime import datetime, timedelta
 import pytz
-from src.services.utils import redis_cache
+from src.services.utils import in_memory_cache
 from src.tools_adaptors.base import Action
 from src.tools_adaptors import utils as action_utils
 from src import utils
@@ -220,7 +220,7 @@ class ListPositionsAct(Action):
     def name(self):
         return "list_current_positions"
 
-    @redis_cache(ttl=60 * 5, function_name="list_current_positions")
+    @in_memory_cache(ttl=60 * 5, function_name="list_current_positions")
     @async_retry()
     async def arun(self, bot_id: str) -> str:
         positions = await get_latest_positions(bot_id)
@@ -236,7 +236,7 @@ class LatestPortfolioValueResult(TypedDict):
     timestamp: str
 
 
-@redis_cache(ttl=60 * 60, function_name="calculate_latest_portfolio_value")
+@in_memory_cache(ttl=60 * 60, function_name="calculate_latest_portfolio_value")
 async def calculate_latest_portfolio_value(bot_id: str) -> LatestPortfolioValueResult:
     portfolio = await prisma.portfolio.find_unique(
         where={"botId": bot_id},
@@ -320,7 +320,7 @@ class PortfolioPerformanceAnalysisAct(Action):
         return "get_portfolio_performance_analysis"
 
     @async_retry()
-    @redis_cache(ttl=60 * 60, function_name="get_portfolio_performance_analysis")
+    @in_memory_cache(ttl=60 * 60, function_name="get_portfolio_performance_analysis")
     async def arun(self, bot_id: str):
         timeline_values = await get_timeline_values(bot_id)
         analysis = action_utils.analyze_timeline_value(timeline_values)
