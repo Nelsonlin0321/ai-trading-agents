@@ -10,7 +10,6 @@ from src import utils, db
 from src.utils import async_retry
 from src.tools_adaptors.portfolio import (
     calculate_latest_portfolio_value,
-    get_latest_positions,
 )
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
@@ -48,6 +47,7 @@ class BuyAct(Action):
 
         portfolio_values_response = await calculate_latest_portfolio_value(bot_id)
         total_portfolio_value = portfolio_values_response["latestPortfolioValue"]
+
         allocated_value_to_increase = total_portfolio_value * generated_allocation
         volume = int(allocated_value_to_increase / float(price))
         total_cost = price * volume
@@ -57,7 +57,7 @@ class BuyAct(Action):
         if volume == 0:
             return (
                 f"Allocation :{utils.format_percent(generated_allocation)} {utils.format_float(allocated_value_to_increase)}  "
-                f"is not enough to buy at least 1 stock with the current price:{utils.format_float(price)}."
+                f"is not enough to buy at least 1 stock with the current price:{utils.format_float(price)}. "
                 "The price is higher than the allocation value."
             )
 
@@ -113,6 +113,7 @@ class BuyAct(Action):
                     "Please regard the post-trade allocation and executed volume as final."
                 )
 
+            new_volume = existing.volume + volume
             await transaction.position.update(
                 where={
                     "portfolioId_ticker": {
@@ -121,17 +122,13 @@ class BuyAct(Action):
                     }
                 },
                 data=PositionUpdateInput(
-                    volume=existing.volume + volume,
+                    volume=new_volume,
                     cost=(existing.cost * existing.volume + price * volume)
-                    / (existing.volume + volume),
+                    / (new_volume),
                 ),
             )
-            positions = await get_latest_positions(bot_id)
-            existing_allocation = next(
-                (p["allocation"] for p in positions if p["ticker"] == ticker), 0
-            )
 
-            new_allocation = existing_allocation + allocation
+            new_allocation = new_volume * price / total_portfolio_value
 
             return (
                 f"Order received to increase allocation by {utils.format_percent(generated_allocation)} through the purchase of {utils.format_float(generated_volume)} shares of {ticker}.\n\n"
@@ -177,7 +174,7 @@ class SellAct(Action):
         total_portfolio_value = portfolio_values_response["latestPortfolioValue"]
 
         allocated_value_to_decrease = total_portfolio_value * generated_allocation
-        volume = int(allocated_value_to_decrease / float(price))
+        volume = int(allocated_value_to_decrease / price)
         total_proceeds = price * volume
         allocation = total_proceeds / total_portfolio_value
 
