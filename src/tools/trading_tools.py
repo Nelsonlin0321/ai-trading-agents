@@ -1,11 +1,11 @@
-# src/tools/trading_tools.py
+import asyncio
+from loguru import logger
 from typing import Literal
 from prisma.enums import Role, TradeType
 from pydantic import BaseModel, Field
 from langchain.tools import tool, ToolRuntime
-from src.context import Context
 
-# from src.utils.ticker import is_valid_ticker
+from src.context import Context
 from src.tools_adaptors.trading import (
     BuyAct,
     SellAct,
@@ -13,6 +13,8 @@ from src.tools_adaptors.trading import (
     GetAnalystsRecommendationsAct,
 )
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+
+trading_lock = asyncio.Lock()
 
 buy_act = BuyAct()
 sell_act = SellAct()
@@ -37,67 +39,88 @@ class SellInput(BaseModel):
 @tool(buy_act.name)
 async def buy_stock(
     ticker: str,
+    allocation: float,
     volume: float,
     rationale: str,
     confidence: float,
     runtime: ToolRuntime[Context],
 ):
-    """Execute a buy order for a stock.
+    """Send an order to a buy order for a stock.
 
     Args:
         ticker: Stock symbol to buy
+        allocation: Additional allocation to buy (0.0-1.0). 0.05 means use 5% of the total portfolio allocation to buy.
         volume: Number of shares to buy
         rationale: Rationale for the buy order
         confidence: Confidence in the buy order (0.0-1.0)
     """
     ticker = ticker.upper().strip()
-    # is_valid = await is_valid_ticker(ticker)
-    # if not is_valid:
-    #     return f"{ticker} is an invalid ticker symbol"
+    if allocation < 0.0 or allocation > 1.0:
+        return "allocation must be between 0.0 and 1.0"
 
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await buy_act.arun(
-        runId=runId,
-        bot_id=bot_id,
-        ticker=ticker,
-        volume=volume,
-        rationale=rationale,
-        confidence=confidence,
+    async with trading_lock:
+        logger.info(
+            f"Acquired lock to buy {volume} shares of {ticker} with allocation {allocation}"
+        )
+        result = await buy_act.arun(
+            runId=runId,
+            bot_id=bot_id,
+            ticker=ticker,
+            allocation=allocation,
+            volume=volume,
+            rationale=rationale,
+            confidence=confidence,
+        )
+    logger.info(
+        f"Released lock of buying {volume} shares of {ticker} with allocation {allocation}"
     )
+    return result
 
 
 @tool(sell_act.name)
 async def sell_stock(
     ticker: str,
+    allocation: float,
     volume: float,
     rationale: str,
     confidence: float,
     runtime: ToolRuntime[Context],
 ):
-    """Execute a sell order for a stock.
+    """Send an order to a sell order for a stock.
 
     Args:
         ticker: Stock symbol to sell
+        allocation: Percentage of total portfolio(allocation) to sell (0.0-1.0). 0.05 means 5% of the total portfolio allocation.
+        if it's 1.0, it means sell all the stock. if it's 0.0, it means sell nothing.
         volume: Number of shares to sell
         rationale: Rationale for the sell order
         confidence: Confidence in the sell order (0.0-1.0)
     """
-    # ticker = ticker.upper().strip()
-    # is_valid = await is_valid_ticker(ticker)
-    # if not is_valid:
-    #     return f"{ticker} is an invalid ticker symbol"
+    ticker = ticker.upper().strip()
+    if allocation < 0.0 or allocation > 1.0:
+        return "allocation must be between 0.0 and 1.0"
 
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await sell_act.arun(
-        runId=runId,
-        bot_id=bot_id,
-        ticker=ticker,
-        volume=volume,
-        rationale=rationale,
-        confidence=confidence,
+    async with trading_lock:
+        logger.info(
+            f"Acquired lock to sell {volume} shares of {ticker} with allocation {allocation}"
+        )
+        result = await sell_act.arun(
+            runId=runId,
+            bot_id=bot_id,
+            ticker=ticker,
+            allocation=allocation,
+            volume=volume,
+            rationale=rationale,
+            confidence=confidence,
+        )
+    logger.info(
+        f"Released lock of selling {volume} shares of {ticker} with allocation {allocation}"
     )
+    return result
 
 
 @tool("get_market_status")
@@ -119,18 +142,30 @@ def get_recommend_stock_tool(role: Role):
         allocation: float,
         rationale: str,
         confidence: float,
-        rating: Literal["BUY", "SELL", "HOLD"],
+        trade_type: Literal["BUY", "SELL", "HOLD"],
         runtime: ToolRuntime[Context],
     ):
-        """Record a allocation-based BUY, SELL, or HOLD recommendation for a stock.
+        """Record a BUY, SELL, or HOLD recommendation for a stock.
+
         Calling tool is mandatory to log your trading suggestions when you recommend a stock.
+        capturing the ticker symbol, desired action (buy, sell, or hold),
+        allocation percentage (0.0-1.0),
+
+        the number of shares involved (amount = the total portfolio value * allocation, nearest integer), the reasoning behind the recommendation with the confidence level.
+
+        These recorded recommendations can later be reviewed or aggregated to guide final investment decisions.
+
         Args:
             ticker: Stock symbol to recommend to BUY, SELL, or HOLD
-            allocation: Allocation of the total value of the portfolio to increase, decrease or hold. If the rating is hold, the allocation must be the 0.0 or same as the existing allocation.
-            rationale: Detailed rationale for the recommendation based on your analysis of the stock.
+            allocation: Allocation of the total value of the portfolio to recommend to BUY, SELL, or HOLD: Allocation percentage (0.0-1.0) = amount / total portfolio value
+            rationale: Rationale for the recommendation
             confidence: Confidence in the recommendation (0.0-1.0)
-            rating: Whether to buy, sell, or hold the stock based on the allocation: `BUY`, `SELL`, or `HOLD`.
+            trade_type: Whether to buy or sell the stock: `BUY`, `SELL`, or `HOLD`
         """
+        # ticker = ticker.upper().strip()
+        # is_valid = await is_valid_ticker(ticker)
+        # if not is_valid:
+        #     return f"{ticker} is an invalid ticker symbol"
 
         bot_id = runtime.context.bot.id
         run_id = runtime.context.run.id
@@ -142,7 +177,7 @@ def get_recommend_stock_tool(role: Role):
             allocation=allocation,
             rationale=rationale,
             confidence=confidence,
-            trade_type=TradeType(rating),
+            trade_type=TradeType(trade_type),
             role=role,
         )
 
