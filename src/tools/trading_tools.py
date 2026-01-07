@@ -1,11 +1,11 @@
-# src/tools/trading_tools.py
+import asyncio
+from loguru import logger
 from typing import Literal
 from prisma.enums import Role, TradeType
 from pydantic import BaseModel, Field
 from langchain.tools import tool, ToolRuntime
-from src.context import Context
 
-# from src.utils.ticker import is_valid_ticker
+from src.context import Context
 from src.tools_adaptors.trading import (
     BuyAct,
     SellAct,
@@ -13,6 +13,8 @@ from src.tools_adaptors.trading import (
     GetAnalystsRecommendationsAct,
 )
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+
+trading_lock = asyncio.Lock()
 
 buy_act = BuyAct()
 sell_act = SellAct()
@@ -58,15 +60,23 @@ async def buy_stock(
 
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await buy_act.arun(
-        runId=runId,
-        bot_id=bot_id,
-        ticker=ticker,
-        allocation=allocation,
-        volume=volume,
-        rationale=rationale,
-        confidence=confidence,
+    async with trading_lock:
+        logger.info(
+            f"Acquired lock to buy {volume} shares of {ticker} with allocation {allocation}"
+        )
+        result = await buy_act.arun(
+            runId=runId,
+            bot_id=bot_id,
+            ticker=ticker,
+            allocation=allocation,
+            volume=volume,
+            rationale=rationale,
+            confidence=confidence,
+        )
+    logger.info(
+        f"Released lock of buying {volume} shares of {ticker} with allocation {allocation}"
     )
+    return result
 
 
 @tool(sell_act.name)
@@ -94,15 +104,23 @@ async def sell_stock(
 
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
-    return await sell_act.arun(
-        runId=runId,
-        bot_id=bot_id,
-        ticker=ticker,
-        allocation=allocation,
-        volume=volume,
-        rationale=rationale,
-        confidence=confidence,
+    async with trading_lock:
+        logger.info(
+            f"Acquired lock to sell {volume} shares of {ticker} with allocation {allocation}"
+        )
+        result = await sell_act.arun(
+            runId=runId,
+            bot_id=bot_id,
+            ticker=ticker,
+            allocation=allocation,
+            volume=volume,
+            rationale=rationale,
+            confidence=confidence,
+        )
+    logger.info(
+        f"Released lock of selling {volume} shares of {ticker} with allocation {allocation}"
     )
+    return result
 
 
 @tool("get_market_status")
