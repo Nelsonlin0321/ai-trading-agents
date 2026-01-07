@@ -87,10 +87,12 @@ AGENT_DESCRIPTIONS: dict[SubAgentRole, AgentDescription] = {
     },
     "TRADING_EXECUTOR": {
         "title": "Trading Executor",
-        "description": "Trading executor who executes trades based on instructions from the Chief Investment Officer.",
+        "description": "Trading executor who executes instant trades based on instructions from the Chief Investment Officer.",
         "key_capabilities": [
+            "Execute instant BUY/SELL exactly as instructed at current market price only",
+            "If the limit price is specified, execute the order at the limit price or better, if the price cannot be satisfied, the order will be cancelled instantly",
+            "Cannot place pending limit orders that wait for the price to satisfy;",
             "Verify watchlist/position, market hours, cash, holdings",
-            "Execute BUY/SELL exactly as instructed",
             "Confirm trade booked, cash/position updated",
             "Ensure cash sufficiency for buys",
             "Never short-sell (≤ current holdings)",
@@ -108,7 +110,8 @@ RolePromptMap = dict[Role, str]
 ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.MARKET_ANALYST: read_text("src/prompt/market_analyst.md"),
     Role.EQUITY_SELECTION_ANALYST: read_text("src/prompt/equity_selection_analyst.md"),
-    Role.EQUITY_RESEARCH_ANALYST: read_text("src/prompt/equity_research_analyst.md"),
+    Role.EQUITY_RESEARCH_ANALYST: read_text("src/prompt/equity_research_analyst.md")
+    + RECOMMENDATION_PROMPT,
     Role.CHIEF_INVESTMENT_OFFICER: read_text("src/prompt/chief_investment_officer.md"),
     Role.RISK_ANALYST: read_text("src/prompt/risk_analyst.md") + RECOMMENDATION_PROMPT,
     Role.FUNDAMENTAL_ANALYST: read_text("src/prompt/fundamental_analyst.md")

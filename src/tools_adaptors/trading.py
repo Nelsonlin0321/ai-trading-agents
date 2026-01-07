@@ -21,7 +21,7 @@ class BuyAct(Action):
     def name(self):
         return "buy_stock"
 
-    @async_retry()
+    # @async_retry()
     async def arun(
         self,
         runId,
@@ -31,6 +31,7 @@ class BuyAct(Action):
         allocation: float,  # additional allocation to buy
         rationale: str,
         confidence: float,
+        limit_price: Optional[float] = None,
     ):
         clock = alpaca_trading_client.get_clock()
         if not clock.is_open:  # type: ignore
@@ -40,6 +41,10 @@ class BuyAct(Action):
         price = quotes["quotes"].get(ticker, {}).get("ask_price")
         if not price:
             return f"Cannot get price for {ticker}"
+
+        if limit_price:
+            if price > limit_price:
+                return f"Price {price} is higher than limit price (Target price to buy at) {limit_price}. Cannot buy."
 
         price = float(price)
         generated_volume = volume
@@ -145,7 +150,7 @@ class SellAct(Action):
     def name(self):
         return "sell_stock"
 
-    # @async_retry()
+    @async_retry()
     async def arun(
         self,
         runId,
@@ -155,6 +160,7 @@ class SellAct(Action):
         volume: float,
         rationale: str,
         confidence: float,
+        limit_price: Optional[float] = None,
     ):
         clock = alpaca_trading_client.get_clock()
         if not clock.is_open:  # type: ignore
@@ -165,6 +171,10 @@ class SellAct(Action):
         price = quotes["quotes"].get(ticker, {}).get("bid_price")
         if not price:
             return f"Cannot get price for {ticker}"
+
+        if limit_price:
+            if price < limit_price:
+                return f"Price {price} is lower than limit price (Target price to sell at) {limit_price}. Cannot sell."
 
         price = float(price)
         generated_volume = volume
@@ -331,6 +341,9 @@ class RecommendStockAct(Action):
                 type=trade_type,
                 amount=amount,
                 allocation=allocation,
+                limitPrice=latest_quotes["ask_price"]
+                if trade_type == TradeType.BUY
+                else latest_quotes["bid_price"],
                 rationale=rationale,
                 confidence=confidence,
                 role=role,
