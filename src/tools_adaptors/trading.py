@@ -8,7 +8,10 @@ from prisma.models import Recommend
 from datetime import datetime, timedelta, timezone
 from src import utils, db
 from src.utils import async_retry
-from src.tools_adaptors.portfolio import calculate_latest_portfolio_value
+from src.tools_adaptors.portfolio import (
+    calculate_latest_portfolio_value,
+    get_latest_positions,
+)
 from src.tools_adaptors.base import Action
 from src.tools_adaptors.utils import format_recommendations_markdown
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
@@ -26,20 +29,32 @@ class BuyAct(Action):
         bot_id: str,
         ticker: str,
         volume: float,
+        allocation: float,  # additional allocation to buy
         rationale: str,
         confidence: float,
     ):
         clock = alpaca_trading_client.get_clock()
         if not clock.is_open:  # type: ignore
             return "Market is closed. Cannot buy stock."
+        ticker = ticker.upper().strip()
         quotes = await get_latest_quotes([ticker])
         price = quotes["quotes"].get(ticker, {}).get("ask_price")
         if not price:
             return f"Cannot get price for {ticker}"
+
         price = float(price)
+        generated_volume = volume
+
+        portfolio_values_response = await calculate_latest_portfolio_value(bot_id)
+        total_portfolio_value = portfolio_values_response["latestPortfolioValue"]
+        allocate_to_increase = total_portfolio_value * allocation
+        volume = int(allocate_to_increase / float(price))
         total_cost = price * volume
 
-        ticker = ticker.upper().strip()
+        allocate_to_increase = total_cost / total_portfolio_value
+
+        if volume == 0:
+            return "Allocation is not enough to buy any stock. The price is higher than the allocation value."
 
         async with db.prisma.tx() as transaction:
             portfolio = await transaction.portfolio.find_unique(where={"botId": bot_id})
@@ -85,9 +100,12 @@ class BuyAct(Action):
                 )
 
                 return (
-                    f"Successfully bought {volume} shares of {ticker} at {price} per share. "
-                    f"Current volume is {volume} "
-                    f"with average cost {utils.format_float(price)}"
+                    f"Order received to increase allocation by {utils.format_percent(allocation)} through the purchase of {utils.format_float(generated_volume)} shares of {ticker}.\n\n"
+                    f"Post-trade result:\n\n"
+                    f"Allocation successfully increased from 0% to {utils.format_percent(allocate_to_increase)} "
+                    f"via the purchase of {volume} shares of {ticker} at {price} per share.\n\n"
+                    "Note: The executed order may differ from the original instruction due to share-volume rounding or misalignment between the requested allocation and share quantity. "
+                    "Please regard the post-trade allocation and executed volume as final."
                 )
 
             await transaction.position.update(
@@ -103,11 +121,20 @@ class BuyAct(Action):
                     / (existing.volume + volume),
                 ),
             )
+            positions = await get_latest_positions(bot_id)
+            existing_allocation = next(
+                (p["allocation"] for p in positions if p["ticker"] == ticker), 0
+            )
+
+            new_allocation = existing_allocation + allocate_to_increase
 
             return (
-                f"Successfully bought {volume} shares of {ticker} at {price} per share. "
-                f"Current volume is {existing.volume + volume} "
-                f"with average cost {utils.format_float(existing.cost)}"
+                f"Order received to increase allocation by {utils.format_percent(allocation)} through the purchase of {utils.format_float(generated_volume)} shares of {ticker}.\n\n"
+                f"Post-trade result:\n\n"
+                f"Allocation successfully increased from {utils.format_percent(existing_allocation)} to {utils.format_percent(new_allocation)} "
+                f"via the purchase of {volume} shares of {ticker} at {price} per share.\n\n"
+                "Note: The executed order may differ from the original instruction due to share-volume rounding or misalignment between the requested allocation and share quantity. "
+                "Please regard the post-trade allocation and executed volume as final."
             )
 
 
