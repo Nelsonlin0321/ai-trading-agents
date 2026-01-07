@@ -136,6 +136,65 @@ def in_db_cache(
     return decorator
 
 
+_MEM_CACHE: dict[str, tuple[datetime, Any]] = {}
+
+
+def in_memory_cache(
+    function_name: str, ttl: int
+) -> Callable[
+    [Callable[..., Coroutine[Any, Any, T]]], Callable[..., Coroutine[Any, Any, T]]
+]:
+    """Async decorator to cache function results in memory with TTL."""
+
+    def decorator(
+        func: Callable[..., Coroutine[Any, Any, T]],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
+        async def wrapper(*args, **kwargs) -> T:
+            if "start" in kwargs:
+                start = kwargs["start"]
+                kwargs["start"] = datetime.fromisoformat(
+                    start.replace("Z", "+00:00")
+                ).strftime("%Y-%m-%d")
+
+            if "end" in kwargs:
+                end = kwargs["end"]
+                kwargs["end"] = datetime.fromisoformat(
+                    end.replace("Z", "+00:00")
+                ).strftime("%Y-%m-%d")
+
+            if "symbols" in kwargs:
+                symbols = kwargs["symbols"]
+                kwargs["symbols"] = sorted(symbols)
+
+            key_payload = {
+                "args": sorted([str(a) for a in args]),
+                "kwargs": kwargs,
+                "function_name": function_name,
+            }
+            cache_key = json.dumps(key_payload, sort_keys=True)
+
+            now = datetime.now(timezone.utc)
+            entry = _MEM_CACHE.get(cache_key)
+            if entry:
+                expires_at, value = entry
+                if expires_at > now:
+                    logger.info(
+                        f"Cache Memory hit for {function_name} with key {cache_key}"
+                    )
+                    return cast(T, value)
+                else:
+                    _MEM_CACHE.pop(cache_key, None)
+
+            result = await func(*args, **kwargs)
+            expires_at = now + timedelta(seconds=ttl)
+            _MEM_CACHE[cache_key] = (expires_at, result)
+            return result
+
+        return wrapper
+
+    return decorator
+
+
 def redis_cache(
     function_name: str, ttl: int
 ) -> Callable[
@@ -235,4 +294,10 @@ def async_retry_on_status_code(
     return decorator
 
 
-__all__ = ["redis_cache", "async_retry_on_status_code", "APIError", "in_db_cache"]
+__all__ = [
+    "redis_cache",
+    "async_retry_on_status_code",
+    "APIError",
+    "in_db_cache",
+    "in_memory_cache",
+]
