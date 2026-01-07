@@ -108,7 +108,8 @@ RolePromptMap = dict[Role, str]
 ROLE_PROMPTS_MAP: RolePromptMap = {
     Role.MARKET_ANALYST: read_text("src/prompt/market_analyst.md"),
     Role.EQUITY_SELECTION_ANALYST: read_text("src/prompt/equity_selection_analyst.md"),
-    Role.EQUITY_RESEARCH_ANALYST: read_text("src/prompt/equity_research_analyst.md"),
+    Role.EQUITY_RESEARCH_ANALYST: read_text("src/prompt/equity_research_analyst.md")
+    + RECOMMENDATION_PROMPT,
     Role.CHIEF_INVESTMENT_OFFICER: read_text("src/prompt/chief_investment_officer.md"),
     Role.RISK_ANALYST: read_text("src/prompt/risk_analyst.md") + RECOMMENDATION_PROMPT,
     Role.FUNDAMENTAL_ANALYST: read_text("src/prompt/fundamental_analyst.md")
