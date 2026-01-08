@@ -1,11 +1,15 @@
-from src import db
+from services.alpaca.api_latest_bars import get_latest_price_bars
+from services.utils import in_memory_cache
 
 
-async def is_valid_ticker(ticker: str):
-    ticker = ticker.replace("-", ".")
-    ticker_record = await db.prisma.ticker.find_unique(where={"ticker": ticker})
+@in_memory_cache(function_name="filter_valid_tickers", ttl=60 * 60)
+async def filter_valid_tickers(tickers: list[str]) -> list[str]:
+    invalid_tickers = []
+    latest_bars = await get_latest_price_bars(tickers)
+    for ticker in tickers:
+        if ticker not in latest_bars:
+            invalid_tickers.append(ticker)
+    return invalid_tickers
 
-    return ticker_record is not None
 
-
-__all__ = ["is_valid_ticker"]
+__all__ = ["filter_valid_tickers"]
