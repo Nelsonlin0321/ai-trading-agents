@@ -2,7 +2,7 @@ from typing import Dict, TypedDict
 
 from dotenv import load_dotenv
 
-from services.alpaca.api_historical_bars import PriceBar
+from src.services.alpaca.api_historical_bars import PriceBar
 from src.services.alpaca.api_client import AlpacaAPIClient
 
 load_dotenv()
