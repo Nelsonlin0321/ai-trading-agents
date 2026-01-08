@@ -1,8 +1,8 @@
 import os
-
-# from src.utils.ticker import is_valid_ticker
 from src.utils.python import run_python_code
 from langchain.tools import tool
+
+from src.utils.ticker import filter_valid_tickers
 
 HOME_DIR = os.environ["HOME"]
 DATA_DIR = os.path.join(HOME_DIR, "downloads/ticker_bars")
@@ -38,9 +38,9 @@ async def execute_python_technical_analysis(code: str, ticker: str) -> str:
         str: The execution output or an error message.
     """
 
-    # is_valid = await is_valid_ticker(ticker)
-    # if not is_valid:
-    #     return f"Invalid ticker symbol: `{ticker}`"
+    invalid_tickers = await filter_valid_tickers([ticker])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
 
     csv_data_path = os.path.join(DATA_DIR, f"{ticker}.csv")
     if not os.path.exists(csv_data_path):

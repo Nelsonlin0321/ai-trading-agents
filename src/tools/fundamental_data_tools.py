@@ -1,9 +1,8 @@
 from langchain.tools import tool
-
-# from src.utils.ticker import is_valid_ticker
 from src.tools_adaptors.fundamental_data import (
     FundamentalDataAct,
 )
+from src.utils.ticker import filter_valid_tickers
 
 fundamental_act = FundamentalDataAct()
 
@@ -28,8 +27,8 @@ async def get_fundamental_data(ticker: str):
     Args:
         ticker: Stock symbol, e.g., "AAPL".
     """
-    # ticker = ticker.upper().strip()
-    # is_valid = await is_valid_ticker(ticker)
-    # if not is_valid:
-    #     return f"{ticker} is an invalid ticker symbol"
+    invalid_tickers = await filter_valid_tickers([ticker])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
+
     return await fundamental_act.arun(ticker)
