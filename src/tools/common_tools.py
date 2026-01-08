@@ -16,6 +16,7 @@ from src.tools_adaptors import (
     WriteDownSelectedTickersAct,
     GetSelectedTickersAct,
 )
+from src.utils.ticker import filter_valid_tickers
 
 
 get_user_investment_strategy_act = GetUserInvestmentStrategyAct()
@@ -155,6 +156,10 @@ async def write_down_selected_tickers(
     """
     if len(tickers) > MAX_TICKERS_ALLOWED:
         return f"Only {MAX_TICKERS_ALLOWED} tickers are allowed at a time.Please choose at most {MAX_TICKERS_ALLOWED} tickers."
+
+    invalid_tickers = await filter_valid_tickers(tickers)
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
 
     runId = runtime.context.run.id
     return await write_down_selected_tickers_act.arun(

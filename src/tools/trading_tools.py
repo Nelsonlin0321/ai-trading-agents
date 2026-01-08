@@ -13,6 +13,7 @@ from src.tools_adaptors.trading import (
     GetAnalystsRecommendationsAct,
 )
 from src.services.alpaca.sdk_trading_client import client as alpaca_trading_client
+from src.utils.ticker import filter_valid_tickers
 
 trading_lock = asyncio.Lock()
 
@@ -61,6 +62,10 @@ async def buy_stock(
     if allocation < 0.0 or allocation > 1.0:
         return "allocation must be between 0.0 and 1.0"
 
+    invalid_tickers = await filter_valid_tickers([ticker])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
+
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
     async with trading_lock:
@@ -108,6 +113,10 @@ async def sell_stock(
     ticker = ticker.upper().strip()
     if allocation < 0.0 or allocation > 1.0:
         return "allocation must be between 0.0 and 1.0"
+
+    invalid_tickers = await filter_valid_tickers([ticker])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
 
     bot_id = runtime.context.bot.id
     runId = runtime.context.run.id
@@ -169,6 +178,10 @@ def get_recommend_stock_tool(role: Role):
 
         bot_id = runtime.context.bot.id
         run_id = runtime.context.run.id
+
+        invalid_tickers = await filter_valid_tickers([ticker])
+        if invalid_tickers:
+            return f"{', '.join(invalid_tickers)} are invalid tickers."
 
         return await recommend_stock_act.arun(
             run_id=run_id,
