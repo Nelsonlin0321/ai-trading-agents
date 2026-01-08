@@ -1,8 +1,7 @@
 from langchain.tools import tool
-
-# from src.utils.ticker import is_valid_ticker
 from src.services.tradingeconomics.api_market_news import News
 from src.tools_adaptors.news import MarketNewsAct, EquityNewsAct
+from src.utils.ticker import filter_valid_tickers
 
 market_news_action = MarketNewsAct()
 equity_news_action = EquityNewsAct()
@@ -60,10 +59,9 @@ async def get_latest_equity_news(symbol: str):
 
     Returns a markdown-formatted string containing the title, date, and content of each news item.
     """
-    # symbol = symbol.upper().strip()
-    # is_valid = await is_valid_ticker(symbol)
-    # if not is_valid:
-    #     return f"{symbol} is an invalid ticker symbol"
+    invalid_tickers = await filter_valid_tickers([symbol])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
 
     equity_news = await equity_news_action.arun(symbol)
     return equity_news

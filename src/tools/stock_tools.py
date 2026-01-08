@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from langchain.tools import tool
 from src import tools_adaptors
 from src import utils
-# from src.utils.ticker import is_valid_ticker
+from src.utils.ticker import filter_valid_tickers
 
 eft_live_price_change_act = tools_adaptors.ETFLivePriceChangeAct()
 stock_live_price_change_act = tools_adaptors.StockLivePriceChangeAct()
@@ -20,9 +20,9 @@ async def download_ticker_bars_data(ticker: str):
     Args:
         ticker (str): The ticker symbol of the stock or ETF (e.g. "AAPL", "SPY").
     """
-    # is_valid = await is_valid_ticker(ticker)
-    # if not is_valid:
-    #     return f"Invalid ticker symbol: {ticker}"
+    invalid_tickers = await filter_valid_tickers([ticker])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
     results = await download_ticker_bars_data_act.arun(ticker)
     return results
 
@@ -103,11 +103,9 @@ async def get_stock_live_historical_price_change(tickers: list[str]):
     - Generate quick market commentary on price action
     - Monitor portfolio positions for risk or opportunity signals
     """
-    # tickers = [ticker.upper().strip() for ticker in tickers]
-    # for ticker in tickers:
-    #     is_valid = await is_valid_ticker(ticker)
-    #     if not is_valid:
-    #         return f"{ticker} is an invalid ticker symbol"
+    invalid_tickers = await filter_valid_tickers(tickers)
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
 
     results = await stock_live_price_change_act.arun(tickers)
     metrics_list = []
@@ -188,11 +186,9 @@ async def get_latest_quotes(tickers: list[str]):
     Returns:
         A markdown-formatted table with latest quote data for each symbol.
     """
-    # tickers = [ticker.upper().strip() for ticker in tickers]
-    # for ticker in tickers:
-    #     is_valid = await is_valid_ticker(ticker)
-    #     if not is_valid:
-    #         return f"{ticker} is an invalid ticker symbol"
+    invalid_tickers = await filter_valid_tickers(tickers)
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
 
     quotes_data = await multi_latest_quotes_act.arun(tickers)
     return quotes_data
@@ -225,10 +221,9 @@ async def get_latest_quote(ticker: str):
     Returns:
         A markdown-formatted table with latest quote data for each symbol.
     """
-    # ticker = ticker.upper().strip()
-    # is_valid = await is_valid_ticker(ticker)
-    # if not is_valid:
-    #     return f"{ticker} is an invalid ticker symbol"
+    invalid_tickers = await filter_valid_tickers([ticker])
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
     quotes_data = await single_latest_quotes_act.arun(ticker)
     return quotes_data
 
@@ -247,11 +242,9 @@ async def get_price_trend(tickers: list[str]):
     Returns:
         A markdown-formatted string with the price trend for the stock tickers.
     """
-    # tickers = [ticker.upper().strip() for ticker in tickers]
-    # for ticker in tickers:
-    #     is_valid = await is_valid_ticker(ticker)
-    #     if not is_valid:
-    #         return f"{ticker} is an invalid ticker symbol"
+    invalid_tickers = await filter_valid_tickers(tickers)
+    if invalid_tickers:
+        return f"{', '.join(invalid_tickers)} are invalid tickers."
     price_trend = await get_price_trend_act.arun(tickers)
     return price_trend
 
