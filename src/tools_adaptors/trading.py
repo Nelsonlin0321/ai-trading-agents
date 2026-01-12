@@ -218,6 +218,9 @@ class SellAct(Action):
             if existing is None:
                 return f"No position found for {ticker}"
 
+            if existing.volume == 0:
+                return f"Cannot sell {ticker} because the current volume is 0."
+
             if existing.volume < volume:
                 return (
                     f"Not enough shares to sell {volume} shares of {ticker}. "
@@ -263,7 +266,9 @@ class SellAct(Action):
                     runId=runId,
                     botId=bot_id,
                     realizedPL=price * volume - existing.cost * volume,
-                    realizedPLPercent=(price - existing.cost) / existing.cost,
+                    realizedPLPercent=((price - existing.cost) / existing.cost)
+                    if existing.cost != 0
+                    else 0,
                 )
             )
 
