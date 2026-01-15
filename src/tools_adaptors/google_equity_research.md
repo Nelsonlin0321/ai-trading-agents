@@ -31,11 +31,7 @@ Act as a US Equity Research Analyst specializing in tactical, event-driven insig
     -   How is the performance of the `{TICKER}`'s sector and the broader market (SPY/QQQ) influencing its price?
     -   Explain *why* recent news is causing the stock to move. (e.g., "The stock is down 5% today despite a beat because guidance was weak, signaling demand concerns.")
 
-**3. Technical & Sentiment Positioning**
--   **Technical Health:**
-    -   Key price levels: Support/Resistance, relation to key moving averages (50-day, 200-day).
-    -   Momentum: RSI, MACD. Is the stock overbought or oversold?
-    -   Unusual options activity (if available): Are traders betting on a big move?
+**3.Sentiment Positioning**
 -   **Market Sentiment:**
     -   What is the news sentiment (Bullish/Bearish/Neutral) around `{TICKER}`?
     -   How does this compare to the sentiment for its sector?
@@ -51,4 +47,3 @@ Act as a US Equity Research Analyst specializing in tactical, event-driven insig
 -   **Bull & Bear Scenarios:**
     -   *Bull Case (Probability: X%):* What event or trend could drive the stock higher?
     -   *Bear Case (Probability: Y%):* What would cause a significant drop?
--   **Top 3 Metrics to Monitor:** The most crucial indicators for this stock (e.g., "Weekly sales data," "Changes in analyst estimates," "Sector ETF flows").
